@@ -1,0 +1,58 @@
+This is the TODO list for the transition from Burl-E to Tyumi. The goal is to work through this list until
+Tyumi has feature parity with Burl-E, but with the planned improvements to structure/encapsulation/whatever.
+
+Once this has been achieved, we can try to port Spaceshippers to Tyumi. If all goes to plan, the porting
+process should be... possible. Hopefully with some more thoughtful design in places we can reduce cruft in
+the game code as well.
+
+- TYUMI: 
+	PKG: engine
+		- multihtreaded main gameloop
+			- multiple goroutines, one for tick, one for render, synchronized inbetween with a BuildFrame() step on the main thread
+			- tick
+				- goes at some user-defined speed, defaults to 60 UPS
+			- render
+				- goes at some user-defined speed, defaults to 60 FPS
+		- state, dialog
+			- pre-built often-used dialogs would be nice here.
+				- textinput dialog, message, message with button
+		- debug mode
+			- debug window
+			- FPS/UPS tracking via engine events
+				- nice graph?? this is a luxury haha.
+	PKG: event
+		- event subsystem
+		- register event types
+		- eventstream as an object that you set up?
+		- event filterer
+		- listener system
+	PKG: gfx
+		- animation interface/prototype/library
+		- post-process interface
+		SUBPKG: ui
+			- primitives for ui drawing
+			- ui elements: textbox, inputbox, etc.
+			- border styling object
+			- border linking post process?
+			- window object for compositing
+	PKG: input
+		- need some kind of input handling interface if we're going eliminate SDL inclusion in game logic
+		- also good for different input handlers
+			- SDL keyboard/mouse
+			- SDL gamepad
+			- terminal commands (standard in)
+			- *spinning mark hammil* and many more
+	PKG: data
+		- data structures for roguelikes, with associated functionality
+		- tilemap, entity
+		- stat
+		- tiledata
+		- algorithms? (FOV, terrain gen, serialization, etc.)
+			- or should this be its own package
+
+NOTES:
+	- util.GenerateCoord feels out of place. 
+	- vec.coord.mag() doesn't feel right. conversion to vec2 and back? seems weird
+	- logger was manually adding log messages to debug window. hmm. need to think on how to implement this in more compartmentalized way. 
+		- log package can't emit events, needs to be its own deal.
+	- gfx.ChangeChar is something of a hack. 

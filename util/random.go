@@ -1,5 +1,4 @@
 //utility functions for generating random numbers, sequences, etc.
-
 package util
 
 import "math/rand"

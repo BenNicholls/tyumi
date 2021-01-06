@@ -26,14 +26,22 @@ func (r Rect) Bounds() Rect {
 	return r
 }
 
+//translates r in 2d by the vector (dx, dy)
+//CONSIDER: should input be a vec.coord?
+func (r *Rect) Move(dx, dy int) {
+	r.X += dx
+	r.Y += dy
+}
+
+
 //IsInside checks if the point (x, y) is within the object b.
 func IsInside(x, y int, b Bounded) bool {
 	r := b.Bounds()
 	return x >= r.X && x < r.X+r.W && y >= r.Y && y < r.Y+r.H
 }
 
-//FindIntersectionRect calculates the intersection of two rectangularly-bound objects as a rect if 
-//no intersection, returns Rect{0,0,0,0}
+//FindIntersectionRect calculates the intersection of two rectangularly-bound objects as a rect if no intersection,
+//returns Rect{0,0,0,0}
 func FindIntersectionRect(r1, r2 Bounded) (r Rect) {
 	b1 := r1.Bounds()
 	b2 := r2.Bounds()

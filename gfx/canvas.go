@@ -21,7 +21,7 @@ func (c *Canvas) Dims() (int, int) {
 }
 
 func (c *Canvas) Bounds() vec.Rect {
-	return vec.Rect{W: c.width, H: c.height, X: 0, Y: 0}
+	return vec.Rect{c.width, c.height, 0, 0}
 }
 
 //Initializes the canvas. Can also be used for resizing, assuming

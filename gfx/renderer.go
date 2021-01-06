@@ -1,10 +1,10 @@
 package gfx
 
 type Renderer interface {
-	Setup(string, string, string) error
+	Setup(window *Canvas, glyphPath, fontPath, title string) error
 	Ready() bool
 	Cleanup()
-	ChangeFonts(string, string) error
+	ChangeFonts(glyphPath, fontPath string) error
 	SetFullscreen(bool)
 	ToggleFullscreen()
 	SetFramerate(int)

@@ -1,5 +1,4 @@
-//utility function for handling strings, text, runes, etc.
-
+//utility functions for handling strings, text, runes, etc.
 package util
 
 import "strings"
@@ -10,9 +9,9 @@ func ValidText(key rune) bool {
 	return (key >= 93 && key < 123) || (key >= 37 && key < 58)
 }
 
-//WrapText wraps the provided string at WIDTH characters. optionally takes another int, used to determine the
-//maximum number of lines. returns a slice of strings, each element a wrapped line.
-//for words longer than width it just brutally cuts them off. no mercy.
+//WrapText wraps the provided string at WIDTH characters. optionally takes another int, used to determine the maximum
+//number of lines. returns a slice of strings, each element a wrapped line. for words longer than width it just brutally
+//cuts them off. no mercy.
 func WrapText(str string, width int, maxlines ...int) (lines []string) {
 	capped := false
 	if len(maxlines) == 1 {

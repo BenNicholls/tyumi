@@ -1,3 +1,5 @@
+//Log package is a logger for debugging purposes. It collects log messages of varying degrees and stores them, with the
+//option to output them to disk at the user's discretion.
 package log
 
 import (
@@ -6,7 +8,8 @@ import (
 	"time"
 )
 
-var logger []entry
+var logger []Entry
+var onMessageCallback func(e Entry)
 
 type level int
 
@@ -32,33 +35,32 @@ func (l level) String() string {
 	}
 }
 
-type entry struct {
-	level   level
-	time    time.Time
-	message string
+type Entry struct {
+	Level   level
+	Time    time.Time
+	Message string
 }
 
-func (m entry) String() string {
-	return "[" + m.time.Format(time.Stamp) + "] " + m.level.String() + ": " + m.message
+func (m Entry) String() string {
+	return "[" + m.Time.Format(time.Stamp) + "] " + m.Level.String() + ": " + m.Message
 }
 
 func init() {
-	logger = make([]entry, 0, 1000)
+	logger = make([]Entry, 0, 1000)
 	Info("Tyumi Logger Initialized!")
 }
 
 func log(level level, text ...interface{}) {
-	logger = append(logger, entry{
-		level:   level,
-		time:    time.Now(),
-		message: fmt.Sprint(text...),
-	})
+	e := Entry{
+		Level:   level,
+		Time:    time.Now(),
+		Message: fmt.Sprint(text...),
+	}	
+	logger = append(logger, e)
 
-	// //if we're in debug mode, add the new message to the debugger window
-	// if debug {
-	// 	debugger.logList.Append(logger[len(logger)-1].String())
-	// 	debugger.logList.ScrollToBottom()
-	// }
+	if onMessageCallback != nil {
+		onMessageCallback(e)
+	}
 }
 
 func outputToDisk() {
@@ -87,4 +89,9 @@ func Warning(m ...interface{}) {
 
 func Error(m ...interface{}) {
 	log(ERROR, m...)
+}
+
+//Use this to run code whenever a log entry is recorded, for example to print the log message to the screen.
+func SetOnMessageCallback(f func(e Entry)) {
+	onMessageCallback = f
 }

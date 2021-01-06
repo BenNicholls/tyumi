@@ -1,7 +1,7 @@
 package vec
 
-//returns a generator that computes successive coordinates representing 1/8th of a circle. rotate
-//the arc to draw circles. gives back the ZERO_COORD when it is done. 
+//returns a generator that computes successive coordinates representing 1/8th of a circle. rotate the arc to draw
+//circles. gives back the ZERO_COORD when it is done. 
 func ArcGenerator(radius int) func() Coord {
 	x, y := 0, radius
 	f := 1 - radius
@@ -27,8 +27,7 @@ func ArcGenerator(radius int) func() Coord {
 	}
 }
 
-//Computes a circle, calling fn on each point of the circle. fn can be a drawing function,
-//or whatever.
+//Computes a circle, calling fn on each point of the circle. fn can be a drawing function or whatever.
 func Circle(center Coord, radius int, fn func(x, y int)) {
 	c := ArcGenerator(radius)
 	for p := c(); p != ZERO_COORD; p = c() {

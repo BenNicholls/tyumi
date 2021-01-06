@@ -81,8 +81,8 @@ func (v *Vec2Polar) Pos() {
 	}
 }
 
-//Returns the shortest anglular distance from v1 to v2. positive for counterclockwise, negative for
-//clockwise. NOTE: Do these need to be Pos()'d?? Hmm.
+//Returns the shortest anglular distance from v1 to v2. positive for counterclockwise, negative for clockwise.
+//NOTE: Do these need to be Pos()'d?? Hmm.
 func (v1 Vec2Polar) AngularDistance(v2 Vec2Polar) float64 {
 	d := v2.Phi - v1.Phi
 

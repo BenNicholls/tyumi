@@ -8,11 +8,13 @@ the game code as well.
 - TYUMI: 
 	PKG: engine
 		- multihtreaded main gameloop
-			- multiple goroutines, one for tick, one for render, synchronized inbetween with a BuildFrame() step on the main thread
 			- tick
 				- goes at some user-defined speed, defaults to 60 UPS
+			-update
+				- updates all UI elements
 			- render
 				- goes at some user-defined speed, defaults to 60 FPS
+				- renders UI elements
 		- state, dialog
 			- pre-built often-used dialogs would be nice here.
 				- textinput dialog, message, message with button
@@ -27,7 +29,7 @@ the game code as well.
 		- event filterer
 		- listener system
 	PKG: gfx
-		- animation interface/prototype/library
+		- animation prototype/library
 		- post-process interface
 		SUBPKG: ui
 			- primitives for ui drawing
@@ -51,8 +53,20 @@ the game code as well.
 			- or should this be its own package
 
 NOTES:
-	- util.GenerateCoord feels out of place. 
+	- util.GenerateCoord feels out of place. should be in vec?
 	- vec.coord.mag() doesn't feel right. conversion to vec2 and back? seems weird
 	- logger was manually adding log messages to debug window. hmm. need to think on how to implement this in more compartmentalized way. 
 		- log package can't emit events, needs to be its own deal.
+		- some kind of inspection function that lets you pull out recent entries? 
 	- gfx.ChangeChar is something of a hack. 
+	- gfx.Floodfill needs to be written
+	- sdlRenderer uses a double buffer technique for reasons that i can't remember. it renders draw calls to a drawing texture
+	then copies that to the display texture before flipping. was this to handle vsync or something? can i remove this? it
+	adds a bunch of cgo calls that i'd love to delete
+	- vec could use an interface for objects with 2d and 3d positioning qualities. 
+
+
+THINGS TO MAYBE DO:
+	- ui.textbox has a "size to fit" functionality in the initializer. this could be made to run dynamically on
+	change as well, so you'd have a textbox that could grow and shrink as text is added. i'm not sure how useful
+	this would be...

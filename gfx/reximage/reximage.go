@@ -1,9 +1,7 @@
-// A package for decoding and handling .xp files produced by Kyzrati's fabulous
-// REXPaint program, the gold-standard in ASCII art drawing programs. It can be
-// found at www.gridsagegames.com/rexpaint.
+// A package for decoding and handling .xp files produced by Kyzrati's fabulous REXPaint program, the gold-standard in 
+// ASCII art drawing programs. It can be found at www.gridsagegames.com/rexpaint.
 //
-// reximage is part of the Tyumi engine by Benjamin Nicholls, but feel free to
-// use it as a standalone package!
+// reximage is part of the Tyumi engine by Benjamin Nicholls, but feel free to use it as a standalone package!
 package reximage
 
 import (
@@ -21,8 +19,7 @@ type ImageData struct {
 	Cells  []CellData //will have Width*Height Elements
 }
 
-// GetCell returns the CellData at coordinate (x, y) of the decoded image, with (0,0)
-// at the top-left of the image.
+// GetCell returns the CellData at coordinate (x, y) of the decoded image, with (0,0) at the top-left of the image.
 func (id ImageData) GetCell(x, y int) (cd CellData, err error) {
 	if id.Cells == nil || len(id.Cells) == 0 {
 		return CellData{}, errors.New("Image has no data.")
@@ -37,9 +34,8 @@ func (id ImageData) GetCell(x, y int) (cd CellData, err error) {
 	return
 }
 
-// CellData holds the decoded data for a single cell. Colours are split into uint8
-// components so the user can combine them into whatever colour format they need.
-// Some popular colour format conversion functions are provided as well.
+// CellData holds the decoded data for a single cell. Colours are split into uint8 components so the user can combine
+// them into whatever colour format they need. Some popular colour format conversion functions are provided as well.
 type CellData struct {
 	Glyph uint32 // ASCII code for glyph
 	R_f   uint8  //
@@ -82,8 +78,8 @@ func (cd CellData) RGBA() (fore, back uint32) {
 	return
 }
 
-//Import imports an image from the xp file at the provided path. Returns the Imagedata and an error.
-//If an error is present, ImageData will be no good.
+// Import imports an image from the xp file at the provided path. Returns the Imagedata and an error. If an error is 
+// present, ImageData will be no good.
 func Import(path string) (image ImageData, err error) {
 	image = ImageData{}
 
@@ -113,8 +109,7 @@ func Import(path string) (image ImageData, err error) {
 		return
 	}
 
-	//read into the first layer so we can get the image dimensions and initialize
-	//cell data
+	//read into the first layer so we can get the image dimensions and initialize cell data
 	var w, h uint32
 	err = binary.Read(data, binary.LittleEndian, &w)
 	err = binary.Read(data, binary.LittleEndian, &h)
@@ -128,8 +123,7 @@ func Import(path string) (image ImageData, err error) {
 	//read layers, painting from lowest layer to highest
 	for layer := 0; layer < int(numLayers); layer++ {
 		if layer != 0 {
-			//if reading subsequent layers, throw away the dimension
-			//bytes since we've already read them before
+			//if reading subsequent layers, throw away the dimension bytes since we've already read them before
 			err = binary.Read(data, binary.LittleEndian, &w)
 			err = binary.Read(data, binary.LittleEndian, &h)
 		}
@@ -146,8 +140,8 @@ func Import(path string) (image ImageData, err error) {
 			if c.R_b == 255 && c.G_b == 0 && c.B_b == 255 {
 				continue
 			} else {
-				//xp images are encoded in the totally insane column-major order for some reason,
-				//we correct that here (sorry Kyzrati, gotta put my foot down on this one)
+				//xp images are encoded in the totally insane column-major order for some reason, we correct that here
+				//(sorry Kyzrati, gotta put my foot down on this one)
 				x, y := i/image.Height, i%image.Height
 				image.Cells[y*image.Width+x] = c
 			}

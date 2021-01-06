@@ -6,8 +6,7 @@ var (
 	ZERO_COORD Coord = Coord{0, 0}
 )
 
-//Coord is an (X, Y) pair that represents a spot on some 2d grid. Effectively just an implenetation of
-//vec.2D using ints.
+//Coord is an (X, Y) pair that represents a spot on some 2d grid. Effectively just an implementation of vec2 using ints.
 type Coord struct {
 	X, Y int
 }

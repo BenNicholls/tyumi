@@ -1,9 +1,6 @@
-//utility functions for math. the Go standard library has some of these as well, but
-//in a lot of situations they are too generic and weighed down by unnecessary checks
-//and the like. the functions here are expected to be run in tight loops, so we
-//strip out unneeded cruft. other things are just useful functions that I made up
-//as I needed them.
-
+//utility functions for math. the Go standard library has some of these as well, but in a lot of situations they are too
+//generic and weighed down by unnecessary checks and the like. the functions here are expected to be run in tight loops,
+//so we strip out unneeded cruft. other things are just useful functions that I made up as I needed them.
 package util
 
 import "math"
@@ -55,8 +52,7 @@ func MinF(i, j float64) float64 {
 	return i
 }
 
-//Clamp checks if min <= val <= max.
-//If val < min, returns min. If val > max, returns max. Otherwise returns val.
+//Clamp checks if min <= val <= max. If val < min, returns min. If val > max, returns max. Otherwise returns val.
 func Clamp(val, min, max int) int {
 	if val <= min {
 		return min
@@ -66,9 +62,9 @@ func Clamp(val, min, max int) int {
 	return val
 }
 
-//ModularClamp is like clamp but instead of clamping at the endpoints, it overflows/underflows back to the
-//other side of the range. The second return param is the number of overflow cycles. negative for underflow,
-//0 for none, positive for overflow. This kind of function probably has an actual name but hell if I know what it is.
+//ModularClamp is like clamp but instead of clamping at the endpoints, it overflows/underflows back to the other side of
+//the range. The second return param is the number of overflow cycles. negative for underflow, 0 for none, positive for 
+//overflow. This kind of function probably has an actual name but hell if I know what it is.
 func ModularClamp(val, min, max int) (int, int) {
 	if min > max {
 		//if someone foolishly puts their min higher than max, swap
@@ -92,8 +88,8 @@ func RoundFloatToInt(f float64) int {
 	return int(f + math.Copysign(0.5, f))
 }
 
-//Lerp linearly interpolates a range (min-max) over (steps) intervals, and returns the (val)th step.
-//Currently does this via a conversion to float64, so there might be some rounding errors in here I don't know about.
+//Lerp linearly interpolates a range (min-max) over (steps) intervals, and returns the (val)th step. Currently does this
+//via a conversion to float64, so there might be some rounding errors in here I don't know about.
 func Lerp(min, max, val, steps int) int {
 	if val >= steps {
 		return max

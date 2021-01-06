@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/veandco/go-sdl2/sdl"
-	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
+	"github.com/veandco/go-sdl2/sdl"
 )
 
 type SDLRenderer struct {
@@ -39,7 +39,7 @@ type SDLRenderer struct {
 	ready bool
 }
 
-func (sdlr *SDLRenderer) Setup(glyphPath, fontPath, title string) (err error) {
+func (sdlr *SDLRenderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string) (err error) {
 	//renderer defaults to 800x600, once fonts are loaded it figures out the resolution to use and resizes accordingly
 	sdlr.window, err = sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, 800, 600, sdl.WINDOW_OPENGL)
 	if err != nil {
@@ -180,7 +180,7 @@ func (sdlr *SDLRenderer) Render() {
 	var src, dst sdl.Rect
 	t := sdlr.renderer.GetRenderTarget()             //store window texture, we'll switch back to it once we're done with the buffer.
 	sdlr.renderer.SetRenderTarget(sdlr.canvasBuffer) //point renderer at buffer texture, we'll draw there
-	for i:= 0; i < w*h; i++ {
+	for i := 0; i < w*h; i++ {
 		cell := sdlr.console.GetCell(i%w, i/w)
 		if cell.Dirty || sdlr.forceRedraw {
 			if cell.Mode == gfx.DRAW_TEXT {

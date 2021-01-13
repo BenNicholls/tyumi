@@ -63,7 +63,7 @@ func log(level level, text ...interface{}) {
 	}
 }
 
-func outputToDisk() {
+func WriteToDisk() {
 	f, err := os.Create("log.txt")
 	if err != nil {
 		return

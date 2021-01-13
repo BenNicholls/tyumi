@@ -100,4 +100,3 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 		}
 	}
 }
-

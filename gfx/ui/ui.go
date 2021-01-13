@@ -1,10 +1,10 @@
-//UI is Tyumi's UI system. A base UI element is defined and successively more complex elements are composed from it. UI 
-//elements can be nested in Containers for composition alongside one another.
+//UI is Tyumi's UI system. A base UI element is defined and successively more complex elements are composed from it. UI
+//elements can be nested in Containers for composition alongside/inside one another.
 package ui
 
 import (
-	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -12,8 +12,11 @@ import (
 type Element interface {
 	vec.Bounded
 	Pos() *vec.Coord
-	Update()
+	AddParent(*Container)
+	DrawToParent()
 	Render()
+	update()
+	UpdateState()
 }
 
 type ElementPrototype struct {
@@ -28,6 +31,8 @@ type ElementPrototype struct {
 	backColour uint32 //defaults to col.BLACK
 
 	animations []gfx.Animator //animations on this element. these are updated once per frame.
+
+	parent *Container //parent container. if nil,
 }
 
 func (e *ElementPrototype) Init(w, h, x, y, z int) {
@@ -37,8 +42,9 @@ func (e *ElementPrototype) Init(w, h, x, y, z int) {
 	e.foreColour = col.WHITE
 	e.backColour = col.BLACK
 	e.animations = make([]gfx.Animator, 0)
+	e.visible = true
 	e.dirty = true
-} 
+}
 
 func (e *ElementPrototype) Bounds() vec.Rect {
 	w, h := e.Dims()
@@ -49,13 +55,37 @@ func (e *ElementPrototype) Pos() *vec.Coord {
 	return &e.position
 }
 
-//Update is a virtual function. Override this to provide ui update behaviour on a thread-safe, per-frame basis, 
-//instead of updating the element as the gamestate progresses.
-func (e *ElementPrototype) Update() {
+//update() is the internal update function. handles any internal update behaviour, and calls the UpdateState function
+//to allow user-defined update behaviour to occur.
+func (e *ElementPrototype) update() {
+	e.UpdateState()
+}
+
+//UpdateState() is a virtual function. Implement this to provide ui update behaviour on a thread-safe, per-frame basis,
+//instead of updating the state of the element as the gamestate progresses.
+func (e *ElementPrototype) UpdateState() {
 
 }
 
 //Renders any changes in the element to the internal canvas.
 func (e *ElementPrototype) Render() {
+	if e.dirty {
+		e.dirty = false
+	}
+}
 
+func (e *ElementPrototype) AddParent(c *Container) {
+	if e.parent != nil {
+		e.parent.RemoveElement(e)
+	}
+
+	e.parent = c
+}
+
+func (e *ElementPrototype) DrawToParent() {
+	if e.parent == nil {
+		return
+	}
+
+	e.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.z)
 }

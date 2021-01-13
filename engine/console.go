@@ -9,9 +9,11 @@ import (
 //gameloop.
 type Console struct {
 	gfx.Canvas
+
+	ready bool
 }
 
 func InitConsole(w, h int) {
-	console = new(Console)
 	console.Init(w, h)
+	console.ready = true
 }

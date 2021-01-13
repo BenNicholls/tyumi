@@ -54,6 +54,7 @@ func (sdlr *SDLRenderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title s
 	}
 	sdlr.renderer.Clear()
 
+	sdlr.console = console
 	err = sdlr.ChangeFonts(glyphPath, fontPath)
 	if err != nil {
 		return err

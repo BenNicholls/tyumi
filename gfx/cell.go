@@ -77,3 +77,16 @@ func (c *Cell) SetText(z int, char1, char2 int) {
 func (c *Cell) Clear() {
 	c.SetGlyphCell(GLYPH_NONE, col.WHITE, col.BLACK, 0)
 }
+
+//copies the contents of src cell to c. if a change is made to c, it will be marked dirty.
+func (c *Cell) CopyFromCell(src *Cell) {
+	if src == nil {
+		return
+	}
+
+	if src.Mode == DRAW_GLYPH {
+		c.SetGlyphCell(src.Glyph, src.ForeColour, src.BackColour, src.Z)
+	} else {
+		c.SetTextCell(src.Chars[0], src.Chars[1], src.ForeColour, src.BackColour, src.Z)
+	}
+}

@@ -38,3 +38,22 @@ func NewTextbox(w, h, x, y, z int, text string, center bool) Textbox {
 	tb.ElementPrototype.Init(w, h, x, y, z)
 	return tb
 }
+
+func (tb *Textbox) ChangeText(txt string) {
+	if txt == tb.text {
+		return
+	}
+
+	tb.text = txt
+	w, h := tb.Dims()
+	tb.lines = util.WrapText(txt, w, h)
+	tb.dirty = true
+}
+
+func (tb *Textbox) Render() {
+	if tb.visible {
+		for i, line := range tb.lines {
+			tb.DrawText(0, i, 0, line, tb.foreColour, tb.backColour, 0)
+		}
+	}
+}

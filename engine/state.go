@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/gfx/ui"
+	"github.com/bennicholls/tyumi/event"
 )
 
 var currentState State //the current state object
@@ -15,6 +16,7 @@ const (
 type State interface {
 	Update()
 	UpdateUI()
+	HandleEvent(event.Event)
 	Shutdown()
 	Window() *ui.Container	
 }
@@ -57,6 +59,10 @@ func (sp *StatePrototype) UpdateUI() {
 }
 
 func (sp *StatePrototype) Shutdown() {
+	return
+}
+
+func (sp *StatePrototype) HandleEvent(e event.Event) {
 	return
 }
 

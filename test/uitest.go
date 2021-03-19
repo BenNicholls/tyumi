@@ -1,7 +1,10 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/bennicholls/tyumi/engine"
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/sdlrenderer"
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/log"
@@ -9,7 +12,7 @@ import (
 
 func main() {
 	engine.InitConsole(40, 20)
-	engine.InitRenderer(new(sdlrenderer.SDLRenderer), "res/glyphs.bmp", "res/font.bmp", "TEST WINDOW")
+	engine.InitRenderer(new(sdlrenderer.SDLRenderer), "res/glyphs12x24.bmp", "res/font12x24.bmp", "TEST WINDOW")
 
 	state := TestState{}
 	state.Init()
@@ -35,10 +38,17 @@ func (ts *TestState) Init() {
 func (ts *TestState) Update() {
 	log.Info("TICK ", ts.tick)
 	ts.tick++
-	ts.text.MoveTo(ts.tick%10, 1)
-	log.Info(ts.text.Pos())
+	//ts.text.MoveTo(ts.tick%10, 1)
 }
 
 func (ts *TestState) UpdateUI() {
 	log.Info("TOCK")
+}
+
+func (ts *TestState) HandleEvent(e event.Event) {
+	switch e.ID() {
+	case engine.EV_KEYBOARD:
+		ev := e.(engine.KeyboardEvent)
+		ts.text.ChangeText(strconv.Itoa(ev.Key))
+	}
 }

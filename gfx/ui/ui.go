@@ -11,7 +11,6 @@ import (
 //An element is the base structure of anything handled by the UI system.
 type Element interface {
 	vec.Bounded
-	Pos() *vec.Coord
 	AddParent(*Container)
 	DrawToParent()
 	Render()
@@ -51,8 +50,15 @@ func (e *ElementPrototype) Bounds() vec.Rect {
 	return vec.Rect{w, h, e.position.X, e.position.Y}
 }
 
-func (e *ElementPrototype) Pos() *vec.Coord {
-	return &e.position
+func (e *ElementPrototype) Pos() vec.Coord {
+	return e.position
+}
+
+func (e *ElementPrototype) MoveTo(x, y int) {
+	e.position.MoveTo(x, y)
+	if e.parent != nil {
+		e.parent.Redraw()
+	}
 }
 
 //update() is the internal update function. handles any internal update behaviour, and calls the UpdateState function

@@ -6,6 +6,7 @@ type Container struct {
 	ElementPrototype
 
 	children []Element
+	redraw bool //total redraw required. see Container.Redraw()
 }
 
 func NewContainer(w, h, x, y, z int) (c Container) {
@@ -44,6 +45,13 @@ func (c *Container) RemoveElement(e Element) {
 	}
 }
 
+//Call this to indicate to the container that it must do a complete redraw from scratch.
+//Usually this is because a child element has moved, toggled visibility, or done some other
+//cool move. The next call to render will perform a clear first, then reset the flag.
+func (c *Container) Redraw() {
+	c.redraw = true
+}
+
 func (c *Container) update() {
 	c.UpdateChildren()
 	c.UpdateState()
@@ -57,6 +65,10 @@ func (c *Container) UpdateChildren() {
 
 //Render composites all internal elements into the container's canvas.
 func (c *Container) Render() {
+	if c.redraw {
+		c.Canvas.Clear()
+	}
+
 	for _, e := range c.children {
 		e.Render()
 		e.DrawToParent()

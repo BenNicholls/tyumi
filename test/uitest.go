@@ -35,7 +35,7 @@ func (ts *TestState) Init() {
 func (ts *TestState) Update() {
 	log.Info("TICK ", ts.tick)
 	ts.tick++
-	ts.text.Pos().MoveTo(ts.tick%10, 1)
+	ts.text.MoveTo(ts.tick%10, 1)
 	log.Info(ts.text.Pos())
 }
 

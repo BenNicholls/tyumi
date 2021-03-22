@@ -5,6 +5,7 @@ import (
 
 	"github.com/bennicholls/tyumi/engine"
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/gfx/sdlrenderer"
 	"github.com/bennicholls/tyumi/gfx/ui"
 )
@@ -30,7 +31,9 @@ type TestState struct {
 
 func (ts *TestState) Setup() {
 	ts.Init(engine.FIT_CONSOLE, engine.FIT_CONSOLE)
+	ts.Window().SetDefaultColours(col.RED, col.LIME)
 	ts.text = ui.NewTextbox(ui.FIT_TEXT, ui.FIT_TEXT, 1, 1, 0, "TEST STRING DO NOT UPVOTE", true)
+	ts.text.SetDefaultColours(col.CYAN, col.FUSCHIA)
 	ts.Window().AddElement(&ts.text)
 	ts.AddInputHandler(ts.HandleInputs)
 }

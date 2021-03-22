@@ -4,7 +4,6 @@ package ui
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
-	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -26,9 +25,6 @@ type ElementPrototype struct {
 	visible  bool
 	dirty    bool //indicates this object needs to be re-rendered.
 
-	foreColour uint32 //defaults to col.WHITE
-	backColour uint32 //defaults to col.BLACK
-
 	animations []gfx.Animator //animations on this element. these are updated once per frame.
 
 	parent *Container //parent container. if nil,
@@ -38,10 +34,13 @@ func (e *ElementPrototype) Init(w, h, x, y, z int) {
 	e.Canvas.Init(w, h)
 	e.position = vec.Coord{x, y}
 	e.z = z
-	e.foreColour = col.WHITE
-	e.backColour = col.BLACK
 	e.animations = make([]gfx.Animator, 0)
 	e.visible = true
+	e.dirty = true
+}
+
+func (e *ElementPrototype) SetDefaultColours(fore uint32, back uint32) {
+	e.Canvas.SetDefaultColours(fore, back)
 	e.dirty = true
 }
 

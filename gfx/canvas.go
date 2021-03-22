@@ -1,19 +1,27 @@
 package gfx
 
 import (
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
+)
+
+const (
+	COL_DEFAULT uint32 = 0x00000001 //pass this in cases where you want the canvas to use the default colours
 )
 
 //Canvas is a Z-depthed grid of Cell objects.
 //All canvas drawing options are z-depth sensitive. They will never
 //draw a lower z value cell over a higher one. The clear function can
-//be used to set a region of a canvas back to zero z level so you can 
+//be used to set a region of a canvas back to zero z level so you can
 //redraw over it.
 type Canvas struct {
 	cells []Cell
 
 	width, height int
+
+	foreColour uint32 //default foreground colour
+	backColour uint32 //default background colour
 }
 
 func (c *Canvas) Dims() (int, int) {
@@ -26,9 +34,11 @@ func (c *Canvas) Bounds() vec.Rect {
 
 //Initializes the canvas. Can also be used for resizing, assuming
 //you don't mind that the contents of the canvas are destroyed.
-func (c *Canvas) Init(w,h int) {
+func (c *Canvas) Init(w, h int) {
 	c.width, c.height = util.Abs(w), util.Abs(h)
 	c.cells = make([]Cell, c.width*c.height)
+	c.foreColour = col.WHITE
+	c.backColour = col.BLACK
 	c.Clear()
 }
 
@@ -41,23 +51,34 @@ func (c *Canvas) GetCell(x, y int) *Cell {
 	return &c.cells[y*c.width+x]
 }
 
+//Sets the default colours for a canvas, then does a reset of the canvas to apply them.
+func (c *Canvas) SetDefaultColours(fore uint32, back uint32) {
+	c.foreColour = fore
+	c.backColour = back
+	c.Clear()
+}
+
 func (c *Canvas) SetForeColour(x, y, z int, col uint32) {
 	if cell := c.GetCell(x, y); cell != nil && cell.Z <= z {
+		if col == COL_DEFAULT {
+			col = c.foreColour
+		}
 		cell.SetForeColour(z, col)
 	}
 }
 
 func (c *Canvas) SetBackColour(x, y, z int, col uint32) {
 	if cell := c.GetCell(x, y); cell != nil && cell.Z <= z {
+		if col == COL_DEFAULT {
+			col = c.backColour
+		}
 		cell.SetBackColour(z, col)
 	}
 }
 
 func (c *Canvas) SetColours(x, y, z int, fore, back uint32) {
-	if cell := c.GetCell(x, y); cell != nil && cell.Z <= z {
-		cell.SetForeColour(z, fore)
-		cell.SetBackColour(z, back)
-	}
+	c.SetForeColour(x, y, z, fore)
+	c.SetBackColour(x, y, z, back)
 }
 
 func (c *Canvas) SetGlyph(x, y, z, gl int) {
@@ -93,9 +114,11 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 	}
 
 	for _, r := range areas {
-		for i:=0; i < r.W*r.H; i++ {
-			if cell := c.GetCell(r.X + i%r.W, r.Y + i/r.W); cell != nil {
+		for i := 0; i < r.W*r.H; i++ {
+			if cell := c.GetCell(r.X+i%r.W, r.Y+i/r.W); cell != nil {
 				cell.Clear()
+				cell.SetBackColour(0, c.backColour)
+				cell.SetForeColour(0, c.foreColour)
 			}
 		}
 	}

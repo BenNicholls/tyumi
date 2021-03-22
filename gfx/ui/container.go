@@ -6,7 +6,7 @@ type Container struct {
 	ElementPrototype
 
 	children []Element
-	redraw bool //total redraw required. see Container.Redraw()
+	redraw   bool //total redraw required. see Container.Redraw()
 }
 
 func NewContainer(w, h, x, y, z int) (c Container) {
@@ -39,7 +39,7 @@ func (c *Container) RemoveElement(e Element) {
 	for i, child := range c.children {
 		if child == e {
 			copy(c.children[i:], c.children[i+1:])
-			c.children[len(c.children)-1] = nil 
+			c.children[len(c.children)-1] = nil
 			c.children = c.children[:len(c.children)-1]
 		}
 	}
@@ -67,10 +67,11 @@ func (c *Container) UpdateChildren() {
 func (c *Container) Render() {
 	if c.redraw {
 		c.Canvas.Clear()
+		c.redraw = false
 	}
 
 	for _, e := range c.children {
 		e.Render()
 		e.DrawToParent()
-	}	
+	}
 }

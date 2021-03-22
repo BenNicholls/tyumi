@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/util"
 )
 
@@ -54,7 +55,9 @@ func (tb *Textbox) Render() {
 	if tb.visible && tb.dirty {
 		tb.Clear()
 		for i, line := range tb.lines {
-			tb.DrawText(0, i, 0, line, tb.foreColour, tb.backColour, 0)
+			tb.DrawText(0, i, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
 		}
+
+		tb.ElementPrototype.Render()
 	}
 }

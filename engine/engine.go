@@ -3,12 +3,10 @@ package engine
 import (
 	"errors"
 	"runtime"
-	"time"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/log"
-	"github.com/veandco/go-sdl2/sdl"
 )
 
 var renderer gfx.Renderer
@@ -18,7 +16,7 @@ var mainState State
 var tick int //count of number of ticks since engine was initialized
 var running bool
 
-var events *event.Stream //the main event stream for the engine. all events will go and be distributed from here
+var events event.Stream //the main event stream for the engine. all events will go and be distributed from here
 var EV_QUIT = event.Register()
 
 //Initializes the renderer. This must be done after initializaing the console, but before running the main game loop.
@@ -45,6 +43,8 @@ func Run() {
 	defer log.WriteToDisk()
 
 	events = event.NewStream(250)
+	events.AddHandler(handleEvent)
+	events.Listen(EV_QUIT)
 
 	if mainState == nil {
 		log.Error("No game state for Tyumi to run! Ensure that engine.InitMainState() is run before the gameloop.")
@@ -52,35 +52,21 @@ func Run() {
 	}
 
 	for running = true; running; {
-		processInput() //take inputs from sdl, convert to tyumi events as appropriate, and distribute
-		update()       //step forward the gamestate
-		updateUI()     //update changed UI elements
-		render()       //composite frame together, post process, and render to screen
-		handleEvents() //handle events generated this frame, both internal and external
-		time.Sleep(15) //TODO: implement an actual framerate limiter
+		processInput()   //take inputs from sdl, convert to tyumi events as appropriate, and distribute
+		update()         //step forward the gamestate
+		updateUI()       //update changed UI elements
+		render()         //composite frame together, post process, and render to screen
+		events.Process() //processes internal events
 	}
 
 	renderer.Cleanup()
 }
 
-//gather input events from sdl and handle/distribute accordingly
-func processInput() int {
-	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
-		switch e := sdlevent.(type) {
-		case *sdl.QuitEvent:
-			events.Add(event.New(EV_QUIT))
-			break //don't care about other input events if we're quitting
-		case *sdl.KeyboardEvent:
-			mainState.HandleEvent(NewKeyboardEvent(int(e.Keysym.Sym)))
-		}
-	}
-
-	return 0
-}
-
 //This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.
 func update() {
+	mainState.InputEvents().Process()
 	mainState.Update()
+	mainState.Events().Process() //process any gameplay events from this frame.
 	tick++
 }
 
@@ -101,16 +87,11 @@ func render() {
 	renderer.Render()
 }
 
-//handles events from the main event stream. passes them to the main gamestate first, then handles any required internal
-//engine behaviour
-func handleEvents() {
-	for e := events.Next(); e != nil; e = events.Next() {
-		mainState.HandleEvent(e)
-
-		switch e.ID() {
-		case EV_QUIT:
-			running = false
-			mainState.Shutdown()
-		}
+//handles events from the engine's internal event stream. runs once per tick()
+func handleEvent(e event.Event) {
+	switch e.ID() {
+	case EV_QUIT:
+		running = false
+		mainState.Shutdown()
 	}
 }

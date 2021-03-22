@@ -1,11 +1,14 @@
 //Event is Tyumi's generic event system. It handles registration, creation, storage, filtering,
-//and eventual doling-out of events. 
+//and eventual doling-out of events.
 package event
 
-//this is a tracker for how many events have been registered. events are given ids in the order
-//they are registered. eventually this will be an array that also holds per-event data, like
-//filter status and other flags.
-var registeredEvents int 
+
+//this array is populated with the registered listeners for each registered event type.
+var registeredEvents [][]*Stream
+
+func init() {
+	registeredEvents = make([][]*Stream, 0)
+}
 
 //Definition for event objects. Compose custom events around the EventPrototype to satisfy
 //this interface cleanly.
@@ -29,12 +32,17 @@ func New(ID int) EventPrototype {
 //Stream is a queue of events.
 type Stream struct {
 	stream chan Event
+
+	handler func(Event) //event handler called by Process()
 }
 
-func NewStream(size int) (es *Stream) {
-	es = new(Stream)
+func NewStream(size int) (es Stream) {
 	es.stream = make(chan Event, size)
-	return es
+	return
+}
+
+func (s *Stream) AddHandler(h func(Event)) {
+	s.handler = h
 }
 
 //Adds an event to the stream, unless the stream is full.
@@ -52,11 +60,38 @@ func (s *Stream) Next() Event {
 		return nil
 	}
 
-	return <- s.stream
+	return <-s.stream
 }
 
-//Registers an event with the event system and returns the assigned ID.
+//Begins listening for the specified event.
+//TODO: check for duplicate listens
+func (s *Stream) Listen(id int) {
+	registeredEvents[id] = append(registeredEvents[id], s)
+}
+
+//Processes all events in the stream with the provided event handler function. If no event handler
+//exists, does nothing.
+//THINK: should this clear the events from the stream if no handler is present?
+func (s *Stream) Process() {
+	if s.handler == nil {
+		return
+	}
+
+	for e := s.Next(); e != nil; e = s.Next() {
+		s.handler(e)
+	}
+}
+
+//Registers an event with the event system and returns the assigned ID. Also creates the list of
+//listeners
 func Register() int {
-	registeredEvents++
-	return registeredEvents - 1
+	registeredEvents = append(registeredEvents, make([]*Stream, 0))
+	return len(registeredEvents) - 1
+}
+
+//fire the event into the void. the event will be sent to all listening event streams
+func Fire(e Event) {
+	for _, s := range registeredEvents[e.ID()] {
+		s.Add(e)
+	}
 }

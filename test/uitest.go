@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-
 	"github.com/bennicholls/tyumi/engine"
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/col"
@@ -34,7 +32,9 @@ func (ts *TestState) Setup() {
 	ts.Window().SetDefaultColours(col.RED, col.LIME)
 	ts.text = ui.NewTextbox(ui.FIT_TEXT, ui.FIT_TEXT, 1, 1, 0, "TEST STRING DO NOT UPVOTE", true)
 	ts.text.SetDefaultColours(col.CYAN, col.FUSCHIA)
-	ts.Window().AddElement(&ts.text)
+
+	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 10, 2, "blah blah blah blah blah blah blah blah hello whatever i love you", true)
+	ts.Window().AddElement(&ts.text, &text2)
 	ts.AddInputHandler(ts.HandleInputs)
 }
 
@@ -51,6 +51,8 @@ func (ts *TestState) HandleInputs(e event.Event) {
 	switch e.ID() {
 	case engine.EV_KEYBOARD:
 		ev := e.(engine.KeyboardEvent)
-		ts.text.ChangeText(strconv.Itoa(ev.Key))
+		if dx, dy := ev.Direction(); dx != 0 || dy != 0 {
+			ts.text.Move(dx, dy)
+		}
 	}
 }

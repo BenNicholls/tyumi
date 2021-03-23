@@ -60,6 +60,10 @@ func (e *ElementPrototype) MoveTo(x, y int) {
 	}
 }
 
+func (e *ElementPrototype) Move(dx, dy int) {
+	e.MoveTo(e.position.X+dx, e.position.Y+dy)
+}
+
 //update() is the internal update function. handles any internal update behaviour, and calls the UpdateState function
 //to allow user-defined update behaviour to occur.
 func (e *ElementPrototype) update() {

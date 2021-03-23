@@ -32,7 +32,7 @@ func NewTextbox(w, h, x, y, z int, text string, center bool) Textbox {
 		tb.lines = make([]string, 1)
 		tb.lines[0] = text
 	} else if h == FIT_TEXT {
-		tb.lines = util.WrapText(text, w)
+		tb.lines = util.WrapText(text, w*2)
 		h = len(tb.lines)
 	}
 

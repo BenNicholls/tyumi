@@ -63,3 +63,18 @@ func WrapText(str string, width int, maxlines ...int) (lines []string) {
 
 	return
 }
+
+//Returns a string of lorem ipsum test text with the requested number of words. 
+func LoremIpsum(words int) string {
+	l := strings.Split("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", " ")
+	if words <= len(l) {
+		return strings.Join(l[0:words], " ")
+	}
+
+	str := make([]string, 0, words)
+	for len(str) <= words {
+		str = append(str, l...)
+	}
+
+	return strings.Join(str[0:words], " ")
+}

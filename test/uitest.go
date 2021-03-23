@@ -6,6 +6,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/gfx/sdlrenderer"
 	"github.com/bennicholls/tyumi/gfx/ui"
+	"github.com/bennicholls/tyumi/util"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func (ts *TestState) Setup() {
 	ts.text = ui.NewTextbox(ui.FIT_TEXT, ui.FIT_TEXT, 1, 1, 0, "TEST STRING DO NOT UPVOTE", true)
 	ts.text.SetDefaultColours(col.CYAN, col.FUSCHIA)
 
-	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 10, 2, "blah blah blah blah blah blah blah blah hello whatever i love you", true)
+	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 5, 0, util.LoremIpsum(50), true)
 	ts.Window().AddElement(&ts.text, &text2)
 	ts.AddInputHandler(ts.HandleInputs)
 }

@@ -45,6 +45,7 @@ func Run() {
 	events = event.NewStream(250)
 	events.AddHandler(handleEvent)
 	events.Listen(input.EV_QUIT)
+	events.Listen(input.EV_KEYBOARD)
 
 	if mainState == nil {
 		log.Error("No game state for Tyumi to run! Ensure that engine.InitMainState() is run before the gameloop.")
@@ -93,5 +94,8 @@ func handleEvent(e event.Event) {
 	case input.EV_QUIT: //quit input event, like from clicking the close window button on the window
 		running = false
 		mainState.Shutdown()
+	case input.EV_KEYBOARD:
+		//pass keyboard events to the main ui to be processed by any relevant input handlers
+		mainState.Window().HandleKeypress(e.(input.KeyboardEvent))
 	}
 }

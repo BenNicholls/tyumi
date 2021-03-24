@@ -47,7 +47,7 @@ func (tb *Textbox) ChangeText(txt string) {
 
 	tb.text = txt
 	w, h := tb.Dims()
-	tb.lines = util.WrapText(txt, w, h)
+	tb.lines = util.WrapText(txt, w*2, h)
 	tb.dirty = true
 }
 

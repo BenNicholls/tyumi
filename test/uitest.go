@@ -40,6 +40,10 @@ func (ts *TestState) Setup() {
 	text2.EnableBorder("lorem", "")
 	ts.Window().AddElement(&ts.text, &text2)
 	ts.AddInputHandler(ts.HandleInputs)
+
+	inputbox := ui.NewInputbox(10, 1, 8, 8, 10)
+	inputbox.EnableBorder("inputs!", "do the input")
+	ts.Window().AddElement(&inputbox)
 }
 
 func (ts *TestState) Update() {

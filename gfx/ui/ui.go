@@ -4,6 +4,7 @@ package ui
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -15,6 +16,7 @@ type Element interface {
 	Render()
 	update()
 	UpdateState()
+	HandleKeypress(input.KeyboardEvent)
 }
 
 type ElementPrototype struct {
@@ -116,4 +118,8 @@ func (e *ElementPrototype) DrawToParent() {
 	if e.bordered {
 		e.border.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.z)
 	}
+}
+
+func (e *ElementPrototype) HandleKeypress(event input.KeyboardEvent) {
+	return
 }

@@ -1,7 +1,10 @@
 package input
 
 import (
+	"strconv"
+
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -28,6 +31,21 @@ func (kb KeyboardEvent) Direction() (dx, dy int) {
 		return -1, 0
 	case K_RIGHT:
 		return 1, 0
+	}
+
+	return
+}
+
+//If the keyboard event represents text in some way (letter, number, anything traditionally
+//representable by a string) this returns the string form. If not, it return an empty string.
+//TODO: support for capital letters once modifier support is added.
+func (kb KeyboardEvent) Text() (s string) {
+	key := rune(kb.Key)
+	if util.ValidText(key) {
+		s = strconv.QuoteRuneToASCII(key)
+		s, _ = strconv.Unquote(s)
+	} else if kb.Key == K_SPACE {
+		s = " "
 	}
 
 	return

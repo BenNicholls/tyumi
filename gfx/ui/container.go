@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/bennicholls/tyumi/input"
+
 //Container allows you to group a number of children objects together. Children can be any UI Element, including other
 //containers. Go nuts why don't ya.
 type Container struct {
@@ -73,5 +75,13 @@ func (c *Container) Render() {
 	for _, e := range c.children {
 		e.Render()
 		e.DrawToParent()
+	}
+}
+
+//Containers take keyboard input events and pass them to their children, in case any of them want
+//to handle the input
+func (c *Container) HandleKeypress(e input.KeyboardEvent) {
+	for _, child := range c.children {
+		child.HandleKeypress(e)
 	}
 }

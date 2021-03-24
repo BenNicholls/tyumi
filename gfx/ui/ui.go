@@ -23,11 +23,13 @@ type ElementPrototype struct {
 	position vec.Coord
 	z        int //depth for the UI system, relative to the element's parent. if no parent, relative to the console
 	visible  bool
+	bordered bool
 	dirty    bool //indicates this object needs to be re-rendered.
 
+	border     Border
 	animations []gfx.Animator //animations on this element. these are updated once per frame.
 
-	parent *Container //parent container. if nil,
+	parent *Container //parent container.
 }
 
 func (e *ElementPrototype) Init(w, h, x, y, z int) {
@@ -36,12 +38,21 @@ func (e *ElementPrototype) Init(w, h, x, y, z int) {
 	e.z = z
 	e.animations = make([]gfx.Animator, 0)
 	e.visible = true
+
 	e.dirty = true
 }
 
 func (e *ElementPrototype) SetDefaultColours(fore uint32, back uint32) {
 	e.Canvas.SetDefaultColours(fore, back)
 	e.dirty = true
+}
+
+func (e *ElementPrototype) EnableBorder(title, hint string) {
+	e.bordered = true
+	w, h := e.Dims()
+	e.border = NewBorder(w, h)
+	e.border.title = title
+	e.border.hint = hint
 }
 
 func (e *ElementPrototype) Bounds() vec.Rect {
@@ -81,6 +92,11 @@ func (e *ElementPrototype) Render() {
 	if e.dirty {
 		e.dirty = false
 	}
+
+	if e.border.dirty {
+		e.border.Render()
+		e.border.dirty = false
+	}
 }
 
 func (e *ElementPrototype) AddParent(c *Container) {
@@ -97,4 +113,7 @@ func (e *ElementPrototype) DrawToParent() {
 	}
 
 	e.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.z)
+	if e.bordered {
+		e.border.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.z)
+	}
 }

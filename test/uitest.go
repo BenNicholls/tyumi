@@ -11,7 +11,7 @@ import (
 
 func main() {
 	engine.InitConsole(40, 20)
-	engine.InitRenderer(new(sdlrenderer.SDLRenderer), "res/glyphs12x24.bmp", "res/font12x24.bmp", "TEST WINDOW")
+	engine.InitRenderer(new(sdlrenderer.SDLRenderer), "res/curses24x24.bmp", "res/font12x24.bmp", "TEST WINDOW")
 
 	state := TestState{}
 	state.Setup()
@@ -33,8 +33,10 @@ func (ts *TestState) Setup() {
 	ts.Window().SetDefaultColours(col.RED, col.LIME)
 	ts.text = ui.NewTextbox(ui.FIT_TEXT, ui.FIT_TEXT, 1, 1, 0, "TEST STRING DO NOT UPVOTE", true)
 	ts.text.SetDefaultColours(col.CYAN, col.FUSCHIA)
+	ts.text.EnableBorder("TEST aTITLE", "TESTa HINT")
 
-	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 5, 0, util.LoremIpsum(50), true)
+	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 5, 0, util.LoremIpsum(30), true)
+	text2.EnableBorder("lorem", "")
 	ts.Window().AddElement(&ts.text, &text2)
 	ts.AddInputHandler(ts.HandleInputs)
 }

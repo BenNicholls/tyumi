@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/ui"
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 )
 
@@ -53,7 +54,7 @@ func (sp *StatePrototype) Init(w, h int) {
 	sp.inputEvents = event.NewStream(100)
 
 	//setup automatic listening for input events.
-	sp.inputEvents.Listen(EV_KEYBOARD)
+	sp.inputEvents.Listen(input.EV_KEYBOARD)
 }
 
 func (sp *StatePrototype) Update() {

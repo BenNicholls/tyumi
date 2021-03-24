@@ -1,29 +1,9 @@
-package engine
+package input
 
 import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/veandco/go-sdl2/sdl"
 )
-
-var EV_KEYBOARD = event.Register()
-
-//gather input events from sdl and handle/distribute accordingly
-func processInput() {
-	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
-		switch e := sdlevent.(type) {
-		case *sdl.QuitEvent:
-			event.Fire(event.New(EV_QUIT))
-			break //don't care about other input events if we're quitting
-		case *sdl.KeyboardEvent:
-			//only want keydown events for now.
-			if e.Type == sdl.KEYDOWN {
-				event.Fire(NewKeyboardEvent(Keycode(e.Keysym.Sym)))
-			}
-		}
-	}
-
-	return
-}
 
 type KeyboardEvent struct {
 	event.EventPrototype

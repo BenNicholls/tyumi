@@ -6,6 +6,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/gfx/sdlrenderer"
 	"github.com/bennicholls/tyumi/gfx/ui"
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/util"
 )
 
@@ -33,7 +34,7 @@ func (ts *TestState) Setup() {
 	ts.Window().SetDefaultColours(col.RED, col.LIME)
 	ts.text = ui.NewTextbox(ui.FIT_TEXT, ui.FIT_TEXT, 1, 1, 0, "TEST STRING DO NOT UPVOTE", true)
 	ts.text.SetDefaultColours(col.CYAN, col.FUSCHIA)
-	ts.text.EnableBorder("TEST aTITLE", "TESTa HINT")
+	ts.text.EnableBorder("TEST TITLE", "TEST HINT")
 
 	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 5, 0, util.LoremIpsum(30), true)
 	text2.EnableBorder("lorem", "")
@@ -52,8 +53,8 @@ func (ts *TestState) UpdateUI() {
 
 func (ts *TestState) HandleInputs(e event.Event) {
 	switch e.ID() {
-	case engine.EV_KEYBOARD:
-		ev := e.(engine.KeyboardEvent)
+	case input.EV_KEYBOARD:
+		ev := e.(input.KeyboardEvent)
 		if dx, dy := ev.Direction(); dx != 0 || dy != 0 {
 			ts.text.Move(dx, dy)
 		}

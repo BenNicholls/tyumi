@@ -6,6 +6,7 @@ import (
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 )
 
@@ -17,7 +18,6 @@ var tick int //count of number of ticks since engine was initialized
 var running bool
 
 var events event.Stream //the main event stream for the engine. all events will go and be distributed from here
-var EV_QUIT = event.Register()
 
 //Initializes the renderer. This must be done after initializaing the console, but before running the main game loop.
 //logs and returns an error if this was unsuccessful.
@@ -44,7 +44,7 @@ func Run() {
 
 	events = event.NewStream(250)
 	events.AddHandler(handleEvent)
-	events.Listen(EV_QUIT)
+	events.Listen(input.EV_QUIT)
 
 	if mainState == nil {
 		log.Error("No game state for Tyumi to run! Ensure that engine.InitMainState() is run before the gameloop.")
@@ -52,7 +52,7 @@ func Run() {
 	}
 
 	for running = true; running; {
-		processInput()   //take inputs from sdl, convert to tyumi events as appropriate, and distribute
+		input.Process()  //take inputs from sdl, convert to tyumi events as appropriate, and distribute
 		update()         //step forward the gamestate
 		updateUI()       //update changed UI elements
 		render()         //composite frame together, post process, and render to screen
@@ -90,7 +90,7 @@ func render() {
 //handles events from the engine's internal event stream. runs once per tick()
 func handleEvent(e event.Event) {
 	switch e.ID() {
-	case EV_QUIT:
+	case input.EV_QUIT: //quit input event, like from clicking the close window button on the window
 		running = false
 		mainState.Shutdown()
 	}

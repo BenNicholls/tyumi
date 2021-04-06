@@ -1,16 +1,23 @@
 package ui
 
 import (
+	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
 )
 
 //Inputbox is a textbox that can accept and display keyboard input
 type InputBox struct {
 	Textbox
+
+	cursor *gfx.BlinkAnimation
 }
 
 func NewInputbox(w, h, x, y, z int) (ib InputBox) {
 	ib.Textbox = NewTextbox(w, h, x, y, z, "", false)
+	ib.cursor = gfx.NewBlinkAnimation(1, 1, 0, 0, 0, gfx.Visuals{gfx.GLYPH_BLOCK, col.WHITE, col.BLACK}, 30)
+
+	ib.AddAnimation(ib.cursor)
 
 	return
 }
@@ -30,6 +37,7 @@ func (ib *InputBox) Insert(text string) {
 	}
 
 	ib.ChangeText(ib.text + text)
+	ib.cursor.MoveTo(len(ib.text)/2, 0)
 }
 
 //Deletes the final character of the contents of the Inputbox
@@ -39,4 +47,5 @@ func (ib *InputBox) Delete() {
 	}
 
 	ib.ChangeText(ib.text[:len(ib.text)-1])
+	ib.cursor.MoveTo(len(ib.text)/2, 0)
 }

@@ -31,7 +31,7 @@ type ElementPrototype struct {
 	border     Border
 	animations []gfx.Animator //animations on this element. these are updated once per frame.
 
-	parent *Container //parent container.
+	parent *Container
 }
 
 func (e *ElementPrototype) Init(w, h, x, y, z int) {
@@ -81,6 +81,20 @@ func (e *ElementPrototype) Move(dx, dy int) {
 //to allow user-defined update behaviour to occur.
 func (e *ElementPrototype) update() {
 	e.UpdateState()
+
+	//tick animations
+	for _, a := range e.animations {
+		if a.Done() {
+			//TODO: remove animation from list if it's done
+			continue
+		}
+
+		a.Update()
+
+		if a.Dirty() {
+			e.dirty = true
+		}
+	}
 }
 
 //UpdateState() is a virtual function. Implement this to provide ui update behaviour on a thread-safe, per-frame basis,
@@ -98,6 +112,10 @@ func (e *ElementPrototype) Render() {
 	if e.border.dirty {
 		e.border.Render()
 		e.border.dirty = false
+	}
+
+	for _, a := range e.animations {
+		a.Render(&e.Canvas)
 	}
 }
 
@@ -122,4 +140,15 @@ func (e *ElementPrototype) DrawToParent() {
 
 func (e *ElementPrototype) HandleKeypress(event input.KeyboardEvent) {
 	return
+}
+
+//Adds an animation to the ui element.
+func (e *ElementPrototype) AddAnimation(a gfx.Animator) {
+	for _, anim := range e.animations {
+		if a == anim {
+			return
+		}
+	}
+
+	e.animations = append(e.animations, a)
 }

@@ -33,6 +33,11 @@ func (r *Rect) Move(dx, dy int) {
 	r.Y += dy
 }
 
+//Moves the rect to location (x, y)
+func (r *Rect) MoveTo(x, y int) {
+	r.X = x
+	r.Y = y
+}
 
 //IsInside checks if the point (x, y) is within the object b.
 func IsInside(x, y int, b Bounded) bool {

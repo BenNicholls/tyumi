@@ -6,27 +6,59 @@ type Drawable interface {
 }
 
 //The basic visual definition of a single-tile object that can be drawn to the screen.
+//Visuals can be one of 2 Modes: Glyph drawing, or Text drawing.
+//Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
+//hence the 2 Chars.
 type Visuals struct {
 	Glyph      int
 	ForeColour uint32
 	BackColour uint32
+
+	Mode  DrawMode
+	Chars [2]rune
 }
 
+func NewGlyphVisuals(gl int, fore, back uint32) (vis Visuals) {
+	vis = Visuals{
+		Glyph:      gl,
+		ForeColour: fore,
+		BackColour: back,
+		Mode:       DRAW_GLYPH,
+	}
+
+	return
+}
+
+func NewTextVisuals(char1, char2 rune, fore, back uint32) (vis Visuals) {
+	vis = Visuals{
+		ForeColour: fore,
+		BackColour: back,
+		Mode:       DRAW_TEXT,
+		Chars:      [2]rune{char1, char2},
+	}
+
+	return
+}
+
+//Changes the glyph. Also enables glyph drawmode.
 func (v *Visuals) ChangeGlyph(g int) {
 	v.Glyph = g
+	v.Mode = DRAW_GLYPH
 }
 
-func (v *Visuals) ChangeForeColour(f uint32) {
-	v.ForeColour = f
+//Changes the characters. Also enables text drawmode.
+func (v *Visuals) ChangeChars(char1, char2 rune) {
+	v.Chars[0] = char1
+	v.Chars[1] = char2
+	v.Mode = DRAW_TEXT
 }
 
-func (v *Visuals) ChangeBackColour(b uint32) {
-	v.BackColour = b
-}
+type DrawMode int
 
-func (v Visuals) GetVisuals() Visuals {
-	return v
-}
+const (
+	DRAW_GLYPH DrawMode = iota
+	DRAW_TEXT
+)
 
 //code page 437 glyphs
 const (
@@ -289,10 +321,12 @@ const (
 	MAXGLYPHS
 )
 
-//Special text characters. Add these to text strings, it'll just work!
+//Special text runes.
 const (
-	TEXT_BORDER_LR         string = string(rune(196))
-	TEXT_BORDER_UD         string = string(rune(179))
-	TEXT_BORDER_DECO_LEFT  string = string(rune(180))
-	TEXT_BORDER_DECO_RIGHT string = string(rune(195))
+	TEXT_BORDER_LR         rune = rune(196)
+	TEXT_BORDER_UD         rune = rune(179)
+	TEXT_BORDER_DECO_LEFT  rune = rune(180)
+	TEXT_BORDER_DECO_RIGHT rune = rune(195)
+	TEXT_DEFAULT           rune = rune(255)
+	TEXT_NONE              rune = rune(32) //just a space
 )

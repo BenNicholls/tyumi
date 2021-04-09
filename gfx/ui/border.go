@@ -48,19 +48,19 @@ func (b *Border) Render() {
 
 	//decorate and draw title
 	if b.title != "" {
-		decoratedTitle := TEXT_BORDER_DECO_LEFT + b.title + TEXT_BORDER_DECO_RIGHT
+		decoratedTitle := string(gfx.TEXT_BORDER_DECO_LEFT) + b.title + string(gfx.TEXT_BORDER_DECO_RIGHT)
 		if len(b.title)%2 == 1 {
-			decoratedTitle += TEXT_BORDER_LR
+			decoratedTitle += string(gfx.TEXT_BORDER_LR)
 		}
 		b.top.DrawText(1, 0, 0, decoratedTitle, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
 	}
 
 	//decorate and draw hint
 	if b.hint != "" {
-		decoratedHint := TEXT_BORDER_DECO_LEFT + b.hint + TEXT_BORDER_DECO_RIGHT
+		decoratedHint := string(gfx.TEXT_BORDER_DECO_LEFT) + b.hint + string(gfx.TEXT_BORDER_DECO_RIGHT)
 		hintOffset := w - len(b.hint)/2 - 1
 		if len(b.hint)%2 == 1 {
-			decoratedHint = TEXT_BORDER_LR + decoratedHint
+			decoratedHint = string(gfx.TEXT_BORDER_LR) + decoratedHint
 			hintOffset -= 1
 		}
 		b.bottom.DrawText(hintOffset-1, 0, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
@@ -75,11 +75,3 @@ func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, z int) {
 	b.left.DrawToCanvas(canvas, x-1, y, z)
 	b.right.DrawToCanvas(canvas, x+w-1, y-1, z)
 }
-
-//Special text characters. Add these to text strings, it'll just work!
-const (
-	TEXT_BORDER_LR         string = string(rune(196))
-	TEXT_BORDER_UD         string = string(rune(179))
-	TEXT_BORDER_DECO_LEFT  string = string(rune(180))
-	TEXT_BORDER_DECO_RIGHT string = string(rune(195))
-)

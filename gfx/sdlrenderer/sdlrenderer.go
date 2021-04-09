@@ -187,8 +187,8 @@ func (sdlr *SDLRenderer) Render() {
 			if cell.Mode == gfx.DRAW_TEXT {
 				for c_i, char := range cell.Chars {
 					dst = makeRect((i%w)*sdlr.tileSize+c_i*sdlr.tileSize/2, (i/w)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
-					src = makeRect((char%32)*sdlr.tileSize/2, (char/32)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
-					sdlr.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.ForeColour, cell.BackColour, char)
+					src = makeRect((int(char)%32)*sdlr.tileSize/2, (int(char)/32)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
+					sdlr.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.ForeColour, cell.BackColour, int(char))
 				}
 			} else {
 				g := cell.Glyph

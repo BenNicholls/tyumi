@@ -10,12 +10,12 @@ import (
 type InputBox struct {
 	Textbox
 
-	cursor *gfx.BlinkAnimation
+	cursor *InputCursorAnimation
 }
 
 func NewInputbox(w, h, x, y, z int) (ib InputBox) {
 	ib.Textbox = NewTextbox(w, h, x, y, z, "", false)
-	ib.cursor = gfx.NewBlinkAnimation(1, 1, 0, 0, 0, gfx.Visuals{gfx.GLYPH_BLOCK, col.WHITE, col.BLACK}, 30)
+	ib.cursor = NewInputCursorAnimation(0, 0, 1, 30)
 
 	ib.AddAnimation(ib.cursor)
 
@@ -37,7 +37,7 @@ func (ib *InputBox) Insert(text string) {
 	}
 
 	ib.ChangeText(ib.text + text)
-	ib.cursor.MoveTo(len(ib.text)/2, 0)
+	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
 }
 
 //Deletes the final character of the contents of the Inputbox
@@ -47,5 +47,26 @@ func (ib *InputBox) Delete() {
 	}
 
 	ib.ChangeText(ib.text[:len(ib.text)-1])
-	ib.cursor.MoveTo(len(ib.text)/2, 0)
+	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
+}
+
+type InputCursorAnimation struct {
+	gfx.BlinkAnimation
+}
+
+func NewInputCursorAnimation(x, y, z, rate int) (cursor *InputCursorAnimation) {
+	cursor = new(InputCursorAnimation)
+	cursor.BlinkAnimation = *gfx.NewBlinkAnimation(1, 1, x, y, z, gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.WHITE, col.BLACK), rate)
+
+	return
+}
+
+//Moves the cursor to (x, y), and blinks the indicated character (0 for left side, 1 for right side)
+func (cursor *InputCursorAnimation) MoveTo(x, y, charNum int) {
+	cursor.BlinkAnimation.MoveTo(x, y)
+	if charNum%2 == 0 {
+		cursor.Vis.ChangeChars(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT)
+	} else {
+		cursor.Vis.ChangeChars(gfx.TEXT_DEFAULT, gfx.TEXT_BORDER_UD)
+	}
 }

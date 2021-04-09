@@ -32,11 +32,11 @@ type TestState struct {
 func (ts *TestState) Setup() {
 	ts.Init(engine.FIT_CONSOLE, engine.FIT_CONSOLE)
 	ts.Window().SetDefaultColours(col.RED, col.LIME)
-	ts.text = ui.NewTextbox(ui.FIT_TEXT, ui.FIT_TEXT, 1, 1, 0, "TEST STRING DO NOT UPVOTE", true)
+	ts.text = ui.NewTextbox(ui.FIT_TEXT, ui.FIT_TEXT, 1, 1, 1, "TEST STRING DO NOT UPVOTE", true)
 	ts.text.SetDefaultColours(col.CYAN, col.FUSCHIA)
 	ts.text.EnableBorder("TEST TITLE", "TEST HINT")
 
-	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 5, 0, util.LoremIpsum(30), true)
+	text2 := ui.NewTextbox(10, ui.FIT_TEXT, 10, 5, 1, util.LoremIpsum(30), true)
 	text2.EnableBorder("lorem", "")
 	ts.Window().AddElement(&ts.text, &text2)
 	ts.AddInputHandler(ts.HandleInputs)

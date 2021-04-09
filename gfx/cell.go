@@ -1,30 +1,17 @@
 package gfx
 
-import "github.com/bennicholls/tyumi/gfx/col"
-
-type DrawMode int
-
-const (
-	DRAW_GLYPH DrawMode = iota
-	DRAW_TEXT
+import (
+	"github.com/bennicholls/tyumi/gfx/col"
 )
 
-//A single tile in a canvas. It tracks its Z value for use in a canvas,
-//but does not enforce any z-depthing.
-//Cells can be one of 2 Modes: Glyph drawing, or Text drawing.
-//Each mode uses a different spritesheet, and Text drawing cells can draw 2 letters each,
-//hence the 2 Chars.
+//A single tile in a canvas. It tracks its Z value for use in a canvas, but does not enforce any z-depthing.
 type Cell struct {
 	Visuals
-	Z          int
-	Dirty      bool //this will be true if the cell has been changed since the last copy/render operation
-	
-	//for text rendering mode. TODO:multiple back and fore colours, one for each char
-	Mode  DrawMode
-	Chars [2]int
+	Z     int
+	Dirty bool //this will be true if the cell has been changed since the last copy/render operation
 }
 
-//Sets the properties of a cell all at once for Glyph Mode. 
+//Sets the properties of a cell all at once for Glyph Mode.
 func (c *Cell) SetGlyphCell(gl int, fore, back uint32, z int) {
 	c.SetGlyph(z, gl)
 	c.SetForeColour(z, fore)
@@ -32,7 +19,7 @@ func (c *Cell) SetGlyphCell(gl int, fore, back uint32, z int) {
 }
 
 //Sets the properties of a cell all at once for Text Mode.
-func (c *Cell) SetTextCell(char1, char2 int, fore, back uint32, z int) {
+func (c *Cell) SetTextCell(char1, char2 rune, fore, back uint32, z int) {
 	c.SetText(z, char1, char2)
 	c.SetForeColour(z, fore)
 	c.SetBackColour(z, back)
@@ -63,30 +50,25 @@ func (c *Cell) SetGlyph(z, gl int) {
 	}
 }
 
-func (c *Cell) SetText(z int, char1, char2 int) {
+func (c *Cell) SetText(z int, char1, char2 rune) {
 	if char1 != c.Chars[0] || char2 != c.Chars[1] || c.Mode != DRAW_TEXT {
-		c.Mode = DRAW_TEXT 
+		c.Mode = DRAW_TEXT
 		c.Z = z
-		c.Chars[0] = char1
-		c.Chars[1] = char2
+		if char1 != TEXT_DEFAULT {
+			c.Chars[0] = char1
+		}
+		if char2 != TEXT_DEFAULT {
+			c.Chars[1] = char2
+		}
 		c.Dirty = true
 	}
 }
 
 //Re-inits a cell back to default blankness.
 func (c *Cell) Clear() {
-	c.SetGlyphCell(GLYPH_NONE, col.WHITE, col.BLACK, 0)
-}
-
-//copies the contents of src cell to c. if a change is made to c, it will be marked dirty.
-func (c *Cell) CopyFromCell(src *Cell) {
-	if src == nil {
-		return
-	}
-
-	if src.Mode == DRAW_GLYPH {
-		c.SetGlyphCell(src.Glyph, src.ForeColour, src.BackColour, src.Z)
+	if c.Mode == DRAW_GLYPH {
+		c.SetGlyphCell(GLYPH_NONE, col.WHITE, col.BLACK, -1)
 	} else {
-		c.SetTextCell(src.Chars[0], src.Chars[1], src.ForeColour, src.BackColour, src.Z)
+		c.SetTextCell(TEXT_NONE, TEXT_NONE, col.WHITE, col.BLACK, -1)
 	}
 }

@@ -83,7 +83,7 @@ func updateUI() {
 //state's ui tree
 func render() {
 	mainState.Window().Render()
-	mainState.Window().DrawToCanvas(&console.Canvas, 0, 0, 1)
+	mainState.Window().DrawToCanvas(&console.Canvas, 0, 0, 0)
 	//  - render animations
 	renderer.Render()
 }

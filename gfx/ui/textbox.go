@@ -34,6 +34,8 @@ func NewTextbox(w, h, x, y, z int, text string, center bool) Textbox {
 	} else if h == FIT_TEXT {
 		tb.lines = util.WrapText(text, w*2)
 		h = len(tb.lines)
+	} else {
+		tb.lines = util.WrapText(text, w*2)
 	}
 
 	tb.ElementPrototype.Init(w, h, x, y, z)
@@ -55,7 +57,11 @@ func (tb *Textbox) Render() {
 	if tb.visible && tb.dirty {
 		tb.Clear()
 		for i, line := range tb.lines {
-			tb.DrawText(0, i, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
+			offset := 0
+			if tb.center {
+				offset = (tb.Bounds().W*2 - len(line)) / 2
+			}
+			tb.DrawText(offset/2, i, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, offset%2)
 		}
 
 		tb.ElementPrototype.Render()

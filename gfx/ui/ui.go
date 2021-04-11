@@ -19,6 +19,7 @@ type Element interface {
 	HandleKeypress(input.KeyboardEvent)
 	MoveTo(int, int)
 	Move(int, int)
+	IsVisible() bool
 }
 
 type ElementPrototype struct {
@@ -42,7 +43,6 @@ func (e *ElementPrototype) Init(w, h, x, y, z int) {
 	e.z = z
 	e.animations = make([]gfx.Animator, 0)
 	e.visible = true
-
 	e.dirty = true
 }
 
@@ -109,8 +109,13 @@ func (e *ElementPrototype) UpdateState() {
 
 }
 
-//Renders any changes in the element to the internal canvas.
+//Renders any changes in the element to the internal canvas. If the element is not visible, we don't waste precious cpus
+//rendering to nothing.
 func (e *ElementPrototype) Render() {
+	if !e.visible {
+		return
+	}
+
 	if e.dirty {
 		e.dirty = false
 	}
@@ -156,4 +161,30 @@ func (e *ElementPrototype) AddAnimation(a gfx.Animator) {
 	}
 
 	e.animations = append(e.animations, a)
+}
+
+func (e *ElementPrototype) IsVisible() bool {
+	return e.visible
+}
+
+func (e *ElementPrototype) ToggleVisible() {
+	e.SetVisible(!e.visible)
+}
+
+//Sets the visibility of the element. If we're making it visible, we trigger a render of the element.
+//We also trigger a redraw of any parent element, in either case.
+func (e *ElementPrototype) SetVisible(v bool) {
+	if e.visible == v {
+		return
+	}
+
+	e.visible = v
+
+	if e.visible {
+		e.dirty = true
+	}
+
+	if e.parent != nil {
+		e.parent.Redraw()
+	}
 }

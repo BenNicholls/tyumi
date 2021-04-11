@@ -73,17 +73,21 @@ func (c *Container) Render() {
 	}
 
 	for _, child := range c.children {
-		child.Render()
-		child.DrawToParent()
+		if child.IsVisible() {
+			child.Render()
+			child.DrawToParent()
+		}
 	}
 
 	c.ElementPrototype.Render()
 }
 
 //Containers take keyboard input events and pass them to their children, in case any of them want
-//to handle the input
+//to handle the input. We skip invisible elements, we assume those are certainly NOT in focus.
 func (c *Container) HandleKeypress(e input.KeyboardEvent) {
 	for _, child := range c.children {
-		child.HandleKeypress(e)
+		if child.IsVisible() {
+			child.HandleKeypress(e)
+		}
 	}
 }

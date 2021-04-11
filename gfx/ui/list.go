@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -124,5 +125,14 @@ func (l *List) Render() {
 	if l.highlight {
 		area := l.children[l.selected].Bounds()
 		l.Canvas.DrawEffect(gfx.InvertEffect, area)
+	}
+}
+
+func (l *List) HandleKeypress(e input.KeyboardEvent) {
+	switch e.Key {
+	case input.K_UP, input.K_PAGEUP:
+		l.Prev()
+	case input.K_DOWN, input.K_PAGEDOWN:
+		l.Next()
 	}
 }

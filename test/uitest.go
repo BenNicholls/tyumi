@@ -55,7 +55,8 @@ func (ts *TestState) Setup() {
 	}
 
 	ts.list.EnableBorder("LIST", "")
-
+	ts.list.ToggleHighlight()
+	ts.list.ToggleScrollbar()
 	ts.list.SetDefaultColours(col.BLUE, col.WHITE)
 
 	ts.Window().AddElement(&ts.list)
@@ -74,13 +75,17 @@ func (ts *TestState) HandleInputs(e event.Event) {
 	switch e.ID() {
 	case input.EV_KEYBOARD:
 		ev := e.(input.KeyboardEvent)
-		ts.list.ToggleHighlight()
 		if dx, dy := ev.Direction(); dx != 0 || dy != 0 {
 			if dy > 0 {
 				ts.list.Next()
 			} else if dy < 0 {
 				ts.list.Prev()
 			}
+		}
+
+		if ev.Key == input.K_a {
+			item := ui.NewTextbox(15, 1, 0, 0, 1, "new item", false)
+			ts.list.AddElement(&item)
 		}
 	}
 }

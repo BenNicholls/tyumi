@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/util"
 )
 
 type Border struct {
@@ -12,6 +13,11 @@ type Border struct {
 
 	title string
 	hint  string
+
+	//SCROLLBAR STUFF. for now, only vertical scrollbar for lists and the like.
+	scrollbar                 bool //whether the scrollbar is enabled. scrollbar will be drawn whenever content doesn't fit
+	scrollbarContentHeight    int  //total height of scrolling content
+	scrollbarViewportPosition int  //position of the viewed content
 
 	dirty bool //flag indicates when border needs to be re-rendered.
 }
@@ -31,6 +37,10 @@ func NewBorder(w, h int) Border {
 
 //renders the border to the internal canvas
 func (b *Border) Render() {
+	if !b.dirty {
+		return
+	}
+
 	w, _ := b.top.Dims()
 	for i := 0; i < w; i++ { //top and bottom
 		b.top.SetGlyph(i, 0, 0, gfx.GLYPH_BORDER_LR)
@@ -65,6 +75,27 @@ func (b *Border) Render() {
 		}
 		b.bottom.DrawText(hintOffset-1, 0, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
 	}
+
+	//draw scrollbar if necessary
+	if b.scrollbar && b.scrollbarContentHeight > h-1 {
+		b.right.SetGlyph(0, 1, 0, gfx.GLYPH_TRIANGLE_UP)
+		b.right.SetGlyph(0, h-1, 0, gfx.GLYPH_TRIANGLE_DOWN)
+
+		barSize := util.Clamp(util.RoundFloatToInt(float64(h-1)/float64(b.scrollbarContentHeight)*float64(h-3)), 1, h-4)
+		
+		var barPos int
+		if b.scrollbarViewportPosition+h-1 >= b.scrollbarContentHeight {
+			barPos = h - 3 - barSize
+		} else {
+			barPos = util.Clamp(util.RoundFloatToInt(float64(b.scrollbarViewportPosition)/float64(b.scrollbarContentHeight)*float64(h-3)), 0, h-4-barSize)
+		}
+
+		for i := 0; i < barSize; i++ {
+			b.right.SetGlyph(0, i+barPos+2, 0, gfx.GLYPH_FILL)
+		}
+	}
+
+	b.dirty = false
 }
 
 func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, z int) {
@@ -74,4 +105,23 @@ func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, z int) {
 	b.bottom.DrawToCanvas(canvas, x, y+h-1, z)
 	b.left.DrawToCanvas(canvas, x-1, y, z)
 	b.right.DrawToCanvas(canvas, x+w-1, y-1, z)
+}
+
+func (b *Border) EnableScrollbar(height, pos int) {
+	b.scrollbar = true
+	b.scrollbarContentHeight = height
+	b.scrollbarViewportPosition = pos
+	b.dirty = true
+}
+
+//Updates the position/size of the scrollbar.
+//NOTE: this does NOT enable the scrollbar. you have to do that manually during setup.
+func (b *Border) UpdateScrollbar(height, pos int) {
+	if b.scrollbarContentHeight == height && b.scrollbarViewportPosition == pos {
+		return
+	}
+
+	b.scrollbarContentHeight = height
+	b.scrollbarViewportPosition = pos
+	b.dirty = true
 }

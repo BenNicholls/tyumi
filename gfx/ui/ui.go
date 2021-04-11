@@ -115,9 +115,8 @@ func (e *ElementPrototype) Render() {
 		e.dirty = false
 	}
 
-	if e.border.dirty {
+	if e.bordered {
 		e.border.Render()
-		e.border.dirty = false
 	}
 
 	for _, a := range e.animations {

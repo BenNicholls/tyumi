@@ -36,6 +36,15 @@ func (l *List) RemoveElement(e Element) {
 	l.calibrate()
 }
 
+func (l *List) ToggleScrollbar() {
+	if l.border.scrollbar {
+		l.border.scrollbar = false
+		l.border.dirty = true
+	} else {
+		l.border.EnableScrollbar(l.contentHeight, l.scrollOffset)
+	}
+}
+
 //positions all the children elements so they are top to bottom, and the selected item is visible
 func (l *List) calibrate() {
 	l.contentHeight = 0
@@ -69,6 +78,8 @@ func (l *List) calibrate() {
 	} else { //if content fits in the list, no need to remember some old scroll offset
 		l.scrollOffset = 0
 	}
+
+	l.border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
 }
 
 //Toggles highlighting of currently selected item.

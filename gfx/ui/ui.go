@@ -17,6 +17,8 @@ type Element interface {
 	update()
 	UpdateState()
 	HandleKeypress(input.KeyboardEvent)
+	MoveTo(int, int)
+	Move(int, int)
 }
 
 type ElementPrototype struct {
@@ -67,6 +69,10 @@ func (e *ElementPrototype) Pos() vec.Coord {
 }
 
 func (e *ElementPrototype) MoveTo(x, y int) {
+	if x == e.position.X && y == e.position.Y {
+		return
+	}
+
 	e.position.MoveTo(x, y)
 	if e.parent != nil {
 		e.parent.Redraw()

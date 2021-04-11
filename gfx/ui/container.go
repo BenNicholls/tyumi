@@ -72,10 +72,12 @@ func (c *Container) Render() {
 		c.redraw = false
 	}
 
-	for _, e := range c.children {
-		e.Render()
-		e.DrawToParent()
+	for _, child := range c.children {
+		child.Render()
+		child.DrawToParent()
 	}
+
+	c.ElementPrototype.Render()
 }
 
 //Containers take keyboard input events and pass them to their children, in case any of them want

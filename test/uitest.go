@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/bennicholls/tyumi/engine"
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/col"
@@ -25,6 +27,7 @@ type TestState struct {
 	engine.StatePrototype
 
 	text ui.Textbox
+	list ui.List
 
 	tick int
 }
@@ -41,9 +44,21 @@ func (ts *TestState) Setup() {
 	ts.Window().AddElement(&ts.text, &text2)
 	ts.AddInputHandler(ts.HandleInputs)
 
-	inputbox := ui.NewInputbox(10, 1, 8, 8, 10)
-	inputbox.EnableBorder("inputs!", "do the input")
-	ts.Window().AddElement(&inputbox)
+	// inputbox := ui.NewInputbox(10, 1, 8, 8, 10)
+	// inputbox.EnableBorder("inputs!", "do the input")
+	// ts.Window().AddElement(&inputbox)
+
+	ts.list = ui.NewList(15, 10, 8, 8, 10)
+	for i := 0; i < 20; i++ {
+		item := ui.NewTextbox(15, i%3+1, 0, 0, 1, "List item "+fmt.Sprint(i)+"/n", false)
+		ts.list.AddElement(&item)
+	}
+
+	ts.list.EnableBorder("LIST", "")
+
+	ts.list.SetDefaultColours(col.BLUE, col.WHITE)
+
+	ts.Window().AddElement(&ts.list)
 }
 
 func (ts *TestState) Update() {
@@ -59,8 +74,13 @@ func (ts *TestState) HandleInputs(e event.Event) {
 	switch e.ID() {
 	case input.EV_KEYBOARD:
 		ev := e.(input.KeyboardEvent)
+		ts.list.ToggleHighlight()
 		if dx, dy := ev.Direction(); dx != 0 || dy != 0 {
-			ts.text.Move(dx, dy)
+			if dy > 0 {
+				ts.list.Next()
+			} else if dy < 0 {
+				ts.list.Prev()
+			}
 		}
 	}
 }

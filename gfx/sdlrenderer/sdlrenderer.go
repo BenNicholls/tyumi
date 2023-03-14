@@ -39,6 +39,14 @@ type SDLRenderer struct {
 	ready bool
 }
 
+//create and get a reference to a SDL Renderer. any sensible defaults can go here too, but the renderer is not
+//valid until Setup() has been run on it.
+func New() *SDLRenderer {
+	sdlr := new(SDLRenderer)
+	sdlr.ready = false //i know false is already the default value, this is for emphasis.
+	return sdlr
+}
+
 func (sdlr *SDLRenderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string) (err error) {
 	//renderer defaults to 800x600, once fonts are loaded it figures out the resolution to use and resizes accordingly
 	sdlr.window, err = sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, 800, 600, sdl.WINDOW_OPENGL)
@@ -126,7 +134,7 @@ func (sdlr *SDLRenderer) loadTexture(path string) (*sdl.Texture, error) {
 	if err != nil {
 		return nil, errors.New("Failed to load image: " + fmt.Sprint(sdl.GetError()))
 	}
-	image.SetColorKey(true, col.FUSCHIA)
+	image.SetColorKey(true, col.KEY)
 	texture, err := sdlr.renderer.CreateTextureFromSurface(image)
 	if err != nil {
 		return nil, errors.New("Failed to create texture: " + fmt.Sprint(sdl.GetError()))

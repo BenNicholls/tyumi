@@ -31,7 +31,7 @@ func RGBA(colour uint32) (r, g, b, a uint8) {
 }
 
 //Blends 2 colours c1 and c2. c1 is the active colour (it's on "top").
-func BlendColours(c1, c2 uint32, mode BlendMode) uint32 {
+func Blend(c1, c2 uint32, mode BlendMode) uint32 {
 	r1, g1, b1, a1 := RGBA(c1)
 	r2, g2, b2, a2 := RGBA(c2)
 
@@ -82,12 +82,23 @@ const (
 	PURPLE    uint32 = 0xFF800080
 )
 
+const KEY = FUSCHIA //key color. renderers should use this to support spritesheet transparency for BMP
+
 type Palette []uint32 
 
+//Adds the palette p2 to the end of p.
+func (p *Palette) Add(p2 Palette) {
+	if (*p)[len(*p) - 1] == p2[0] {
+		*p = append(*p, p2[1:]...)
+	} else {
+		*p = append(*p, p2...)
+	}
+}
+
 //Generate a palette with num items, passing from colour c1 to c2. The colours are
-//lineraly interpolated evenly from one to the next. Palette is NOT circular.
+//lineraly interpolated evenly from one to the next. Gradient is NOT circular.
 //TODO: Circular palette function?
-func GeneratePalette(num int, c1, c2 uint32) (p Palette) {
+func GenerateGradient(num int, c1, c2 uint32) (p Palette) {
 	p = make(Palette, num)
 
 	r1, g1, b1, _ := RGBA(c1)
@@ -102,13 +113,6 @@ func GeneratePalette(num int, c1, c2 uint32) (p Palette) {
 	return
 }
 
-//Adds the palette p2 to the end of p.
-func (p *Palette) Add(p2 Palette) {
-	if (*p)[len(*p) - 1] == p2[0] {
-		*p = append(*p, p2[1:]...)
-	} else {
-		*p = append(*p, p2...)
-	}
-}
+
 
 

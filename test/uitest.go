@@ -14,7 +14,7 @@ import (
 
 func main() {
 	engine.InitConsole(40, 20)
-	engine.InitRenderer(new(sdlrenderer.SDLRenderer), "res/curses24x24.bmp", "res/font12x24.bmp", "TEST WINDOW")
+	engine.InitRenderer(sdlrenderer.New(), "res/curses24x24.bmp", "res/font12x24.bmp", "TEST WINDOW")
 
 	state := TestState{}
 	state.Setup()

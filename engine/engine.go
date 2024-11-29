@@ -8,6 +8,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/platform"
 )
 
 var renderer gfx.Renderer
@@ -19,21 +20,37 @@ var running bool
 
 var events event.Stream //the main event stream for the engine. all events will go and be distributed from here
 
-// Initializes the renderer. This must be done after initializaing the console, but before running the main game loop.
+// Sets up the renderer. This must be done after initializaing the console, but before running the main game loop.
 // logs and returns an error if this was unsuccessful.
-func InitRenderer(r gfx.Renderer, glyphPath, fontPath, title string) error {
+func SetupRenderer(glyphPath, fontPath, title string) error {
+	//if no renderer has been set up, get one from the platform package.
+	if renderer == nil {
+		r, err := platform.GetNewRenderer()
+		if err != nil {
+			return err
+		}
+		renderer = r		
+	}
+
 	if !console.ready {
 		log.Error("Cannot initialize renderer: console not initialized. Run InitConsole() first.")
 		return errors.New("NO CONSOLE.")
 	}
 
-	err := r.Setup(&console.Canvas, glyphPath, fontPath, title)
+	err := renderer.Setup(&console.Canvas, glyphPath, fontPath, title)
 	if err != nil {
 		return err
 	}
-	renderer = r
 
 	return nil
+}
+
+// Sets up a custom used-defined renderer. This must be done after initializaing the console, but before running
+// the main game loop.
+func SetupCustomRenderer(r gfx.Renderer, glyphPath, fontPath, title string) error {
+	renderer = r
+	error := SetupRenderer(glyphPath, fontPath, title)
+	return error
 }
 
 // This is the gameloop
@@ -48,7 +65,7 @@ func Run() {
 	events.Listen(input.EV_KEYBOARD)
 
 	if mainState == nil {
-		log.Error("No game state for Tyumi to run! Ensure that engine.InitMainState() is run before the gameloop. Stupid.")
+		log.Error("No game state for Tyumi to run! Ensure that engine.InitMainState() is run before the gameloop.")
 		return
 	}
 

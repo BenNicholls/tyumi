@@ -1,4 +1,4 @@
-package sdlrenderer
+package platform_sdl
 
 import (
 	"errors"
@@ -41,7 +41,7 @@ type SDLRenderer struct {
 
 // create and get a reference to a SDL Renderer. any sensible defaults can go here too, but the renderer is not
 // valid until Setup() has been run on it.
-func New() *SDLRenderer {
+func NewRenderer() *SDLRenderer {
 	sdlr := new(SDLRenderer)
 	sdlr.ready = false //i know false is already the default value, this is for emphasis.
 	return sdlr

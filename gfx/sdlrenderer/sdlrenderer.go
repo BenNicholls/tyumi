@@ -39,8 +39,8 @@ type SDLRenderer struct {
 	ready bool
 }
 
-//create and get a reference to a SDL Renderer. any sensible defaults can go here too, but the renderer is not
-//valid until Setup() has been run on it.
+// create and get a reference to a SDL Renderer. any sensible defaults can go here too, but the renderer is not
+// valid until Setup() has been run on it.
 func New() *SDLRenderer {
 	sdlr := new(SDLRenderer)
 	sdlr.ready = false //i know false is already the default value, this is for emphasis.
@@ -78,7 +78,7 @@ func (sdlr *SDLRenderer) Ready() bool {
 	return sdlr.ready
 }
 
-//Deletes special graphics structures, closes files, etc. Defer this function!
+// Deletes special graphics structures, closes files, etc. Defer this function!
 func (sdlr *SDLRenderer) Cleanup() {
 	sdlr.glyphs.Destroy()
 	sdlr.font.Destroy()
@@ -87,7 +87,7 @@ func (sdlr *SDLRenderer) Cleanup() {
 	sdlr.window.Destroy()
 }
 
-//Loads new fonts to the renderer and changes the tilesize (and by extension, the window size)
+// Loads new fonts to the renderer and changes the tilesize (and by extension, the window size)
 func (sdlr *SDLRenderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 	if sdlr.glyphs != nil {
 		sdlr.glyphs.Destroy()
@@ -126,8 +126,8 @@ func (sdlr *SDLRenderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 	return
 }
 
-//Loads a bmp font into the GPU using the current window renderer.
-//TODO: support more than bmps?
+// Loads a bmp font into the GPU using the current window renderer.
+// TODO: support more than bmps?
 func (sdlr *SDLRenderer) loadTexture(path string) (*sdl.Texture, error) {
 	image, err := sdl.LoadBMP(path)
 	defer image.Free()
@@ -160,11 +160,11 @@ func (sdlr *SDLRenderer) createCanvasBuffer() (err error) {
 	return
 }
 
-//Enables or disables fullscreen. All tyumi consoles use borderless fullscreen instead of native
-//and the output is scaled to the monitor size.
+// Enables or disables fullscreen. All tyumi consoles use borderless fullscreen instead of native
+// and the output is scaled to the monitor size.
 func (sdlr *SDLRenderer) SetFullscreen(enable bool) {
 	if enable {
-		sdlr.window.SetFullscreen(sdl.WINDOW_FULLSCREEN_DESKTOP)
+		sdlr.window.SetFullscreen(uint32(sdl.WINDOW_FULLSCREEN_DESKTOP))
 		sdlr.window.SetBordered(false)
 	} else {
 		sdlr.window.SetFullscreen(0)
@@ -172,7 +172,7 @@ func (sdlr *SDLRenderer) SetFullscreen(enable bool) {
 	}
 }
 
-//Toggles between fullscreen modes.
+// Toggles between fullscreen modes.
 func (sdlr *SDLRenderer) ToggleFullscreen() {
 	if (sdlr.window.GetFlags() & sdl.WINDOW_FULLSCREEN_DESKTOP) != 0 {
 		sdlr.SetFullscreen(false)
@@ -181,7 +181,7 @@ func (sdlr *SDLRenderer) ToggleFullscreen() {
 	}
 }
 
-//Renders the console to the GPU and flips the buffer.
+// Renders the console to the GPU and flips the buffer.
 func (sdlr *SDLRenderer) Render() {
 	w, h := sdlr.console.Dims()
 
@@ -224,7 +224,7 @@ func (sdlr *SDLRenderer) Render() {
 	sdlr.frames++
 }
 
-//Copies a rect of pixeldata from a source texture to a rect on the renderer's target.
+// Copies a rect of pixeldata from a source texture to a rect on the renderer's target.
 func (sdlr *SDLRenderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, fore, back uint32, g int) {
 	//change backcolour if it is different from previous draw
 	if back != sdlr.backDrawColour {
@@ -267,7 +267,7 @@ func (sdlr *SDLRenderer) setTextureColour(tex *sdl.Texture, colour uint32) {
 	tex.SetAlphaMod(a)
 }
 
-//Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
+// Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
 func (sdlr *SDLRenderer) SetFramerate(f int) {
 	f = util.Min(f, 1000)
 	sdlr.frameTargetDur = time.Duration(1000/float64(f+1)) * time.Millisecond
@@ -288,7 +288,7 @@ func (sdlr *SDLRenderer) ToggleDebugMode(m string) {
 	}
 }
 
-//int32 for rect arguments. what a world.
+// int32 for rect arguments. what a world.
 func makeRect(x, y, w, h int) sdl.Rect {
 	return sdl.Rect{X: int32(x), Y: int32(y), W: int32(w), H: int32(h)}
 }

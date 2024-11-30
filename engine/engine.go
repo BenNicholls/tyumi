@@ -12,6 +12,7 @@ import (
 )
 
 var renderer gfx.Renderer
+var inputProcessor input.Processor
 var console Console
 var mainState State
 
@@ -23,13 +24,13 @@ var events event.Stream //the main event stream for the engine. all events will 
 // Sets up the renderer. This must be done after initializaing the console, but before running the main game loop.
 // logs and returns an error if this was unsuccessful.
 func SetupRenderer(glyphPath, fontPath, title string) error {
-	//if no renderer has been set up, get one from the platform package.
+	//if no renderer has been initialized, get one from the platform package.
 	if renderer == nil {
 		r, err := platform.GetNewRenderer()
 		if err != nil {
 			return err
 		}
-		renderer = r		
+		renderer = r
 	}
 
 	if !console.ready {
@@ -69,8 +70,15 @@ func Run() {
 		return
 	}
 
+	var err error
+	inputProcessor, err = platform.GetInputProcessor()
+	if err != nil {
+		log.Error("Could not get input processor from platform: ", err.Error())
+		return
+	}
+
 	for running = true; running; {
-		input.Process()  //take inputs from sdl, convert to tyumi events as appropriate, and distribute
+		inputProcessor() //take inputs from platform, convert to tyumi events as appropriate, and distribute
 		update()         //step forward the gamestate
 		updateUI()       //update changed UI elements
 		render()         //composite frame together, post process, and render to screen

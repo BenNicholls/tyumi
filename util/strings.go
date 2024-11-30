@@ -3,12 +3,6 @@ package util
 
 import "strings"
 
-//ValidText checks if key is a letter or number or basic punctuation (ASCII-encoded)
-//TODO: this is NOT comprehensive. Improve this later.
-func ValidText(key rune) bool {
-	return (key >= 93 && key < 123) || (key >= 37 && key < 58)
-}
-
 //WrapText wraps the provided string at WIDTH characters. optionally takes another int, used to determine the maximum
 //number of lines. returns a slice of strings, each element a wrapped line. for words longer than width it just brutally
 //cuts them off. no mercy.

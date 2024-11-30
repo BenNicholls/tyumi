@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/platform/platform_sdl"
 )
 
@@ -31,7 +32,21 @@ func GetNewRenderer() (renderer gfx.Renderer, err error) {
 	case NONE:
 		err = errors.New("No platform selected, cannot get renderer")
 	case SDL:
-		return platform_sdl.NewRenderer(), nil
+		renderer = platform_sdl.NewRenderer()
+	default:
+		err = errors.New("Weird platform???")
 	}
-	return nil, errors.New("Weird platform???")
+	return
+}
+
+func GetInputProcessor() (processor input.Processor, err error) {
+	switch current {
+	case NONE:
+		err = errors.New("No platform selected, cannot get input processor")
+	case SDL:
+		processor = platform_sdl.ProcessEvents
+	default:
+		err = errors.New("Weird platform???")
+	}
+	return
 }

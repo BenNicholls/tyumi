@@ -11,7 +11,7 @@ type Effect func(*Cell)
 //times!
 func (c *Canvas) DrawEffect(effect Effect, areas ...vec.Rect) {
 	if len(areas) == 0 {
-		areas = append(areas, c.Bounds())
+		areas = append(areas, vec.Rect{vec.ZERO_COORD, c.Size()})
 	}
 
 	for _, area := range areas {

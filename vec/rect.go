@@ -9,16 +9,8 @@ type Bounded interface {
 
 //Rect is your standard rectangle object, with position (X,Y) in the top left corner.
 type Rect struct {
-	W, H int
-	X, Y int
-}
-
-func (r Rect) Pos() (int, int) {
-	return r.X, r.Y
-}
-
-func (r Rect) Dims() (int, int) {
-	return r.W, r.H
+	Coord //position (X, Y)
+	Dims  //size (W, H)
 }
 
 //Goofy... but needed to satisfy Bounded interface.
@@ -26,20 +18,7 @@ func (r Rect) Bounds() Rect {
 	return r
 }
 
-//translates r in 2d by the vector (dx, dy)
-//CONSIDER: should input be a vec.coord?
-func (r *Rect) Move(dx, dy int) {
-	r.X += dx
-	r.Y += dy
-}
-
-//Moves the rect to location (x, y)
-func (r *Rect) MoveTo(x, y int) {
-	r.X = x
-	r.Y = y
-}
-
-//IsInside checks if the point (x, y) is within the object b.
+//IsInside checks if the point (x, y) is within the bounds of object b.
 func IsInside(x, y int, b Bounded) bool {
 	r := b.Bounds()
 	return x >= r.X && x < r.X+r.W && y >= r.Y && y < r.Y+r.H

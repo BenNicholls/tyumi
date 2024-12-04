@@ -4,7 +4,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-//Anything that can do animations on a Canvas
+// Anything that can do animations on a Canvas
 type Animator interface {
 	Update()
 	Render(*Canvas)
@@ -12,7 +12,7 @@ type Animator interface {
 	Dirty() bool
 }
 
-//Animation that makes an area blink
+// Animation that makes an area blink
 type BlinkAnimation struct {
 	area vec.Rect
 	z    int     //z value of the animation
@@ -26,9 +26,9 @@ type BlinkAnimation struct {
 	blinking    bool //whether the area is rendering a blink or not
 }
 
-func NewBlinkAnimation(w, h, x, y, z int, vis Visuals, rate int) (ba *BlinkAnimation) {
+func NewBlinkAnimation(pos vec.Coord, size vec.Dims, z int, vis Visuals, rate int) (ba *BlinkAnimation) {
 	ba = &BlinkAnimation{
-		area:      vec.Rect{w, h, x, y},
+		area:      vec.Rect{pos, size},
 		z:         z,
 		Vis:       vis,
 		enabled:   true,
@@ -68,10 +68,10 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 		return
 	}
 
-	x, y := ba.area.Pos()
-	w, h := ba.area.Dims()
+	x, y := ba.area.X, ba.area.Y
+	w := ba.area.W
 
-	for i := 0; i < w*h; i++ {
+	for i := 0; i < ba.area.Area(); i++ {
 		c.DrawVisuals(x+i%w, y+i/w, ba.z, ba.Vis)
 	}
 }

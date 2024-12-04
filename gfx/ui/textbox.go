@@ -48,8 +48,7 @@ func (tb *Textbox) ChangeText(txt string) {
 	}
 
 	tb.text = txt
-	w, h := tb.Dims()
-	tb.lines = util.WrapText(txt, w*2, h)
+	tb.lines = util.WrapText(txt, tb.Size().W*2, tb.Size().H)
 	tb.dirty = true
 }
 
@@ -61,7 +60,7 @@ func (tb *Textbox) Render() {
 			if tb.center {
 				offset = (tb.Bounds().W*2 - len(line)) / 2
 			}
-			tb.DrawText(offset/2, i, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, offset%2)
+			tb.DrawText(offset/2, i, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, gfx.TextCellPosition(offset%2))
 		}
 
 		tb.ElementPrototype.Render()

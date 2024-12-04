@@ -10,9 +10,9 @@ const (
 	COL_DEFAULT uint32 = 0x00000001 //pass this in cases where you want the canvas to use the default colours
 )
 
-//Canvas is a Z-depthed grid of Cell objects.
-//All canvas drawing options are z-depth sensitive. They will never draw a lower z value cell over a higher one.
-//The clear function can be used to set a region of a canvas back to -1 z level so you can redraw over it.
+// Canvas is a Z-depthed grid of Cell objects.
+// All canvas drawing options are z-depth sensitive. They will never draw a lower z value cell over a higher one.
+// The clear function can be used to set a region of a canvas back to -1 z level so you can redraw over it.
 type Canvas struct {
 	cells []Cell
 
@@ -22,16 +22,16 @@ type Canvas struct {
 	backColour uint32 //default background colour
 }
 
-func (c *Canvas) Dims() (int, int) {
-	return c.width, c.height
+func (c *Canvas) Size() vec.Dims {
+	return vec.Dims{c.width, c.height}
 }
 
-func (c *Canvas) Bounds() vec.Rect {
-	return vec.Rect{c.width, c.height, 0, 0}
-}
+// func (c *Canvas) Bounds() vec.Rect {
+// 	return vec.Rect{vec.ZERO_COORD, vec.Dims{c.width, c.height}}
+// }
 
-//Initializes the canvas. Can also be used for resizing, assuming you don't mind that the contents of the canvas
-//are destroyed.
+// Initializes the canvas. Can also be used for resizing, assuming you don't mind that the contents of the canvas
+// are destroyed.
 func (c *Canvas) Init(w, h int) {
 	c.width, c.height = util.Abs(w), util.Abs(h)
 	c.cells = make([]Cell, c.width*c.height)
@@ -40,15 +40,15 @@ func (c *Canvas) Init(w, h int) {
 	c.Clear()
 }
 
-//GetCell returns a reference to the cell at (x, y). Returns nil if (x,y) is out of bounds.
+// GetCell returns a reference to the cell at (x, y). Returns nil if (x,y) is out of bounds.
 func (c *Canvas) GetCell(x, y int) *Cell {
-	if !vec.IsInside(x, y, c) {
+	if x < 0 || y < 0 || x > c.width || y > c.height{
 		return nil
 	}
 	return &c.cells[y*c.width+x]
 }
 
-//Sets the default colours for a canvas, then does a reset of the canvas to apply them.
+// Sets the default colours for a canvas, then does a reset of the canvas to apply them.
 func (c *Canvas) SetDefaultColours(fore uint32, back uint32) {
 	c.foreColour = fore
 	c.backColour = back
@@ -90,9 +90,9 @@ func (c *Canvas) SetText(x, y, z int, char1, char2 rune) {
 	}
 }
 
-//Changes a single character on the canvas at position (x,y) in text mode.
-//charNum: 0 = Left, 1 = Right (for ease with modulo operations). Throw whatever in here though, it gets
-//modulo 2'd anyways just in case.
+// Changes a single character on the canvas at position (x,y) in text mode.
+// charNum: 0 = Left, 1 = Right (for ease with modulo operations). Throw whatever in here though, it gets
+// modulo 2'd anyways just in case.
 func (c *Canvas) SetChar(x, y, z int, char rune, charNum int) {
 	if cell := c.GetCell(x, y); cell != nil && charNum >= 0 && cell.Z <= z {
 		cell.Mode = DRAW_TEXT
@@ -104,10 +104,10 @@ func (c *Canvas) SetChar(x, y, z int, char rune, charNum int) {
 	}
 }
 
-//Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas.
+// Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas.
 func (c *Canvas) Clear(areas ...vec.Rect) {
 	if len(areas) == 0 {
-		areas = append(areas, vec.Rect{c.width, c.height, 0, 0})
+		areas = append(areas, vec.Rect{vec.ZERO_COORD, c.Size()})
 	}
 
 	for _, r := range areas {

@@ -39,12 +39,12 @@ func (sp *StatePrototype) Init(w, h int) {
 			log.Error("Cannot fit state window to console: console not initialized.")
 			return
 		}
-		cw, ch := console.Dims()
+		
 		if w == FIT_CONSOLE {
-			w = cw
+			w = console.Size().W
 		}
 		if h == FIT_CONSOLE {
-			h = ch
+			h = console.Size().H
 		}
 	}
 

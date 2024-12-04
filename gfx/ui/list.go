@@ -56,7 +56,7 @@ func (l *List) calibrate() {
 
 	//if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
 	if l.contentHeight > l.Bounds().H {
-		intersect := vec.FindIntersectionRect(l.children[l.selected], vec.Rect{l.Bounds().W, l.Bounds().H, 0, 0})
+		intersect := vec.FindIntersectionRect(l.children[l.selected], vec.Rect{vec.ZERO_COORD, l.Size()})
 		if sh := l.children[l.selected].Bounds().H; intersect.H != sh {
 			scrollDelta := 0
 

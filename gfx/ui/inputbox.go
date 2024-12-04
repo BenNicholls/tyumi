@@ -4,6 +4,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
+	"github.com/bennicholls/tyumi/vec"
 )
 
 //Inputbox is a textbox that can accept and display keyboard input
@@ -15,7 +16,7 @@ type InputBox struct {
 
 func NewInputbox(w, h, x, y, z int) (ib InputBox) {
 	ib.Textbox = NewTextbox(w, h, x, y, z, "", false)
-	ib.cursor = NewInputCursorAnimation(0, 0, 1, 30)
+	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 1, 30)
 
 	ib.AddAnimation(ib.cursor)
 
@@ -32,7 +33,7 @@ func (ib *InputBox) HandleKeypress(e input.KeyboardEvent) {
 
 //Appends the provided string to the contents of the inputbox.
 func (ib *InputBox) Insert(text string) {
-	if w, _ := ib.Dims(); len(ib.text) == w*2 {
+	if w := ib.Size().W; len(ib.text) == w*2 {
 		return
 	}
 
@@ -54,9 +55,9 @@ type InputCursorAnimation struct {
 	gfx.BlinkAnimation
 }
 
-func NewInputCursorAnimation(x, y, z, rate int) (cursor *InputCursorAnimation) {
+func NewInputCursorAnimation(pos vec.Coord, z, rate int) (cursor *InputCursorAnimation) {
 	cursor = new(InputCursorAnimation)
-	cursor.BlinkAnimation = *gfx.NewBlinkAnimation(1, 1, x, y, z, gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.WHITE, col.BLACK), rate)
+	cursor.BlinkAnimation = *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, z, gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.WHITE, col.BLACK), rate)
 
 	return
 }

@@ -41,7 +41,6 @@ func (e *ElementPrototype) Init(w, h, x, y, z int) {
 	e.Canvas.Init(w, h)
 	e.position = vec.Coord{x, y}
 	e.z = z
-	e.animations = make([]gfx.Animator, 0)
 	e.visible = true
 	e.dirty = true
 }
@@ -53,15 +52,13 @@ func (e *ElementPrototype) SetDefaultColours(fore uint32, back uint32) {
 
 func (e *ElementPrototype) EnableBorder(title, hint string) {
 	e.bordered = true
-	w, h := e.Dims()
-	e.border = NewBorder(w, h)
+	e.border = NewBorder(e.Size())
 	e.border.title = title
 	e.border.hint = hint
 }
 
 func (e *ElementPrototype) Bounds() vec.Rect {
-	w, h := e.Dims()
-	return vec.Rect{w, h, e.position.X, e.position.Y}
+	return vec.Rect{e.position, e.Size()}
 }
 
 func (e *ElementPrototype) Pos() vec.Coord {
@@ -154,9 +151,13 @@ func (e *ElementPrototype) HandleKeypress(event input.KeyboardEvent) {
 
 //Adds an animation to the ui element.
 func (e *ElementPrototype) AddAnimation(a gfx.Animator) {
-	for _, anim := range e.animations {
-		if a == anim {
-			return
+	if e.animations == nil {
+		e.animations = make([]gfx.Animator, 0)
+	} else {
+		for _, anim := range e.animations {
+			if a == anim {
+				return
+			}
 		}
 	}
 

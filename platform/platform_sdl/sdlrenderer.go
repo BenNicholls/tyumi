@@ -117,8 +117,8 @@ func (sdlr *SDLRenderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 			err = errors.New("Console not intialized")
 			return
 		}
-		w, h := sdlr.console.Dims()
-		sdlr.window.SetSize(int32(sdlr.tileSize*w), int32(sdlr.tileSize*h))
+		console_size := sdlr.console.Size()
+		sdlr.window.SetSize(int32(sdlr.tileSize*console_size.W), int32(sdlr.tileSize*console_size.H))
 		_ = sdlr.createCanvasBuffer() //TODO: handle this error?
 		log.Info("RENDERER: resized window.")
 	}
@@ -152,8 +152,8 @@ func (sdlr *SDLRenderer) createCanvasBuffer() (err error) {
 	if sdlr.canvasBuffer != nil {
 		sdlr.canvasBuffer.Destroy()
 	}
-	w, h := sdlr.console.Dims()
-	sdlr.canvasBuffer, err = sdlr.renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, int32(w*sdlr.tileSize), int32(h*sdlr.tileSize))
+	console_size := sdlr.console.Size()
+	sdlr.canvasBuffer, err = sdlr.renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, int32(console_size.W*sdlr.tileSize), int32(console_size.H*sdlr.tileSize))
 	if err != nil {
 		log.Error("CONSOLE: Failed to create buffer texture. sdl:" + fmt.Sprint(sdl.GetError()))
 	}
@@ -183,13 +183,14 @@ func (sdlr *SDLRenderer) ToggleFullscreen() {
 
 // Renders the console to the GPU and flips the buffer.
 func (sdlr *SDLRenderer) Render() {
-	w, h := sdlr.console.Dims()
+	console_size := sdlr.console.Size()
+	w := console_size.W
 
 	//render the scene!
 	var src, dst sdl.Rect
 	t := sdlr.renderer.GetRenderTarget()             //store window texture, we'll switch back to it once we're done with the buffer.
 	sdlr.renderer.SetRenderTarget(sdlr.canvasBuffer) //point renderer at buffer texture, we'll draw there
-	for i := 0; i < w*h; i++ {
+	for i := 0; i < console_size.Area(); i++ {
 		cell := sdlr.console.GetCell(i%w, i/w)
 		if cell.Dirty || sdlr.forceRedraw {
 			if cell.Mode == gfx.DRAW_TEXT {

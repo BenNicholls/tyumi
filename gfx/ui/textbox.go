@@ -57,11 +57,12 @@ func (tb *Textbox) Render() {
 	if tb.visible && tb.dirty {
 		tb.Clear()
 		for i, line := range tb.lines {
-			offset := 0
+			x_offset := 0
 			if tb.center {
-				offset = (tb.Bounds().W*2 - len(line)) / 2
+				x_offset = (tb.Bounds().W*2 - len(line)) / 2
 			}
-			tb.DrawText(offset/2, i, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, gfx.TextCellPosition(offset%2))
+			pos := vec.Coord{x_offset/2, i}
+			tb.DrawText(pos, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, gfx.TextCellPosition(x_offset%2))
 		}
 
 		tb.ElementPrototype.Render()

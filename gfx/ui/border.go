@@ -42,22 +42,21 @@ func (b *Border) Render() {
 		return
 	}
 
-	w := b.top.Size().W
-	for i := 0; i < w; i++ { //top and bottom
-		cursor := vec.Coord{i, 0}
-		b.top.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
-		b.bottom.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
+	for cursor := range vec.EachCoord(b.top.Bounds()) { //top and bottom
+		b.top.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
+		b.bottom.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
 	}
-	h := b.left.Size().H
-	for i := 0; i < h; i++ {
-		cursor := vec.Coord{0, i}
-		b.left.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
-		b.right.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
+
+	for cursor := range vec.EachCoord(b.left.Bounds()) {
+		b.left.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
+		b.right.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
 	}
-	b.top.SetGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DR)   //upper left corner
-	b.right.SetGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DL) //upper right corner
-	b.bottom.SetGlyph(vec.Coord{w-1, 0}, 0, gfx.GLYPH_BORDER_UL)         //bottom right corner
-	b.left.SetGlyph(vec.Coord{0, h-1}, 0, gfx.GLYPH_BORDER_UR)           //bottom left corner
+
+	w, h := b.top.Size().W, b.left.Size().H
+	b.top.DrawGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DR)        //upper left corner
+	b.right.DrawGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DL)      //upper right corner
+	b.bottom.DrawGlyph(vec.Coord{w - 1, 0}, 0, gfx.GLYPH_BORDER_UL) //bottom right corner
+	b.left.DrawGlyph(vec.Coord{0, h - 1}, 0, gfx.GLYPH_BORDER_UR)   //bottom left corner
 
 	//decorate and draw title
 	if b.title != "" {
@@ -65,7 +64,7 @@ func (b *Border) Render() {
 		if len(b.title)%2 == 1 {
 			decoratedTitle += string(gfx.TEXT_BORDER_LR)
 		}
-		b.top.DrawText(1, 0, 0, decoratedTitle, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
+		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
 	}
 
 	//decorate and draw hint
@@ -76,13 +75,13 @@ func (b *Border) Render() {
 			decoratedHint = string(gfx.TEXT_BORDER_LR) + decoratedHint
 			hintOffset -= 1
 		}
-		b.bottom.DrawText(hintOffset-1, 0, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
+		b.bottom.DrawText(vec.Coord{hintOffset - 1, 0}, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
 	}
 
 	//draw scrollbar if necessary
 	if b.scrollbar && b.scrollbarContentHeight > h-1 {
-		b.right.SetGlyph(vec.Coord{0, 1}, 0, gfx.GLYPH_TRIANGLE_UP)
-		b.right.SetGlyph(vec.Coord{0, h-1}, 0, gfx.GLYPH_TRIANGLE_DOWN)
+		b.right.DrawGlyph(vec.Coord{0, 1}, 0, gfx.GLYPH_TRIANGLE_UP)
+		b.right.DrawGlyph(vec.Coord{0, h - 1}, 0, gfx.GLYPH_TRIANGLE_DOWN)
 
 		barSize := util.Clamp(util.RoundFloatToInt(float64(h-1)/float64(b.scrollbarContentHeight)*float64(h-3)), 1, h-4)
 
@@ -93,8 +92,8 @@ func (b *Border) Render() {
 			barPos = util.Clamp(util.RoundFloatToInt(float64(b.scrollbarViewportPosition)/float64(b.scrollbarContentHeight)*float64(h-3)), 0, h-4-barSize)
 		}
 
-		for i := 0; i < barSize; i++ {
-			b.right.SetGlyph(vec.Coord{0, i+barPos+2}, 0, gfx.GLYPH_FILL)
+		for i := range barSize {
+			b.right.DrawGlyph(vec.Coord{0, i + barPos + 2}, 0, gfx.GLYPH_FILL)
 		}
 	}
 
@@ -103,10 +102,10 @@ func (b *Border) Render() {
 
 func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, depth int) {
 	w, h := b.top.Size().W, b.left.Size().H
-	b.top.DrawToCanvas(canvas, vec.Coord{x-1, y-1}, depth)
-	b.bottom.DrawToCanvas(canvas, vec.Coord{x, y+h-1}, depth)
-	b.left.DrawToCanvas(canvas, vec.Coord{x-1, y}, depth)
-	b.right.DrawToCanvas(canvas, vec.Coord{x+w-1, y-1}, depth)
+	b.top.DrawToCanvas(canvas, vec.Coord{x - 1, y - 1}, depth)
+	b.bottom.DrawToCanvas(canvas, vec.Coord{x, y + h - 1}, depth)
+	b.left.DrawToCanvas(canvas, vec.Coord{x - 1, y}, depth)
+	b.right.DrawToCanvas(canvas, vec.Coord{x + w - 1, y - 1}, depth)
 }
 
 func (b *Border) EnableScrollbar(height, pos int) {

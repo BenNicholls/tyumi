@@ -15,22 +15,30 @@ func (c *Canvas) Draw(pos vec.Coord, depth int, d Drawable) {
 	c.DrawVisuals(pos, depth, d.Visuals())
 }
 
-//TODO: this sets the depth and does bounds checks like 40 times ro something
+// THINK: this checks/sets the depth 3-4 times i think. hmmm.
 func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, v Visuals) {
 	if !c.InBounds(pos) {
 		return
 	}
-	c.SetColours(pos, depth, v.ForeColour, v.BackColour)
+	c.setColours(pos, depth, v.ForeColour, v.BackColour)
 
-	switch v.Mode{
+	switch v.Mode {
 	case DRAW_GLYPH:
-		c.SetGlyph(pos, depth, v.Glyph)
+		c.setGlyph(pos, depth, v.Glyph)
 	case DRAW_TEXT:
-		c.SetText(pos, depth, v.Chars[0], v.Chars[1])
+		c.setText(pos, depth, v.Chars[0], v.Chars[1])
 	}
 }
 
-func (c *Canvas) DrawText(x, y, depth int, txt string, fore, back uint32, start_pos TextCellPosition) {
+func (c *Canvas) DrawGlyph(pos vec.Coord, depth int, glyph int) {
+	if !c.InBounds(pos) {
+		return
+	}
+
+	c.setGlyph(pos, depth, glyph)
+}
+
+func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, fore, back uint32, start_pos TextCellPosition) {
 	//build []rune version of txt string
 	var text_runes []rune = make([]rune, 0, len(txt))
 	if start_pos == DRAW_TEXT_RIGHT { //pad start with a space if we're starting on the right
@@ -45,13 +53,13 @@ func (c *Canvas) DrawText(x, y, depth int, txt string, fore, back uint32, start_
 
 	//iterate by pairs of runes, drawing 1 cell per loop
 	for i := 0; i < len(text_runes); i += 2 {
-		pos := vec.Coord{x + i/2, y}
-		if !c.InBounds(pos) { //make sure we're drawing in the canvas. TODO: some kind of easy bounds check thing??
+		cursor := vec.Coord{pos.X + i/2, pos.Y}
+		if !c.InBounds(cursor) { //make sure we're drawing in the canvas. TODO: some kind of easy bounds check thing??
 			continue
 		}
 
-		c.SetText(pos, depth, text_runes[i], text_runes[i+1])
-		c.SetColours(pos, depth, fore, back)
+		c.setText(cursor, depth, text_runes[i], text_runes[i+1])
+		c.setColours(cursor, depth, fore, back)
 	}
 }
 
@@ -75,21 +83,19 @@ func (c *Canvas) FloodFill(pos vec.Coord, depth int, v Visuals) {
 	//hey, write this function. it'll be fun i promise
 }
 
-// DrawToCanvas draws the canvas c to a destination canvas, offset by some (x, y) at depth z. This process will mark
+// DrawToCanvas draws the canvas c to a destination canvas, offset by some Coord at depth z. This process will mark
 // any copied cells in c as clean.
 // TODO: this function should take in flags to determine how the canvas is copied
 //
-//	could also pass this a rect to indicate subaras of the canvas that need to be copied
-func (c *Canvas) DrawToCanvas(dst *Canvas, pos vec.Coord, depth int) {
-	cursor := vec.ZERO_COORD
+//	could also pass this a rect to indicate subareas of the canvas that need to be copied
+func (c *Canvas) DrawToCanvas(dst *Canvas, offset vec.Coord, depth int) {
 	dst_cursor := vec.ZERO_COORD
-	for i := range c.cells {
-		cursor.MoveTo(i%c.width, i/c.width)
-		dst_cursor = cursor.Add(pos)
-		if !dst.InBounds(dst_cursor) || dst.GetDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
+	for cursor := range vec.EachCoord(c) {
+		dst_cursor = cursor.Add(offset)
+		if !dst.InBounds(dst_cursor) || dst.getDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
 			continue
 		}
-		cell := c.GetCell(cursor)
+		cell := c.getCell(cursor)
 		dst.DrawVisuals(dst_cursor, depth, cell.Visuals)
 		cell.Dirty = false
 	}

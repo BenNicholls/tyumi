@@ -42,34 +42,18 @@ func (c *Canvas) Init(w, h int) {
 	c.Clear()
 }
 
-// GetCell returns a reference to the cell at pos. Returns nil if pos is out of bounds.
-func (c *Canvas) GetCell(pos vec.Coord) *Cell {
-	if !c.InBounds(pos) {
-		return nil
-	}
-	return &c.cells[pos.Y*c.width+pos.X]
-}
-
-// Gets the depth value at pos. If pos is not in the canvas returns -1
-func (c *Canvas) GetDepth(pos vec.Coord) int {
-	if !c.InBounds(pos) {
-		return -1
-	}
-	return c.depthmap[pos.Y*c.width+pos.X]
-}
-
-// Sets the depth value at pos. If pos is not in canvas, does nothing.
-func (c *Canvas) SetDepth(pos vec.Coord, depth int) {
-	if c.InBounds(pos) {
-		c.depthmap[pos.Y*c.width+pos.X] = depth
-	}
-}
-
 func (c *Canvas) InBounds(pos vec.Coord) bool {
 	if pos.X >= c.width || pos.Y >= c.height || pos.X < 0 || pos.Y < 0 {
 		return false
 	}
 	return true
+}
+
+// Clean sets all cells in the canvas as clean (dirty = false).
+func (c *Canvas) Clean() {
+	for i := range c.cells {
+		c.cells[i].Dirty = false
+	}
 }
 
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.
@@ -79,55 +63,83 @@ func (c *Canvas) SetDefaultColours(fore uint32, back uint32) {
 	c.Clear()
 }
 
-func (c *Canvas) SetForeColour(pos vec.Coord, depth int, col uint32) {
-	if cell := c.GetCell(pos); cell != nil && c.GetDepth(pos) <= depth {
+// GetCell returns the cell at pos. Returns an empty cell if pos is out of bounds.
+// Note that this function just returns the value of the requested cell, not a reference,
+// so you can't change the cell this way. Use the Canvas.Draw* functions for that!
+func (c *Canvas) GetCell(pos vec.Coord) (cell Cell) {
+	if !c.InBounds(pos) {
+		return
+	}
+	cell = c.cells[pos.Y*c.width+pos.X]
+	return
+}
+
+func (c *Canvas) getCell(pos vec.Coord) *Cell {
+	return &c.cells[pos.Y*c.width+pos.X]
+}
+
+func (c *Canvas) getDepth(pos vec.Coord) int {
+	return c.depthmap[pos.Y*c.width+pos.X]
+}
+
+func (c *Canvas) setDepth(pos vec.Coord, depth int) {
+	c.depthmap[pos.Y*c.width+pos.X] = depth
+}
+
+func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
+	if c.getDepth(pos) <= depth {
+		cell := c.getCell(pos)
 		if col == COL_DEFAULT {
 			col = c.foreColour
 		}
 		cell.SetForeColour(col)
-		c.SetDepth(pos, depth)
+		c.setDepth(pos, depth)
 	}
 }
 
-func (c *Canvas) SetBackColour(pos vec.Coord, depth int, col uint32) {
-	if cell := c.GetCell(pos); cell != nil && c.GetDepth(pos) <= depth {
+func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
+	if c.getDepth(pos) <= depth {
+		cell := c.getCell(pos)
 		if col == COL_DEFAULT {
 			col = c.backColour
 		}
 		cell.SetBackColour(col)
-		c.SetDepth(pos, depth)
+		c.setDepth(pos, depth)
 	}
 }
 
-func (c *Canvas) SetColours(pos vec.Coord, depth int, fore, back uint32) {
-	c.SetForeColour(pos, depth, fore)
-	c.SetBackColour(pos, depth, back)
+func (c *Canvas) setColours(pos vec.Coord, depth int, fore, back uint32) {
+	c.setForeColour(pos, depth, fore)
+	c.setBackColour(pos, depth, back)
 }
 
-func (c *Canvas) SetGlyph(pos vec.Coord, depth, gl int) {
-	if cell := c.GetCell(pos); cell != nil && c.GetDepth(pos) <= depth {
+func (c *Canvas) setGlyph(pos vec.Coord, depth, gl int) {
+	if c.getDepth(pos) <= depth {
+		cell := c.getCell(pos)
 		cell.SetGlyph(gl)
-		c.SetDepth(pos, depth)
+		c.setDepth(pos, depth)
 	}
 }
 
-func (c *Canvas) SetText(pos vec.Coord, depth int, char1, char2 rune) {
-	if cell := c.GetCell(pos); cell != nil && c.GetDepth(pos) <= depth {
+func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
+	if c.getDepth(pos) <= depth {
+		cell := c.getCell(pos)
 		cell.SetText(char1, char2)
-		c.SetDepth(pos, depth)
+		c.setDepth(pos, depth)
 	}
 }
 
 // Changes a single character on the canvas at position (x,y) in text mode.
 // charNum: 0 = Left, 1 = Right (for ease with modulo operations). Throw whatever in here though, it gets
 // modulo 2'd anyways just in case.
-func (c *Canvas) SetChar(pos vec.Coord, depth int, char rune, char_pos TextCellPosition) {
-	if cell := c.GetCell(pos); cell != nil && c.GetDepth(pos) <= depth {
+func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellPosition) {
+	if c.getDepth(pos) <= depth {
+		cell := c.getCell(pos)
 		cell.Mode = DRAW_TEXT
 		if cell.Chars[int(char_pos)] != char {
 			cell.Chars[int(char_pos)] = char
-			c.SetDepth(pos, depth)
 			cell.Dirty = true
+			c.setDepth(pos, depth)
 		}
 	}
 }
@@ -138,15 +150,17 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 		areas = append(areas, c.Bounds())
 	}
 
-	for _, r := range areas {
-		for i := 0; i < r.Area(); i++ {
-			pos := vec.Coord{r.X + i%r.W, r.Y + i/r.W}
-			if cell := c.GetCell(pos); cell != nil {
-				cell.Clear()
-				cell.SetBackColour(c.backColour)
-				cell.SetForeColour(c.foreColour)
-				c.SetDepth(pos, -1)
+	for _, area := range areas {
+		for cursor := range vec.EachCoord(area) {
+			if !c.InBounds(cursor) { //need to check to make sure user-provided areas are in bounds.
+				continue
 			}
+			cell := c.getCell(cursor)
+			cell.Clear()
+			cell.SetBackColour(c.backColour)
+			cell.SetForeColour(c.foreColour)
+			c.setDepth(cursor, -1)
+
 		}
 	}
 }

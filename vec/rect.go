@@ -1,31 +1,47 @@
 package vec
 
-import "github.com/bennicholls/tyumi/util"
+import (
+	"iter"
 
-//Bounded defines objects that can report a bounding box of some kind.
+	"github.com/bennicholls/tyumi/util"
+)
+
+// Bounded defines objects that can report a bounding box of some kind.
 type Bounded interface {
 	Bounds() Rect
 }
 
-//Rect is your standard rectangle object, with position (X,Y) in the top left corner.
+// Rect is your standard rectangle object, with position (X,Y) in the top left corner.
 type Rect struct {
 	Coord //position (X, Y)
 	Dims  //size (W, H)
 }
 
-//Goofy... but needed to satisfy Bounded interface.
+// Goofy... but needed to satisfy Bounded interface.
 func (r Rect) Bounds() Rect {
 	return r
 }
 
-//IsInside checks if the point (x, y) is within the bounds of object b.
+// Returns an iterator producing a sequence of all Coords within the Rect r.
+func EachCoord(b Bounded) iter.Seq[Coord] {
+	return func(yield func(Coord) bool) {
+		r := b.Bounds()
+		for i := 0; i < r.Area(); i++ {
+			if !yield(Coord{r.X + (i % r.W), r.Y + (i / r.W)}) {
+				return
+			}
+		}
+	}
+}
+
+// IsInside checks if the point (x, y) is within the bounds of object b.
 func IsInside(x, y int, b Bounded) bool {
 	r := b.Bounds()
 	return x >= r.X && x < r.X+r.W && y >= r.Y && y < r.Y+r.H
 }
 
-//FindIntersectionRect calculates the intersection of two rectangularly-bound objects as a rect if no intersection,
-//returns Rect{0,0,0,0}
+// FindIntersectionRect calculates the intersection of two rectangularly-bound objects as a rect if no intersection,
+// returns Rect{0,0,0,0}
 func FindIntersectionRect(r1, r2 Bounded) (r Rect) {
 	b1 := r1.Bounds()
 	b2 := r2.Bounds()

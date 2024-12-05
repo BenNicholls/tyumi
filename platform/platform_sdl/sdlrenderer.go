@@ -184,34 +184,31 @@ func (sdlr *SDLRenderer) ToggleFullscreen() {
 
 // Renders the console to the GPU and flips the buffer.
 func (sdlr *SDLRenderer) Render() {
-	console_size := sdlr.console.Size()
-	w := console_size.W
-
 	//render the scene!
 	var src, dst sdl.Rect
 	t := sdlr.renderer.GetRenderTarget()             //store window texture, we'll switch back to it once we're done with the buffer.
 	sdlr.renderer.SetRenderTarget(sdlr.canvasBuffer) //point renderer at buffer texture, we'll draw there
-	cursor := vec.ZERO_COORD
-	for i := 0; i < console_size.Area(); i++ {
-		cursor.MoveTo(i%w, i/w)
+
+	for cursor := range vec.EachCoord(sdlr.console) {
 		cell := sdlr.console.GetCell(cursor)
 		if cell.Dirty || sdlr.forceRedraw {
 			if cell.Mode == gfx.DRAW_TEXT {
 				for c_i, char := range cell.Chars {
-					dst = makeRect((i%w)*sdlr.tileSize+c_i*sdlr.tileSize/2, (i/w)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
+					dst = makeRect(cursor.X*sdlr.tileSize+c_i*sdlr.tileSize/2, cursor.Y*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
 					src = makeRect((int(char)%32)*sdlr.tileSize/2, (int(char)/32)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
 					sdlr.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.ForeColour, cell.BackColour, int(char))
 				}
 			} else {
 				g := cell.Glyph
-				dst = makeRect((i%w)*sdlr.tileSize, (i/w)*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
+				dst = makeRect(cursor.X*sdlr.tileSize, cursor.Y*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
 				src = makeRect((g%16)*sdlr.tileSize, (g/16)*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
 				sdlr.copyToRenderer(gfx.DRAW_GLYPH, src, dst, cell.ForeColour, cell.BackColour, g)
 			}
 
-			cell.Dirty = false
 		}
 	}
+	
+	sdlr.console.Clean()
 
 	sdlr.renderer.SetRenderTarget(t) //point renderer at window again
 	sdlr.renderer.Copy(sdlr.canvasBuffer, nil, nil)

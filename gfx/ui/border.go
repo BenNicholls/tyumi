@@ -99,12 +99,12 @@ func (b *Border) Render() {
 	b.dirty = false
 }
 
-func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, z int) {
+func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, depth int) {
 	w, h := b.top.Size().W, b.left.Size().H
-	b.top.DrawToCanvas(canvas, x-1, y-1, z)
-	b.bottom.DrawToCanvas(canvas, x, y+h-1, z)
-	b.left.DrawToCanvas(canvas, x-1, y, z)
-	b.right.DrawToCanvas(canvas, x+w-1, y-1, z)
+	b.top.DrawToCanvas(canvas, x-1, y-1, depth)
+	b.bottom.DrawToCanvas(canvas, x, y+h-1, depth)
+	b.left.DrawToCanvas(canvas, x-1, y, depth)
+	b.right.DrawToCanvas(canvas, x+w-1, y-1, depth)
 }
 
 func (b *Border) EnableScrollbar(height, pos int) {

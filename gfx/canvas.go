@@ -55,50 +55,50 @@ func (c *Canvas) SetDefaultColours(fore uint32, back uint32) {
 	c.Clear()
 }
 
-func (c *Canvas) SetForeColour(x, y, z int, col uint32) {
-	if cell := c.GetCell(x, y); cell != nil && cell.Z <= z {
+func (c *Canvas) SetForeColour(x, y, depth int, col uint32) {
+	if cell := c.GetCell(x, y); cell != nil && cell.Depth <= depth {
 		if col == COL_DEFAULT {
 			col = c.foreColour
 		}
-		cell.SetForeColour(z, col)
+		cell.SetForeColour(depth, col)
 	}
 }
 
-func (c *Canvas) SetBackColour(x, y, z int, col uint32) {
-	if cell := c.GetCell(x, y); cell != nil && cell.Z <= z {
+func (c *Canvas) SetBackColour(x, y, depth int, col uint32) {
+	if cell := c.GetCell(x, y); cell != nil && cell.Depth <= depth {
 		if col == COL_DEFAULT {
 			col = c.backColour
 		}
-		cell.SetBackColour(z, col)
+		cell.SetBackColour(depth, col)
 	}
 }
 
-func (c *Canvas) SetColours(x, y, z int, fore, back uint32) {
-	c.SetForeColour(x, y, z, fore)
-	c.SetBackColour(x, y, z, back)
+func (c *Canvas) SetColours(x, y, depth int, fore, back uint32) {
+	c.SetForeColour(x, y, depth, fore)
+	c.SetBackColour(x, y, depth, back)
 }
 
-func (c *Canvas) SetGlyph(x, y, z, gl int) {
-	if cell := c.GetCell(x, y); cell != nil && cell.Z <= z {
-		cell.SetGlyph(z, gl)
+func (c *Canvas) SetGlyph(x, y, depth, gl int) {
+	if cell := c.GetCell(x, y); cell != nil && cell.Depth <= depth {
+		cell.SetGlyph(depth, gl)
 	}
 }
 
-func (c *Canvas) SetText(x, y, z int, char1, char2 rune) {
-	if cell := c.GetCell(x, y); cell != nil && cell.Z <= z {
-		cell.SetText(z, char1, char2)
+func (c *Canvas) SetText(x, y, depth int, char1, char2 rune) {
+	if cell := c.GetCell(x, y); cell != nil && cell.Depth <= depth {
+		cell.SetText(depth, char1, char2)
 	}
 }
 
 // Changes a single character on the canvas at position (x,y) in text mode.
 // charNum: 0 = Left, 1 = Right (for ease with modulo operations). Throw whatever in here though, it gets
 // modulo 2'd anyways just in case.
-func (c *Canvas) SetChar(x, y, z int, char rune, charNum int) {
-	if cell := c.GetCell(x, y); cell != nil && charNum >= 0 && cell.Z <= z {
+func (c *Canvas) SetChar(x, y, depth int, char rune, charNum int) {
+	if cell := c.GetCell(x, y); cell != nil && charNum >= 0 && cell.Depth <= depth {
 		cell.Mode = DRAW_TEXT
 		if cell.Chars[charNum%2] != char {
 			cell.Chars[charNum%2] = char
-			cell.Z = z
+			cell.Depth = depth
 			cell.Dirty = true
 		}
 	}

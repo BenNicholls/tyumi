@@ -19,9 +19,9 @@ type List struct {
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
 }
 
-func NewList(w, h, x, y, z int) (l List) {
+func NewList(w, h, x, y, depth int) (l List) {
 	l = List{
-		Container: NewContainer(w, h, x, y, z),
+		Container: NewContainer(w, h, x, y, depth),
 	}
 
 	return

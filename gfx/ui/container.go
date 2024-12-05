@@ -11,8 +11,8 @@ type Container struct {
 	redraw   bool //total redraw required. see Container.Redraw()
 }
 
-func NewContainer(w, h, x, y, z int) (c Container) {
-	c.Init(w, h, x, y, z)
+func NewContainer(w, h, x, y, depth int) (c Container) {
+	c.Init(w, h, x, y, depth)
 	c.children = make([]Element, 0)
 
 	return

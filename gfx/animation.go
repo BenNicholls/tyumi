@@ -14,9 +14,9 @@ type Animator interface {
 
 // Animation that makes an area blink
 type BlinkAnimation struct {
-	area vec.Rect
-	z    int     //z value of the animation
-	Vis  Visuals //what to draw when the area is blinking
+	area  vec.Rect
+	depth int     //depth value of the animation
+	Vis   Visuals //what to draw when the area is blinking
 
 	enabled bool //animation is playing
 	dirty   bool //animation needs to be re-rendered
@@ -26,10 +26,10 @@ type BlinkAnimation struct {
 	blinking    bool //whether the area is rendering a blink or not
 }
 
-func NewBlinkAnimation(pos vec.Coord, size vec.Dims, z int, vis Visuals, rate int) (ba *BlinkAnimation) {
+func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba *BlinkAnimation) {
 	ba = &BlinkAnimation{
 		area:      vec.Rect{pos, size},
-		z:         z,
+		depth:     depth,
 		Vis:       vis,
 		enabled:   true,
 		blinkRate: rate,
@@ -72,7 +72,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 	w := ba.area.W
 
 	for i := 0; i < ba.area.Area(); i++ {
-		c.DrawVisuals(x+i%w, y+i/w, ba.z, ba.Vis)
+		c.DrawVisuals(x+i%w, y+i/w, ba.depth, ba.Vis)
 	}
 }
 

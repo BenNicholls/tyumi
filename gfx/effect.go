@@ -25,6 +25,6 @@ func (c *Canvas) DrawEffect(effect Effect, areas ...vec.Rect) {
 
 func InvertEffect(cell *Cell) {
 	f := cell.ForeColour
-	cell.SetForeColour(cell.Z, cell.BackColour)
-	cell.SetBackColour(cell.Z, f)
+	cell.SetForeColour(cell.Depth, cell.BackColour)
+	cell.SetBackColour(cell.Depth, f)
 }

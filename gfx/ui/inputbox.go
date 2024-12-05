@@ -14,8 +14,8 @@ type InputBox struct {
 	cursor *InputCursorAnimation
 }
 
-func NewInputbox(w, h, x, y, z int) (ib InputBox) {
-	ib.Textbox = NewTextbox(w, h, x, y, z, "", false)
+func NewInputbox(w, h, x, y, depth int) (ib InputBox) {
+	ib.Textbox = NewTextbox(w, h, x, y, depth, "", false)
 	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 1, 30)
 
 	ib.AddAnimation(ib.cursor)
@@ -55,9 +55,9 @@ type InputCursorAnimation struct {
 	gfx.BlinkAnimation
 }
 
-func NewInputCursorAnimation(pos vec.Coord, z, rate int) (cursor *InputCursorAnimation) {
+func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor *InputCursorAnimation) {
 	cursor = new(InputCursorAnimation)
-	cursor.BlinkAnimation = *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, z, gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.WHITE, col.BLACK), rate)
+	cursor.BlinkAnimation = *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.WHITE, col.BLACK), rate)
 
 	return
 }

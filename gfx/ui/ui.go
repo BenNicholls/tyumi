@@ -26,7 +26,7 @@ type ElementPrototype struct {
 	gfx.Canvas
 
 	position vec.Coord
-	z        int //depth for the UI system, relative to the element's parent. if no parent, relative to the console
+	depth        int //depth for the UI system, relative to the element's parent. if no parent, relative to the console
 	visible  bool
 	bordered bool
 	dirty    bool //indicates this object needs to be re-rendered.
@@ -37,10 +37,10 @@ type ElementPrototype struct {
 	parent *Container
 }
 
-func (e *ElementPrototype) Init(w, h, x, y, z int) {
+func (e *ElementPrototype) Init(w, h, x, y, depth int) {
 	e.Canvas.Init(w, h)
 	e.position = vec.Coord{x, y}
-	e.z = z
+	e.depth = depth
 	e.visible = true
 	e.dirty = true
 }
@@ -139,9 +139,9 @@ func (e *ElementPrototype) DrawToParent() {
 		return
 	}
 
-	e.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.z)
+	e.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.depth)
 	if e.bordered {
-		e.border.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.z)
+		e.border.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.depth)
 	}
 }
 

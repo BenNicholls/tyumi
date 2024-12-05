@@ -26,9 +26,9 @@ func (c *Canvas) Size() vec.Dims {
 	return vec.Dims{c.width, c.height}
 }
 
-// func (c *Canvas) Bounds() vec.Rect {
-// 	return vec.Rect{vec.ZERO_COORD, vec.Dims{c.width, c.height}}
-// }
+func (c *Canvas) Bounds() vec.Rect {
+	return vec.Rect{vec.ZERO_COORD, vec.Dims{c.width, c.height}}
+}
 
 // Initializes the canvas. Can also be used for resizing, assuming you don't mind that the contents of the canvas
 // are destroyed.
@@ -42,7 +42,7 @@ func (c *Canvas) Init(w, h int) {
 
 // GetCell returns a reference to the cell at (x, y). Returns nil if (x,y) is out of bounds.
 func (c *Canvas) GetCell(x, y int) *Cell {
-	if x < 0 || y < 0 || x > c.width || y > c.height{
+	if x < 0 || y < 0 || x >= c.width || y >= c.height{
 		return nil
 	}
 	return &c.cells[y*c.width+x]
@@ -107,7 +107,7 @@ func (c *Canvas) SetChar(x, y, z int, char rune, charNum int) {
 // Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas.
 func (c *Canvas) Clear(areas ...vec.Rect) {
 	if len(areas) == 0 {
-		areas = append(areas, vec.Rect{vec.ZERO_COORD, c.Size()})
+		areas = append(areas, c.Bounds())
 	}
 
 	for _, r := range areas {

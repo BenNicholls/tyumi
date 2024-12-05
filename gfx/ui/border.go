@@ -44,18 +44,20 @@ func (b *Border) Render() {
 
 	w := b.top.Size().W
 	for i := 0; i < w; i++ { //top and bottom
-		b.top.SetGlyph(i, 0, 0, gfx.GLYPH_BORDER_LR)
-		b.bottom.SetGlyph(i, 0, 0, gfx.GLYPH_BORDER_LR)
+		cursor := vec.Coord{i, 0}
+		b.top.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
+		b.bottom.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
 	}
 	h := b.left.Size().H
 	for i := 0; i < h; i++ {
-		b.left.SetGlyph(0, i, 0, gfx.GLYPH_BORDER_UD)
-		b.right.SetGlyph(0, i, 0, gfx.GLYPH_BORDER_UD)
+		cursor := vec.Coord{0, i}
+		b.left.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
+		b.right.SetGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
 	}
-	b.top.SetGlyph(0, 0, 0, gfx.GLYPH_BORDER_DR)      //upper left corner
-	b.right.SetGlyph(0, 0, 0, gfx.GLYPH_BORDER_DL)    //upper right corner
-	b.bottom.SetGlyph(w-1, 0, 0, gfx.GLYPH_BORDER_UL) //bottom right corner
-	b.left.SetGlyph(0, h-1, 0, gfx.GLYPH_BORDER_UR)   //bottom left corner
+	b.top.SetGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DR)   //upper left corner
+	b.right.SetGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DL) //upper right corner
+	b.bottom.SetGlyph(vec.Coord{w-1, 0}, 0, gfx.GLYPH_BORDER_UL)         //bottom right corner
+	b.left.SetGlyph(vec.Coord{0, h-1}, 0, gfx.GLYPH_BORDER_UR)           //bottom left corner
 
 	//decorate and draw title
 	if b.title != "" {
@@ -79,8 +81,8 @@ func (b *Border) Render() {
 
 	//draw scrollbar if necessary
 	if b.scrollbar && b.scrollbarContentHeight > h-1 {
-		b.right.SetGlyph(0, 1, 0, gfx.GLYPH_TRIANGLE_UP)
-		b.right.SetGlyph(0, h-1, 0, gfx.GLYPH_TRIANGLE_DOWN)
+		b.right.SetGlyph(vec.Coord{0, 1}, 0, gfx.GLYPH_TRIANGLE_UP)
+		b.right.SetGlyph(vec.Coord{0, h-1}, 0, gfx.GLYPH_TRIANGLE_DOWN)
 
 		barSize := util.Clamp(util.RoundFloatToInt(float64(h-1)/float64(b.scrollbarContentHeight)*float64(h-3)), 1, h-4)
 
@@ -92,7 +94,7 @@ func (b *Border) Render() {
 		}
 
 		for i := 0; i < barSize; i++ {
-			b.right.SetGlyph(0, i+barPos+2, 0, gfx.GLYPH_FILL)
+			b.right.SetGlyph(vec.Coord{0, i+barPos+2}, 0, gfx.GLYPH_FILL)
 		}
 	}
 
@@ -101,10 +103,10 @@ func (b *Border) Render() {
 
 func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, depth int) {
 	w, h := b.top.Size().W, b.left.Size().H
-	b.top.DrawToCanvas(canvas, x-1, y-1, depth)
-	b.bottom.DrawToCanvas(canvas, x, y+h-1, depth)
-	b.left.DrawToCanvas(canvas, x-1, y, depth)
-	b.right.DrawToCanvas(canvas, x+w-1, y-1, depth)
+	b.top.DrawToCanvas(canvas, vec.Coord{x-1, y-1}, depth)
+	b.bottom.DrawToCanvas(canvas, vec.Coord{x, y+h-1}, depth)
+	b.left.DrawToCanvas(canvas, vec.Coord{x-1, y}, depth)
+	b.right.DrawToCanvas(canvas, vec.Coord{x+w-1, y-1}, depth)
 }
 
 func (b *Border) EnableScrollbar(height, pos int) {

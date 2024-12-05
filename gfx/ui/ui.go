@@ -17,7 +17,7 @@ type Element interface {
 	update()
 	UpdateState()
 	HandleKeypress(input.KeyboardEvent)
-	MoveTo(int, int)
+	MoveTo(vec.Coord)
 	Move(int, int)
 	IsVisible() bool
 }
@@ -37,9 +37,9 @@ type ElementPrototype struct {
 	parent *Container
 }
 
-func (e *ElementPrototype) Init(w, h, x, y, depth int) {
+func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 	e.Canvas.Init(w, h)
-	e.position = vec.Coord{x, y}
+	e.position = pos
 	e.depth = depth
 	e.visible = true
 	e.dirty = true
@@ -65,19 +65,20 @@ func (e *ElementPrototype) Pos() vec.Coord {
 	return e.position
 }
 
-func (e *ElementPrototype) MoveTo(x, y int) {
-	if x == e.position.X && y == e.position.Y {
+func (e *ElementPrototype) MoveTo(pos vec.Coord) {
+	if e.position == pos {
 		return
 	}
 
-	e.position.MoveTo(x, y)
+	e.position = pos
 	if e.parent != nil {
 		e.parent.Redraw()
 	}
 }
 
+//THINK: should this take a coord too? or a Vec2i?
 func (e *ElementPrototype) Move(dx, dy int) {
-	e.MoveTo(e.position.X+dx, e.position.Y+dy)
+	e.MoveTo(vec.Coord{e.position.X+dx, e.position.Y+dy})
 }
 
 //update() is the internal update function. handles any internal update behaviour, and calls the UpdateState function
@@ -139,7 +140,7 @@ func (e *ElementPrototype) DrawToParent() {
 		return
 	}
 
-	e.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.depth)
+	e.DrawToCanvas(&e.parent.Canvas, e.position, e.depth)
 	if e.bordered {
 		e.border.DrawToCanvas(&e.parent.Canvas, e.position.X, e.position.Y, e.depth)
 	}

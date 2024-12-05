@@ -28,16 +28,16 @@ func ArcGenerator(radius int) func() Coord {
 }
 
 //Computes a circle, calling fn on each point of the circle. fn can be a drawing function or whatever.
-func Circle(center Coord, radius int, fn func(x, y int)) {
+func Circle(center Coord, radius int, fn func(pos Coord)) {
 	c := ArcGenerator(radius)
 	for p := c(); p != ZERO_COORD; p = c() {
-		fn(center.X+p.X, center.Y+p.Y)
-		fn(center.X+p.Y, center.Y+p.X)
-		fn(center.X-p.Y, center.Y+p.X)
-		fn(center.X-p.X, center.Y+p.Y)
-		fn(center.X-p.X, center.Y-p.Y)
-		fn(center.X-p.Y, center.Y-p.X)
-		fn(center.X+p.Y, center.Y-p.X)
-		fn(center.X+p.X, center.Y-p.Y)
+		fn(Coord{center.X+p.X, center.Y+p.Y})
+		fn(Coord{center.X+p.Y, center.Y+p.X})
+		fn(Coord{center.X-p.Y, center.Y+p.X})
+		fn(Coord{center.X-p.X, center.Y+p.Y})
+		fn(Coord{center.X-p.X, center.Y-p.Y})
+		fn(Coord{center.X-p.Y, center.Y-p.X})
+		fn(Coord{center.X+p.Y, center.Y-p.X})
+		fn(Coord{center.X+p.X, center.Y-p.Y})
 	}
 }

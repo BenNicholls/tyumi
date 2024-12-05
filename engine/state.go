@@ -5,6 +5,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/vec"
 )
 
 var currentState State //the current state object
@@ -48,7 +49,7 @@ func (sp *StatePrototype) Init(w, h int) {
 		}
 	}
 
-	sp.window = ui.NewContainer(w, h, 0, 0, 0)
+	sp.window = ui.NewContainer(w, h, vec.ZERO_COORD, 0)
 
 	sp.events = event.NewStream(100)
 	sp.inputEvents = event.NewStream(100)

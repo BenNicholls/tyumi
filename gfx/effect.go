@@ -15,8 +15,10 @@ func (c *Canvas) DrawEffect(effect Effect, areas ...vec.Rect) {
 	}
 
 	for _, area := range areas {
-		for i := 0; i < area.W*area.H; i++ {
-			if cell := c.GetCell(i%area.W+area.X, i/area.W+area.Y); cell != nil {
+		offset := vec.ZERO_COORD
+		for i := 0; i < area.Area(); i++ {
+			offset = vec.Coord{i%area.W, i/area.W}
+			if cell := c.GetCell(area.Coord.Add(offset)); cell != nil {
 				effect(cell)
 			}
 		}
@@ -25,6 +27,6 @@ func (c *Canvas) DrawEffect(effect Effect, areas ...vec.Rect) {
 
 func InvertEffect(cell *Cell) {
 	f := cell.ForeColour
-	cell.SetForeColour(cell.Depth, cell.BackColour)
-	cell.SetBackColour(cell.Depth, f)
+	cell.SetForeColour(cell.BackColour)
+	cell.SetBackColour(f)
 }

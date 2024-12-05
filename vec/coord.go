@@ -18,6 +18,11 @@ func (c *Coord) MoveTo(x, y int) {
 	c.X, c.Y = x, y
 }
 
+//TODO: work around this somehow. Generic add function for vec2i types? Interface stuff?
+func (c1 Coord) Add(c2 Coord) Coord {
+	return Coord(Vec2i(c1).Add(Vec2i(c2)))
+}
+
 //ManhattanDistance calculates the manhattan (or taxicab) distance on a square grid.
 func ManhattanDistance(c1, c2 Coord) int {
 	return util.Abs(c2.X-c1.X) + util.Abs(c2.Y-c1.Y)

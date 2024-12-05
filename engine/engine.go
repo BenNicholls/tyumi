@@ -9,6 +9,7 @@ import (
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/platform"
+	"github.com/bennicholls/tyumi/vec"
 )
 
 var renderer gfx.Renderer
@@ -108,7 +109,7 @@ func updateUI() {
 // state's ui tree
 func render() {
 	mainState.Window().Render()
-	mainState.Window().DrawToCanvas(&console.Canvas, 0, 0, 0)
+	mainState.Window().DrawToCanvas(&console.Canvas, vec.ZERO_COORD, 0)
 	//  - render animations
 	renderer.Render()
 }

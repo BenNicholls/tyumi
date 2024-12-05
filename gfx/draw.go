@@ -11,18 +11,22 @@ const (
 	DRAW_TEXT_RIGHT TextCellPosition = 1
 )
 
-func (c *Canvas) Draw(x, y, depth int, d Drawable) {
-	c.DrawVisuals(x, y, depth, d.Visuals())
+func (c *Canvas) Draw(pos vec.Coord, depth int, d Drawable) {
+	c.DrawVisuals(pos, depth, d.Visuals())
 }
 
-//TODO: fix default colour detection
-func (c *Canvas) DrawVisuals(x, y, depth int, v Visuals) {
-	if cell := c.GetCell(x, y); cell != nil && cell.Depth <= depth {
-		if v.Mode == DRAW_GLYPH {
-			cell.SetGlyphCell(v.Glyph, v.ForeColour, v.BackColour, depth)
-		} else {
-			cell.SetTextCell(v.Chars[0], v.Chars[1], v.ForeColour, v.BackColour, depth)
-		}
+//TODO: this sets the depth and does bounds checks like 40 times ro something
+func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, v Visuals) {
+	if !c.InBounds(pos) {
+		return
+	}
+	c.SetColours(pos, depth, v.ForeColour, v.BackColour)
+
+	switch v.Mode{
+	case DRAW_GLYPH:
+		c.SetGlyph(pos, depth, v.Glyph)
+	case DRAW_TEXT:
+		c.SetText(pos, depth, v.Chars[0], v.Chars[1])
 	}
 }
 
@@ -42,33 +46,32 @@ func (c *Canvas) DrawText(x, y, depth int, txt string, fore, back uint32, start_
 	//iterate by pairs of runes, drawing 1 cell per loop
 	for i := 0; i < len(text_runes); i += 2 {
 		pos := vec.Coord{x + i/2, y}
-		cell := c.GetCell(pos.X, pos.Y)
-		if cell == nil { //make sure we're drawing in the canvas. TODO: some kind of easy bounds check thing??
+		if !c.InBounds(pos) { //make sure we're drawing in the canvas. TODO: some kind of easy bounds check thing??
 			continue
 		}
 
-		c.SetText(pos.X, pos.Y, depth, text_runes[i], text_runes[i+1])
-		c.SetColours(pos.X, pos.Y, depth, fore, back)
+		c.SetText(pos, depth, text_runes[i], text_runes[i+1])
+		c.SetColours(pos, depth, fore, back)
 	}
 }
 
 // draws a circle of radius r centered at (px, py), copying the visuals from v, with option to fill the circle with same
 // visuals
-func (c *Canvas) DrawCircle(px, py, depth, r int, v Visuals, fill bool) {
-	drawFunc := func(x, y int) {
-		c.DrawVisuals(x, y, depth, v)
+func (c *Canvas) DrawCircle(center vec.Coord, depth, r int, v Visuals, fill bool) {
+	drawFunc := func(pos vec.Coord) {
+		c.DrawVisuals(pos, depth, v)
 	}
 
-	vec.Circle(vec.Coord{px, py}, r, drawFunc)
+	vec.Circle(center, r, drawFunc)
 
 	if fill {
-		c.FloodFill(px, py, depth, v)
+		c.FloodFill(center, depth, v)
 	}
 }
 
 // Floodfill performs a floodfill starting at x,y. it fills with visuals v, also using v as criteria for looking for
 // edges. any cell with a higher z value will also count as an edge and impede the flood
-func (c *Canvas) FloodFill(x, y, depth int, v Visuals) {
+func (c *Canvas) FloodFill(pos vec.Coord, depth int, v Visuals) {
 	//hey, write this function. it'll be fun i promise
 }
 
@@ -77,18 +80,17 @@ func (c *Canvas) FloodFill(x, y, depth int, v Visuals) {
 // TODO: this function should take in flags to determine how the canvas is copied
 //
 //	could also pass this a rect to indicate subaras of the canvas that need to be copied
-func (c *Canvas) DrawToCanvas(dst *Canvas, x, y, depth int) {
+func (c *Canvas) DrawToCanvas(dst *Canvas, pos vec.Coord, depth int) {
+	cursor := vec.ZERO_COORD
+	dst_cursor := vec.ZERO_COORD
 	for i := range c.cells {
-		dx, dy := x+i%c.width, y+i/c.width
-		cell := c.GetCell(i%c.width, i/c.width)
-		if dcell := dst.GetCell(dx, dy); dcell != nil && depth >= dcell.Depth {
-			if cell.Mode == DRAW_GLYPH {
-				dcell.SetGlyphCell(cell.Glyph, cell.ForeColour, cell.BackColour, depth)
-			} else {
-				dcell.SetTextCell(cell.Chars[0], cell.Chars[1], cell.ForeColour, cell.BackColour, depth)
-			}
-
-			cell.Dirty = false
+		cursor.MoveTo(i%c.width, i/c.width)
+		dst_cursor = cursor.Add(pos)
+		if !dst.InBounds(dst_cursor) || dst.GetDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
+			continue
 		}
+		cell := c.GetCell(cursor)
+		dst.DrawVisuals(dst_cursor, depth, cell.Visuals)
+		cell.Dirty = false
 	}
 }

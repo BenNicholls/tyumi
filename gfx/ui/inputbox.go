@@ -7,15 +7,15 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-//Inputbox is a textbox that can accept and display keyboard input
+// Inputbox is a textbox that can accept and display keyboard input
 type InputBox struct {
 	Textbox
 
 	cursor *InputCursorAnimation
 }
 
-func NewInputbox(w, h, x, y, depth int) (ib InputBox) {
-	ib.Textbox = NewTextbox(w, h, x, y, depth, "", false)
+func NewInputbox(w, h int, pos vec.Coord, depth int) (ib InputBox) {
+	ib.Textbox = NewTextbox(w, h, pos, depth, "", false)
 	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 1, 30)
 
 	ib.AddAnimation(ib.cursor)
@@ -31,7 +31,7 @@ func (ib *InputBox) HandleKeypress(e input.KeyboardEvent) {
 	}
 }
 
-//Appends the provided string to the contents of the inputbox.
+// Appends the provided string to the contents of the inputbox.
 func (ib *InputBox) Insert(text string) {
 	if w := ib.Size().W; len(ib.text) == w*2 {
 		return
@@ -41,7 +41,7 @@ func (ib *InputBox) Insert(text string) {
 	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
 }
 
-//Deletes the final character of the contents of the Inputbox
+// Deletes the final character of the contents of the Inputbox
 func (ib *InputBox) Delete() {
 	if len(ib.text) == 0 {
 		return
@@ -62,7 +62,7 @@ func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor *InputCurso
 	return
 }
 
-//Moves the cursor to (x, y), and blinks the indicated character (0 for left side, 1 for right side)
+// Moves the cursor to (x, y), and blinks the indicated character (0 for left side, 1 for right side)
 func (cursor *InputCursorAnimation) MoveTo(x, y, charNum int) {
 	cursor.BlinkAnimation.MoveTo(x, y)
 	if charNum%2 == 0 {

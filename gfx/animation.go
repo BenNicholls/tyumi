@@ -68,11 +68,11 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 		return
 	}
 
-	x, y := ba.area.X, ba.area.Y
 	w := ba.area.W
 
 	for i := 0; i < ba.area.Area(); i++ {
-		c.DrawVisuals(x+i%w, y+i/w, ba.depth, ba.Vis)
+		offset := vec.Coord{i%w, i/w}
+		c.DrawVisuals(ba.area.Coord.Add(offset), ba.depth, ba.Vis)
 	}
 }
 

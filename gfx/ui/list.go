@@ -19,9 +19,9 @@ type List struct {
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
 }
 
-func NewList(w, h, x, y, depth int) (l List) {
+func NewList(w, h int, pos vec.Coord, depth int) (l List) {
 	l = List{
-		Container: NewContainer(w, h, x, y, depth),
+		Container: NewContainer(w, h, pos, depth),
 	}
 
 	return
@@ -50,7 +50,7 @@ func (l *List) ToggleScrollbar() {
 func (l *List) calibrate() {
 	l.contentHeight = 0
 	for _, child := range l.children {
-		child.MoveTo(0, l.contentHeight-l.scrollOffset)
+		child.MoveTo(vec.Coord{0, l.contentHeight-l.scrollOffset})
 		l.contentHeight += child.Bounds().H
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
+	"github.com/bennicholls/tyumi/vec"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -190,8 +191,10 @@ func (sdlr *SDLRenderer) Render() {
 	var src, dst sdl.Rect
 	t := sdlr.renderer.GetRenderTarget()             //store window texture, we'll switch back to it once we're done with the buffer.
 	sdlr.renderer.SetRenderTarget(sdlr.canvasBuffer) //point renderer at buffer texture, we'll draw there
+	cursor := vec.ZERO_COORD
 	for i := 0; i < console_size.Area(); i++ {
-		cell := sdlr.console.GetCell(i%w, i/w)
+		cursor.MoveTo(i%w, i/w)
+		cell := sdlr.console.GetCell(cursor)
 		if cell.Dirty || sdlr.forceRedraw {
 			if cell.Mode == gfx.DRAW_TEXT {
 				for c_i, char := range cell.Chars {

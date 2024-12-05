@@ -1,9 +1,12 @@
 package ui
 
-import "github.com/bennicholls/tyumi/input"
+import (
+	"github.com/bennicholls/tyumi/input"
+	"github.com/bennicholls/tyumi/vec"
+)
 
-//Container allows you to group a number of children objects together. Children can be any UI Element, including other
-//containers. Go nuts why don't ya.
+// Container allows you to group a number of children objects together. Children can be any UI Element, including other
+// containers. Go nuts why don't ya.
 type Container struct {
 	ElementPrototype
 
@@ -11,8 +14,8 @@ type Container struct {
 	redraw   bool //total redraw required. see Container.Redraw()
 }
 
-func NewContainer(w, h, x, y, depth int) (c Container) {
-	c.Init(w, h, x, y, depth)
+func NewContainer(w, h int, pos vec.Coord, depth int) (c Container) {
+	c.Init(w, h, pos, depth)
 	c.children = make([]Element, 0)
 
 	return
@@ -47,9 +50,9 @@ func (c *Container) RemoveElement(e Element) {
 	}
 }
 
-//Call this to indicate to the container that it must do a complete redraw from scratch.
-//Usually this is because a child element has moved, toggled visibility, or done some other
-//cool move. The next call to render will perform a clear first, then reset the flag.
+// Call this to indicate to the container that it must do a complete redraw from scratch.
+// Usually this is because a child element has moved, toggled visibility, or done some other
+// cool move. The next call to render will perform a clear first, then reset the flag.
 func (c *Container) Redraw() {
 	c.redraw = true
 }
@@ -65,7 +68,7 @@ func (c *Container) UpdateChildren() {
 	}
 }
 
-//Render composites all internal elements into the container's canvas.
+// Render composites all internal elements into the container's canvas.
 func (c *Container) Render() {
 	if c.redraw {
 		c.Canvas.Clear()
@@ -82,8 +85,8 @@ func (c *Container) Render() {
 	c.ElementPrototype.Render()
 }
 
-//Containers take keyboard input events and pass them to their children, in case any of them want
-//to handle the input. We skip invisible elements, we assume those are certainly NOT in focus.
+// Containers take keyboard input events and pass them to their children, in case any of them want
+// to handle the input. We skip invisible elements, we assume those are certainly NOT in focus.
 func (c *Container) HandleKeypress(e input.KeyboardEvent) {
 	for _, child := range c.children {
 		if child.IsVisible() {

@@ -53,6 +53,11 @@ func (v *Visuals) ChangeChars(char1, char2 rune) {
 	v.Mode = DRAW_TEXT
 }
 
+//Needed to satisfy Visuals interface. :(
+func (v Visuals) Visuals() Visuals {
+	return v
+}
+
 type DrawMode int
 
 const (

@@ -7,7 +7,7 @@ import (
 )
 
 // sdl event processor
-func ProcessEvents() {
+func processEvents() {
 	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
 		switch e := sdlevent.(type) {
 

@@ -47,7 +47,7 @@ func SetupRenderer(glyphPath, fontPath, title string) error {
 	return nil
 }
 
-// Sets up a custom used-defined renderer. This must be done after initializaing the console, but before running
+// Sets up a custom user-defined renderer. This must be done after initializaing the console, but before running
 // the main game loop.
 func SetupCustomRenderer(r gfx.Renderer, glyphPath, fontPath, title string) error {
 	renderer = r

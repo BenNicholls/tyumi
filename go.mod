@@ -1,6 +1,6 @@
 module github.com/bennicholls/tyumi
 
-go 1.23.3
+go 1.23
 
 require (
 	github.com/veandco/go-sdl2 v0.4.40

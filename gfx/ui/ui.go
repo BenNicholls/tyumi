@@ -144,7 +144,10 @@ func (e *ElementPrototype) Render() {
 	}
 
 	for _, child := range e.GetChildren() {
-		if child.IsVisible() {
+		//BUG: visibility culling doesn't take the border of the child into account.
+		//instead of fixing, might be better to redesign how borders work. Or make elements
+		//dynamically adjust their bounds when borders are activated?? hmm.
+		if child.IsVisible() && vec.FindIntersectionRect(e.getCanvas(), child).Area() > 0 { 
 			if child.IsUpdated() {
 				child.Render()
 			}

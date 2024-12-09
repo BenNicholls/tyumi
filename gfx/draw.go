@@ -89,13 +89,13 @@ func (c *Canvas) FloodFill(pos vec.Coord, depth int, v Visuals) {
 //
 //	could also pass this a rect to indicate subareas of the canvas that need to be copied
 func (c *Canvas) DrawToCanvas(dst *Canvas, offset vec.Coord, depth int) {
-	dst_cursor := vec.ZERO_COORD
-	for cursor := range vec.EachCoord(c) {
-		dst_cursor = cursor.Add(offset)
-		if !dst.InBounds(dst_cursor) || dst.getDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
+	draw_area := vec.FindIntersectionRect(dst, vec.Rect{offset, c.Size()})
+	for dst_cursor := range vec.EachCoord(draw_area) {
+		if dst.getDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
 			continue
 		}
-		cell := c.getCell(cursor)
+		src_cursor := dst_cursor.Subtract(offset)
+		cell := c.getCell(src_cursor)
 		dst.DrawVisuals(dst_cursor, depth, cell.Visuals)
 		cell.Dirty = false
 	}

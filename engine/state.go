@@ -19,14 +19,14 @@ type State interface {
 	Update()
 	UpdateUI()
 	Shutdown()
-	Window() *ui.Container
+	Window() *ui.ElementPrototype
 	InputEvents() *event.Stream
 	Events() *event.Stream
 }
 
 //An embeddable prototype that satisfies the State interface. Build around this for easier gamestate management.
 type StatePrototype struct {
-	window ui.Container
+	window ui.ElementPrototype
 
 	events event.Stream       //for engine events, game events, etc. processed at the end of each tick
 	inputEvents event.Stream  //for input events. processed at the start of each tick
@@ -49,7 +49,7 @@ func (sp *StatePrototype) Init(w, h int) {
 		}
 	}
 
-	sp.window = ui.NewContainer(w, h, vec.ZERO_COORD, 0)
+	sp.window.Init(w, h, vec.ZERO_COORD, 0)
 
 	sp.events = event.NewStream(100)
 	sp.inputEvents = event.NewStream(100)
@@ -63,7 +63,7 @@ func (sp *StatePrototype) Update() {
 }
 
 //UpdateUI is called before each frame, allowing the user to apply ui changes for rendering all at once if they prefer.
-//Otherwise they can implement Update() routines on the individual UI elements themselves and have them control their
+//Otherwise they can implement UpdateState() routines on the individual UI elements themselves and have them control their
 //own behaviour.
 func (sp *StatePrototype) UpdateUI() {
 	return
@@ -74,7 +74,7 @@ func (sp *StatePrototype) Shutdown() {
 	return
 }
 
-func (sp *StatePrototype) Window() *ui.Container {
+func (sp *StatePrototype) Window() *ui.ElementPrototype {
 	return &sp.window
 }
 

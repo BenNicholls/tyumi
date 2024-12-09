@@ -7,10 +7,10 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-//A List is a container that renders it's children elements from top to bottom, like you would expect
-//a list to do.
+// A List is a container that renders it's children elements from top to bottom, like you would expect
+// a list to do.
 type List struct {
-	Container
+	ElementPrototype
 
 	selected  int  //element that is currently selected. selected item will be ensured to be visible
 	highlight bool //toggle to highlight currently selected list item
@@ -20,20 +20,24 @@ type List struct {
 }
 
 func NewList(w, h int, pos vec.Coord, depth int) (l List) {
-	l = List{
-		Container: NewContainer(w, h, pos, depth),
-	}
-
+	l.ElementPrototype.Init(w, h, pos, depth)
 	return
 }
 
-func (l *List) AddElement(elems ...Element) {
-	l.Container.AddElement(elems...)
+func (l *List) AddChild(elem Element) {
+	l.TreeNode.AddChild(elem)
 	l.calibrate()
+	l.updated = true
 }
 
-func (l *List) RemoveElement(e Element) {
-	l.Container.RemoveElement(e)
+func (l *List) AddChildren(elems ...Element) {
+	l.TreeNode.AddChildren(elems...)
+	l.calibrate()
+	l.updated = true
+}
+
+func (l *List) RemoveChild(e Element) {
+	l.TreeNode.RemoveChild(e)
 	l.calibrate()
 }
 
@@ -46,21 +50,22 @@ func (l *List) ToggleScrollbar() {
 	}
 }
 
-//positions all the children elements so they are top to bottom, and the selected item is visible
+// positions all the children elements so they are top to bottom, and the selected item is visible
 func (l *List) calibrate() {
 	l.contentHeight = 0
-	for _, child := range l.children {
-		child.MoveTo(vec.Coord{0, l.contentHeight-l.scrollOffset})
+	for _, child := range l.GetChildren() {
+		child.MoveTo(vec.Coord{0, l.contentHeight - l.scrollOffset})
 		l.contentHeight += child.Bounds().H
 	}
 
 	//if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
 	if l.contentHeight > l.Bounds().H {
-		intersect := vec.FindIntersectionRect(l.children[l.selected], vec.Rect{vec.ZERO_COORD, l.Size()})
-		if sh := l.children[l.selected].Bounds().H; intersect.H != sh {
+
+		intersect := vec.FindIntersectionRect(l.GetChildren()[l.selected], vec.Rect{vec.ZERO_COORD, l.Size()})
+		if sh := l.GetChildren()[l.selected].Bounds().H; intersect.H != sh {
 			scrollDelta := 0
 
-			sy := l.children[l.selected].Bounds().Y
+			sy := l.GetChildren()[l.selected].Bounds().Y
 			if sy < 0 {
 				scrollDelta = sy
 			} else if sy >= l.Bounds().H {
@@ -69,7 +74,7 @@ func (l *List) calibrate() {
 				scrollDelta = sh - intersect.H
 			}
 
-			for _, child := range l.children {
+			for _, child := range l.GetChildren() {
 				child.Move(0, -scrollDelta)
 			}
 
@@ -83,47 +88,53 @@ func (l *List) calibrate() {
 	l.border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
 }
 
-//Toggles highlighting of currently selected item.
+// Toggles highlighting of currently selected item.
 func (l *List) ToggleHighlight() {
 	l.highlight = !l.highlight
 }
 
 func (l *List) Select(selection int) {
-	if l.selected == util.Clamp(selection, 0, len(l.children)-1) {
+	if l.selected == util.Clamp(selection, 0, len(l.GetChildren())-1) {
 		return
 	}
 
-	l.selected = util.Clamp(selection, 0, len(l.children)-1)
+	l.selected = util.Clamp(selection, 0, l.ChildCount()-1)
 	l.calibrate()
 }
 
-//Selects the next item
+// Selects the next item
 func (l *List) Next() {
-	if len(l.children) <= 1 {
+	if l.ChildCount() <= 1 {
 		return
 	}
 
-	l.selected, _ = util.ModularClamp(l.selected+1, 0, len(l.children)-1)
+	l.selected, _ = util.ModularClamp(l.selected+1, 0, l.ChildCount()-1)
 	l.calibrate()
+	l.updated = true
 }
 
-//Selects the previous item in the list
+// Selects the previous item in the list
 func (l *List) Prev() {
-	if len(l.children) <= 1 {
+	if l.ChildCount() <= 1 {
 		return
 	}
 
-	l.selected, _ = util.ModularClamp(l.selected-1, 0, len(l.children)-1)
+	l.selected, _ = util.ModularClamp(l.selected-1, 0, l.ChildCount()-1)
 	l.calibrate()
+	l.updated = true
 }
 
 func (l *List) Render() {
-	l.Container.Render()
+	if l.updated {
+		l.forceRedraw = true
+	}
+
+	l.ElementPrototype.Render()
 
 	//render highlight for selected item.
 	//TODO: different options for how the selected item is highlighted. currently just inverts the colours
 	if l.highlight {
-		area := l.children[l.selected].Bounds()
+		area := l.GetChildren()[l.selected].Bounds()
 		l.Canvas.DrawEffect(gfx.InvertEffect, area)
 	}
 }

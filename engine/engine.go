@@ -100,7 +100,7 @@ func update() {
 // This function updates any UI elements that need updating after the most recent tick in the current active state.
 func updateUI() {
 	mainState.UpdateUI()
-	mainState.Window().UpdateChildren()
+	mainState.Window().Update()
 	//    - tick animations
 }
 

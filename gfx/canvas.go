@@ -16,6 +16,7 @@ const (
 type Canvas struct {
 	cells    []Cell
 	depthmap []int
+	dirty    bool //true if any cells in the Canvas are dirty and need to be drawn out. TODO: replace this with a dirty bitset
 
 	width, height int
 
@@ -93,6 +94,7 @@ func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
 			col = c.foreColour
 		}
 		cell.SetForeColour(col)
+		c.dirty = cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -104,6 +106,7 @@ func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
 			col = c.backColour
 		}
 		cell.SetBackColour(col)
+		c.dirty = cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -117,6 +120,7 @@ func (c *Canvas) setGlyph(pos vec.Coord, depth, gl int) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
 		cell.SetGlyph(gl)
+		c.dirty = cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -125,6 +129,7 @@ func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
 		cell.SetText(char1, char2)
+		c.dirty = cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -140,6 +145,7 @@ func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellP
 			cell.Chars[int(char_pos)] = char
 			cell.Dirty = true
 			c.setDepth(pos, depth)
+			c.dirty = true
 		}
 	}
 }
@@ -160,7 +166,12 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 			cell.SetBackColour(c.backColour)
 			cell.SetForeColour(c.foreColour)
 			c.setDepth(cursor, -1)
-
 		}
 	}
+	c.dirty = true
+}
+
+//reports whether the cavas should be drawn out
+func (c Canvas) Dirty() bool {
+	return c.dirty
 }

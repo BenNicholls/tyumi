@@ -99,4 +99,6 @@ func (c *Canvas) DrawToCanvas(dst *Canvas, offset vec.Coord, depth int) {
 		dst.DrawVisuals(dst_cursor, depth, cell.Visuals)
 		cell.Dirty = false
 	}
+
+	c.dirty = false
 }

@@ -14,6 +14,7 @@ type Border struct {
 
 	title string
 	hint  string
+	style BorderStyle
 
 	//SCROLLBAR STUFF. for now, only vertical scrollbar for lists and the like.
 	scrollbar                 bool //whether the scrollbar is enabled. scrollbar will be drawn whenever content doesn't fit
@@ -25,6 +26,8 @@ type Border struct {
 
 func NewBorder(element_size vec.Dims) Border {
 	b := Border{}
+
+	b.style = DefaultBorderStyle
 
 	b.top.Init(element_size.W+1, 1)
 	b.bottom.Init(element_size.W+1, 1)
@@ -43,39 +46,38 @@ func (b *Border) Render() {
 	}
 
 	for cursor := range vec.EachCoord(b.top.Bounds()) { //top and bottom
-		b.top.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
-		b.bottom.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_LR)
+		b.top.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
+		b.bottom.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
 	}
 
 	for cursor := range vec.EachCoord(b.left.Bounds()) {
-		b.left.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
-		b.right.DrawGlyph(cursor, 0, gfx.GLYPH_BORDER_UD)
+		b.left.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
+		b.right.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
 	}
 
 	w, h := b.top.Size().W, b.left.Size().H
-	b.top.DrawGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DR)        //upper left corner
-	b.right.DrawGlyph(vec.Coord{0, 0}, 0, gfx.GLYPH_BORDER_DL)      //upper right corner
-	b.bottom.DrawGlyph(vec.Coord{w - 1, 0}, 0, gfx.GLYPH_BORDER_UL) //bottom right corner
-	b.left.DrawGlyph(vec.Coord{0, h - 1}, 0, gfx.GLYPH_BORDER_UR)   //bottom left corner
+	b.top.DrawGlyph(vec.Coord{0, 0}, 0, b.style.Glyphs[BORDER_DR])        //upper left corner
+	b.right.DrawGlyph(vec.Coord{0, 0}, 0, b.style.Glyphs[BORDER_DL])      //upper right corner
+	b.bottom.DrawGlyph(vec.Coord{w - 1, 0}, 0, b.style.Glyphs[BORDER_UL]) //bottom right corner
+	b.left.DrawGlyph(vec.Coord{0, h - 1}, 0, b.style.Glyphs[BORDER_UR])   //bottom left corner
 
 	//decorate and draw title
 	if b.title != "" {
-		decoratedTitle := string(gfx.TEXT_BORDER_DECO_LEFT) + b.title + string(gfx.TEXT_BORDER_DECO_RIGHT)
-		if len(b.title)%2 == 1 {
-			decoratedTitle += string(gfx.TEXT_BORDER_LR)
+		decoratedTitle := b.style.DecorateText(b.title)
+		if len(decoratedTitle)%2 == 1 {
+			decoratedTitle += string(b.style.TextDecorationPad)
 		}
-		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
+		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, gfx.COL_DEFAULT, gfx.COL_DEFAULT, gfx.DRAW_TEXT_LEFT)
 	}
 
 	//decorate and draw hint
 	if b.hint != "" {
-		decoratedHint := string(gfx.TEXT_BORDER_DECO_LEFT) + b.hint + string(gfx.TEXT_BORDER_DECO_RIGHT)
-		hintOffset := w - len(b.hint)/2 - 1
-		if len(b.hint)%2 == 1 {
-			decoratedHint = string(gfx.TEXT_BORDER_LR) + decoratedHint
-			hintOffset -= 1
+		decoratedHint := b.style.DecorateText(b.hint)
+		if len(decoratedHint)%2 == 1 {
+			decoratedHint = string(b.style.TextDecorationPad) + decoratedHint
 		}
-		b.bottom.DrawText(vec.Coord{hintOffset - 1, 0}, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
+		hintOffset := w - len(decoratedHint)/2
+		b.bottom.DrawText(vec.Coord{hintOffset, 0}, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
 	}
 
 	//draw scrollbar if necessary
@@ -126,3 +128,4 @@ func (b *Border) UpdateScrollbar(height, pos int) {
 	b.scrollbarViewportPosition = pos
 	b.dirty = true
 }
+

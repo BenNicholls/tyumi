@@ -55,11 +55,16 @@ func (e *ElementPrototype) SetDefaultColours(fore uint32, back uint32) {
 	e.updated = true
 }
 
-func (e *ElementPrototype) EnableBorder(title, hint string) {
+// Enable the border. Optionally takes a BorderStyle if you'd like something apart from the default style.
+func (e *ElementPrototype) EnableBorder(title, hint string, style ...BorderStyle) {
 	e.bordered = true
 	e.border = NewBorder(e.Size())
 	e.border.title = title
 	e.border.hint = hint
+
+	if len(style) > 0 {
+		e.border.style = style[0]
+	}
 }
 
 func (e *ElementPrototype) Bounds() vec.Rect {

@@ -5,6 +5,7 @@ package ui
 import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/input"
+	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -24,6 +25,7 @@ type Element interface {
 	IsUpdated() bool
 	DrawToParent()
 	getCanvas() *gfx.Canvas
+	getBorder() *Border
 }
 
 type ElementPrototype struct {
@@ -55,16 +57,43 @@ func (e *ElementPrototype) SetDefaultColours(fore uint32, back uint32) {
 	e.updated = true
 }
 
-// Enable the border. Optionally takes a BorderStyle if you'd like something apart from the default style.
-func (e *ElementPrototype) EnableBorder(title, hint string, style ...BorderStyle) {
+// Enable the border. Defaults to ui.DefaultBorderStyle. Use SetBorderStyle to use something else.
+// TODO: might be good to move this out into a SetupBorder() function, so EnableBorder() can be used
+// instead to turn drawing of the border on and off, which might make more sense? Is that a functionality
+// that is needed??
+func (e *ElementPrototype) EnableBorder(title, hint string) {
 	e.bordered = true
 	e.border = NewBorder(e.Size())
 	e.border.title = title
 	e.border.hint = hint
+	e.border.style = &DefaultBorderStyle
+}
 
-	if len(style) > 0 {
-		e.border.style = style[0]
+// Sets the border style flag and, if possible, updates the used style. Sometimes you can't though...
+// for example, setting the flag to BORDER_INHERIT while the element does not have a parent.
+func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle ...BorderStyle) {
+	switch styleFlag {
+	case BORDER_STYLE_DEFAULT:
+		e.border.style = &DefaultBorderStyle
+	case BORDER_STYLE_INHERIT:
+		if parent := e.GetParent(); parent != nil {
+			parent_border := parent.getBorder()
+			e.border.style = parent_border.style
+		}
+	case BORDER_STYLE_CUSTOM:
+		if len(borderStyle) < 1 {
+			log.Error("Custom border style application failed: no borderstyle provided.")
+			return
+		}
+
+		e.border.style = &borderStyle[0]
 	}
+
+	e.border.styleFlag = styleFlag
+}
+
+func (e *ElementPrototype) getBorder() *Border {
+	return &e.border
 }
 
 func (e *ElementPrototype) Bounds() vec.Rect {
@@ -87,14 +116,30 @@ func (e *ElementPrototype) Move(dx, dy int) {
 	e.MoveTo(vec.Coord{e.position.X + dx, e.position.Y + dy})
 }
 
+func (e *ElementPrototype) AddChild(child Element) {
+	if child_border := child.getBorder(); child_border.styleFlag == BORDER_STYLE_INHERIT {
+		child_border.style = e.border.style
+	}
+	
+	e.TreeNode.AddChild(child)
+}
+
+func (e *ElementPrototype) AddChildren(children ...Element) {
+	if len(children) > 0 {
+		for _, child := range children {
+			e.AddChild(child)
+		}
+	}
+}
+
 // update() is the internal update function. handles any internal update behaviour, and calls the UpdateState function
 // to allow user-defined update behaviour to occur.
 func (e *ElementPrototype) Update() {
 	for _, e := range e.GetChildren() {
 		e.Update()
 	}
-	
-	//run user-provided state update function. 
+
+	//run user-provided state update function.
 	if e.UpdateState() {
 		e.updated = true
 	}
@@ -115,7 +160,7 @@ func (e *ElementPrototype) Update() {
 }
 
 // UpdateState() is a virtual function. Implement this to provide ui update behaviour on a thread-safe, per-frame basis,
-// instead of updating the state of the element as the gamestate progresses. Return true if you want to trigger a 
+// instead of updating the state of the element as the gamestate progresses. Return true if you want to trigger a
 // render of the ui element.
 func (e *ElementPrototype) UpdateState() bool {
 	return false
@@ -152,7 +197,7 @@ func (e *ElementPrototype) Render() {
 		//BUG: visibility culling doesn't take the border of the child into account.
 		//instead of fixing, might be better to redesign how borders work. Or make elements
 		//dynamically adjust their bounds when borders are activated?? hmm.
-		if child.IsVisible() && vec.FindIntersectionRect(e.getCanvas(), child).Area() > 0 { 
+		if child.IsVisible() && vec.FindIntersectionRect(e.getCanvas(), child).Area() > 0 {
 			if child.IsUpdated() {
 				child.Render()
 			}

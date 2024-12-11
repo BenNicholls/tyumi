@@ -25,19 +25,19 @@ func NewList(w, h int, pos vec.Coord, depth int) (l List) {
 }
 
 func (l *List) AddChild(elem Element) {
-	l.TreeNode.AddChild(elem)
+	l.ElementPrototype.AddChild(elem)
 	l.calibrate()
 	l.updated = true
 }
 
 func (l *List) AddChildren(elems ...Element) {
-	l.TreeNode.AddChildren(elems...)
+	l.ElementPrototype.AddChildren(elems...)
 	l.calibrate()
 	l.updated = true
 }
 
 func (l *List) RemoveChild(e Element) {
-	l.TreeNode.RemoveChild(e)
+	l.ElementPrototype.RemoveChild(e)
 	l.calibrate()
 }
 

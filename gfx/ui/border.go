@@ -12,9 +12,10 @@ type Border struct {
 	left   gfx.Canvas //left, including bottom left corner
 	right  gfx.Canvas //right, including top right corner
 
-	title string
-	hint  string
-	style BorderStyle
+	title     string
+	hint      string
+	styleFlag borderStyleFlag
+	style     *BorderStyle
 
 	//SCROLLBAR STUFF. for now, only vertical scrollbar for lists and the like.
 	scrollbar                 bool //whether the scrollbar is enabled. scrollbar will be drawn whenever content doesn't fit
@@ -26,8 +27,6 @@ type Border struct {
 
 func NewBorder(element_size vec.Dims) Border {
 	b := Border{}
-
-	b.style = DefaultBorderStyle
 
 	b.top.Init(element_size.W+1, 1)
 	b.bottom.Init(element_size.W+1, 1)
@@ -128,4 +127,3 @@ func (b *Border) UpdateScrollbar(height, pos int) {
 	b.scrollbarViewportPosition = pos
 	b.dirty = true
 }
-

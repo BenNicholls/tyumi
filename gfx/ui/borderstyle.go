@@ -2,10 +2,18 @@ package ui
 
 import "github.com/bennicholls/tyumi/gfx"
 
+type borderStyleFlag int
+
+const (
+	BORDER_STYLE_DEFAULT borderStyleFlag = iota //use default style
+	BORDER_STYLE_INHERIT                        //use parent's style
+	BORDER_STYLE_CUSTOM                         //use custom defined style
+)
+
 // Border neighbour flags
 const (
-	BORDER_NONE = 0
-	BORDER_L    = 1 << iota
+	BORDER_LONELY = 0 //border cell with no nieghbours. why would this ever exist???? i don't know but it's nice to have an unusable zero value
+	BORDER_L      = 1 << iota
 	BORDER_R
 	BORDER_U
 	BORDER_D
@@ -24,7 +32,7 @@ const (
 // default borderstyle used by all elements
 var DefaultBorderStyle BorderStyle
 
-// some pre-defined borderstyles
+// some pre-defined borderstyles. current options are "Block", "Thin", and "Thick"
 var BorderStyles map[string]BorderStyle
 
 type BorderStyle struct {
@@ -69,7 +77,6 @@ func init() {
 	thinStyle.TextDecorationR = gfx.TEXT_BORDER_DECO_RIGHT
 	thinStyle.TextDecorationPad = gfx.TEXT_BORDER_LR
 	BorderStyles["Thin"] = thinStyle
-	
 
 	var thickStyle BorderStyle
 	thickStyle.Glyphs[BORDER_LR] = gfx.GLYPH_BORDER_LLRR
@@ -83,7 +90,7 @@ func init() {
 	thickStyle.TextDecorationPad = gfx.TEXT_BORDER_LR
 	BorderStyles["Thick"] = thickStyle
 
-	DefaultBorderStyle = BorderStyles["Thick"]
+	DefaultBorderStyle = BorderStyles["Thin"]
 }
 
 // note: changing this does NOT dynamically update the styles for ui elements already using the old default.

@@ -64,7 +64,7 @@ func (b *Border) Render() {
 	//decorate and draw title
 	if b.title != "" {
 		decoratedTitle := b.style.DecorateText(b.title)
-		if len(decoratedTitle)%2 == 1 {
+		if len([]rune(decoratedTitle))%2 == 1 {
 			decoratedTitle += string(b.style.TextDecorationPad)
 		}
 		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, gfx.COL_DEFAULT, gfx.COL_DEFAULT, gfx.DRAW_TEXT_LEFT)
@@ -73,10 +73,10 @@ func (b *Border) Render() {
 	//decorate and draw hint
 	if b.hint != "" {
 		decoratedHint := b.style.DecorateText(b.hint)
-		if len(decoratedHint)%2 == 1 {
+		if len([]rune(decoratedHint))%2 == 1 {
 			decoratedHint = string(b.style.TextDecorationPad) + decoratedHint
 		}
-		hintOffset := w - len(decoratedHint)/2
+		hintOffset := w - len([]rune(decoratedHint))/2 - 1
 		b.bottom.DrawText(vec.Coord{hintOffset, 0}, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
 	}
 

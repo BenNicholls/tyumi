@@ -44,9 +44,7 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, fore, back uint3
 	if start_pos == DRAW_TEXT_RIGHT { //pad start with a space if we're starting on the right
 		text_runes = append(text_runes, TEXT_NONE)
 	}
-	for _, r := range txt {
-		text_runes = append(text_runes, r)
-	}
+	text_runes = append(text_runes, []rune(txt)...)
 	if len(text_runes)%2 != 0 { //pad end if we're ending on the left
 		text_runes = append(text_runes, TEXT_NONE)
 	}

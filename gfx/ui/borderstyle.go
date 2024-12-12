@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/bennicholls/tyumi/gfx"
+import (
+	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
+)
 
 type borderStyleFlag int
 
@@ -41,6 +44,8 @@ type BorderStyle struct {
 	TextDecorationR   rune            //character to print on the right of titles/hints
 	TextDecorationPad rune            //character to pad title/hint in case the decorated string isn't an even number of chars
 
+	Colours col.Pair //colours for the border. use gfx.COL_DEFAULT to use the default colours of the ui element instead
+
 	//scrollbar styling stuff should go here as well
 }
 
@@ -55,7 +60,7 @@ func (bs BorderStyle) DecorateText(text string) (decoratedText string) {
 	return
 }
 
-// setup predefined border styles and set simple crummy default
+// setup predefined border styles and set simple default
 func init() {
 
 	BorderStyles = make(map[string]BorderStyle)
@@ -64,6 +69,7 @@ func init() {
 	for i := range BORDER_ALL {
 		blockStyle.Glyphs[i] = gfx.GLYPH_FILL
 	}
+	blockStyle.Colours = col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}
 	BorderStyles["Block"] = blockStyle
 
 	var thinStyle BorderStyle
@@ -76,6 +82,7 @@ func init() {
 	thinStyle.TextDecorationL = gfx.TEXT_BORDER_DECO_LEFT
 	thinStyle.TextDecorationR = gfx.TEXT_BORDER_DECO_RIGHT
 	thinStyle.TextDecorationPad = gfx.TEXT_BORDER_LR
+	thinStyle.Colours = col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}
 	BorderStyles["Thin"] = thinStyle
 
 	var thickStyle BorderStyle
@@ -88,6 +95,7 @@ func init() {
 	thickStyle.TextDecorationL = gfx.TEXT_BORDER_DECO_LEFT
 	thickStyle.TextDecorationR = gfx.TEXT_BORDER_DECO_RIGHT
 	thickStyle.TextDecorationPad = gfx.TEXT_BORDER_LR
+	thickStyle.Colours = col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}
 	BorderStyles["Thick"] = thickStyle
 
 	DefaultBorderStyle = BorderStyles["Thin"]

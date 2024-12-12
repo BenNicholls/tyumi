@@ -58,6 +58,9 @@ func (c *Canvas) Clean() {
 
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.
 func (c *Canvas) SetDefaultColours(colours col.Pair) {
+	if c.defaultColours == colours {
+		return
+	}
 	c.defaultColours = colours
 	c.Clear()
 }

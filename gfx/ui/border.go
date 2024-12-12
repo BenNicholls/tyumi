@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -12,8 +13,10 @@ type Border struct {
 	left   gfx.Canvas //left, including bottom left corner
 	right  gfx.Canvas //right, including top right corner
 
-	title     string
-	hint      string
+	title   string
+	hint    string
+	colours col.Pair
+
 	styleFlag borderStyleFlag
 	style     *BorderStyle
 
@@ -38,11 +41,29 @@ func NewBorder(element_size vec.Dims) Border {
 	return b
 }
 
+func (b *Border) setColours(col col.Pair) {
+	b.colours = col
+	b.dirty = true
+}
+
 // renders the border to the internal canvas
 func (b *Border) Render() {
 	if !b.dirty {
 		return
 	}
+
+	//determine colours and update internal canavases if necessary.
+	colours := b.style.Colours
+	if colours.Fore == gfx.COL_DEFAULT {
+		colours.Fore = b.colours.Fore
+	}
+	if colours.Back == gfx.COL_DEFAULT {
+		colours.Back = b.colours.Back
+	}
+	b.top.SetDefaultColours(colours)
+	b.bottom.SetDefaultColours(colours)
+	b.left.SetDefaultColours(colours)
+	b.right.SetDefaultColours(colours)
 
 	for cursor := range vec.EachCoord(b.top.Bounds()) { //top and bottom
 		b.top.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
@@ -66,7 +87,7 @@ func (b *Border) Render() {
 		if len([]rune(decoratedTitle))%2 == 1 {
 			decoratedTitle += string(b.style.TextDecorationPad)
 		}
-		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.DRAW_TEXT_LEFT)
+		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, colours, gfx.DRAW_TEXT_LEFT)
 	}
 
 	//decorate and draw hint
@@ -76,7 +97,7 @@ func (b *Border) Render() {
 			decoratedHint = string(b.style.TextDecorationPad) + decoratedHint
 		}
 		hintOffset := w - len([]rune(decoratedHint))/2 - 1
-		b.bottom.DrawText(vec.Coord{hintOffset, 0}, 0, decoratedHint, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, 0)
+		b.bottom.DrawText(vec.Coord{hintOffset, 0}, 0, decoratedHint, colours, 0)
 	}
 
 	//draw scrollbar if necessary

@@ -55,6 +55,9 @@ func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 
 func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
+	if e.bordered {
+		e.border.setColours(e.DefaultColours())
+	}
 	e.updated = true
 }
 
@@ -67,6 +70,7 @@ func (e *ElementPrototype) EnableBorder(title, hint string) {
 	e.border = NewBorder(e.Size())
 	e.border.title = title
 	e.border.hint = hint
+	e.border.setColours(e.DefaultColours())
 	e.border.style = &DefaultBorderStyle
 }
 

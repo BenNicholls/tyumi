@@ -20,8 +20,7 @@ type Canvas struct {
 
 	width, height int
 
-	foreColour uint32 //default foreground colour
-	backColour uint32 //default background colour
+	defaultColours col.Pair
 }
 
 func (c *Canvas) Size() vec.Dims {
@@ -38,8 +37,8 @@ func (c *Canvas) Init(w, h int) {
 	c.width, c.height = util.Abs(w), util.Abs(h)
 	c.cells = make([]Cell, c.Size().Area())
 	c.depthmap = make([]int, c.Size().Area())
-	c.foreColour = col.WHITE
-	c.backColour = col.BLACK
+	c.defaultColours.Fore = col.WHITE
+	c.defaultColours.Back = col.BLACK
 	c.Clear()
 }
 
@@ -58,9 +57,8 @@ func (c *Canvas) Clean() {
 }
 
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.
-func (c *Canvas) SetDefaultColours(fore uint32, back uint32) {
-	c.foreColour = fore
-	c.backColour = back
+func (c *Canvas) SetDefaultColours(colours col.Pair) {
+	c.defaultColours = colours
 	c.Clear()
 }
 
@@ -91,7 +89,7 @@ func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
 		if col == COL_DEFAULT {
-			col = c.foreColour
+			col = c.defaultColours.Fore
 		}
 		cell.SetForeColour(col)
 		c.dirty = cell.Dirty
@@ -103,7 +101,7 @@ func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
 		if col == COL_DEFAULT {
-			col = c.backColour
+			col = c.defaultColours.Back
 		}
 		cell.SetBackColour(col)
 		c.dirty = cell.Dirty
@@ -111,9 +109,9 @@ func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
 	}
 }
 
-func (c *Canvas) setColours(pos vec.Coord, depth int, fore, back uint32) {
-	c.setForeColour(pos, depth, fore)
-	c.setBackColour(pos, depth, back)
+func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
+	c.setForeColour(pos, depth, colours.Fore)
+	c.setBackColour(pos, depth, colours.Back)
 }
 
 func (c *Canvas) setGlyph(pos vec.Coord, depth, gl int) {
@@ -163,8 +161,8 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 			}
 			cell := c.getCell(cursor)
 			cell.Clear()
-			cell.SetBackColour(c.backColour)
-			cell.SetForeColour(c.foreColour)
+			cell.SetBackColour(c.defaultColours.Back)
+			cell.SetForeColour(c.defaultColours.Fore)
 			c.setDepth(cursor, -1)
 		}
 	}
@@ -174,4 +172,8 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 //reports whether the cavas should be drawn out
 func (c Canvas) Dirty() bool {
 	return c.dirty
+}
+
+func (c Canvas) DefaultColours() col.Pair {
+	return c.defaultColours
 }

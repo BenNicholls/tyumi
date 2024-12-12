@@ -11,29 +11,29 @@ type Cell struct {
 }
 
 //Sets the properties of a cell all at once for Glyph Mode.
-func (c *Cell) SetGlyphCell(gl int, fore, back uint32) {
+func (c *Cell) SetGlyphCell(gl int, colours col.Pair) {
 	c.SetGlyph(gl)
-	c.SetForeColour(fore)
-	c.SetBackColour(back)
+	c.SetForeColour(colours.Fore)
+	c.SetBackColour(colours.Back)
 }
 
 //Sets the properties of a cell all at once for Text Mode.
-func (c *Cell) SetTextCell(char1, char2 rune, fore, back uint32) {
+func (c *Cell) SetTextCell(char1, char2 rune, colours col.Pair) {
 	c.SetText(char1, char2)
-	c.SetForeColour(fore)
-	c.SetBackColour(back)
+	c.SetForeColour(colours.Fore)
+	c.SetBackColour(colours.Back)
 }
 
 func (c *Cell) SetForeColour(col uint32) {
-	if col != c.ForeColour {
-		c.ForeColour = col
+	if col != c.Colours.Fore {
+		c.Colours.Fore = col
 		c.Dirty = true
 	}
 }
 
 func (c *Cell) SetBackColour(col uint32) {
-	if col != c.BackColour {
-		c.BackColour = col
+	if col != c.Colours.Back {
+		c.Colours.Back = col
 		c.Dirty = true
 	}
 }
@@ -62,8 +62,8 @@ func (c *Cell) SetText(char1, char2 rune) {
 //Re-inits a cell back to default blankness.
 func (c *Cell) Clear() {
 	if c.Mode == DRAW_GLYPH {
-		c.SetGlyphCell(GLYPH_NONE, col.WHITE, col.BLACK)
+		c.SetGlyphCell(GLYPH_NONE, col.Pair{col.WHITE, col.BLACK})
 	} else {
-		c.SetTextCell(TEXT_NONE, TEXT_NONE, col.WHITE, col.BLACK)
+		c.SetTextCell(TEXT_NONE, TEXT_NONE, col.Pair{col.WHITE, col.BLACK})
 	}
 }

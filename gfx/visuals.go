@@ -1,5 +1,7 @@
 package gfx
 
+import "github.com/bennicholls/tyumi/gfx/col"
+
 //Defines anything with the ability to be drawn.
 type Drawable interface {
 	Visuals() Visuals
@@ -10,9 +12,8 @@ type Drawable interface {
 //Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
 //hence the 2 Chars.
 type Visuals struct {
-	Glyph      int
-	ForeColour uint32
-	BackColour uint32
+	Glyph   int
+	Colours col.Pair
 
 	Mode  DrawMode
 	Chars [2]rune
@@ -21,8 +22,10 @@ type Visuals struct {
 func NewGlyphVisuals(gl int, fore, back uint32) (vis Visuals) {
 	vis = Visuals{
 		Glyph:      gl,
-		ForeColour: fore,
-		BackColour: back,
+		Colours: col.Pair{
+			Fore: fore,
+			Back: back,
+		},
 		Mode:       DRAW_GLYPH,
 	}
 
@@ -31,8 +34,10 @@ func NewGlyphVisuals(gl int, fore, back uint32) (vis Visuals) {
 
 func NewTextVisuals(char1, char2 rune, fore, back uint32) (vis Visuals) {
 	vis = Visuals{
-		ForeColour: fore,
-		BackColour: back,
+		Colours: col.Pair{
+			Fore: fore,
+			Back: back,
+		},
 		Mode:       DRAW_TEXT,
 		Chars:      [2]rune{char1, char2},
 	}

@@ -39,28 +39,28 @@ func Blend(c1, c2 uint32, mode BlendMode) uint32 {
 
 	switch mode {
 	case BLEND_MULTIPLY:
-		r = int(r1)*int(r2)/255
-		g = int(g1)*int(g2)/255
-		b = int(b1)*int(b2)/255
-		a = int(a1)*int(a2)/255
+		r = int(r1) * int(r2) / 255
+		g = int(g1) * int(g2) / 255
+		b = int(b1) * int(b2) / 255
+		a = int(a1) * int(a2) / 255
 	case BLEND_SCREEN:
-		r = 255-int(255-r1)*int(255-r2)/255
-		g = 255-int(255-g1)*int(255-g2)/255
-		b = 255-int(255-b1)*int(255-b2)/255
-		a = 255-int(255-a1)*int(255-a2)/255
+		r = 255 - int(255-r1)*int(255-r2)/255
+		g = 255 - int(255-g1)*int(255-g2)/255
+		b = 255 - int(255-b1)*int(255-b2)/255
+		a = 255 - int(255-a1)*int(255-a2)/255
 	}
 
 	return Make(r, g, b, a)
 }
 
-type BlendMode int 
+type BlendMode int
 
 const (
 	BLEND_MULTIPLY BlendMode = iota
 	BLEND_SCREEN
 )
 
-//colours! hardcoded for your pleasure. 
+//colours! hardcoded for your pleasure.
 const (
 	NONE      uint32 = 0x00000000
 	WHITE     uint32 = 0xFFFFFFFF
@@ -84,11 +84,11 @@ const (
 
 const KEY = FUSCHIA //key color. renderers should use this to support spritesheet transparency for BMP
 
-type Palette []uint32 
+type Palette []uint32
 
 //Adds the palette p2 to the end of p.
 func (p *Palette) Add(p2 Palette) {
-	if (*p)[len(*p) - 1] == p2[0] {
+	if (*p)[len(*p)-1] == p2[0] {
 		*p = append(*p, p2[1:]...)
 	} else {
 		*p = append(*p, p2...)
@@ -113,6 +113,8 @@ func GenerateGradient(num int, c1, c2 uint32) (p Palette) {
 	return
 }
 
-
-
-
+// A Pair of colours, fore and back
+type Pair struct {
+	Fore uint32
+	Back uint32
+}

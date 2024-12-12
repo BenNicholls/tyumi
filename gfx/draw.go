@@ -1,6 +1,7 @@
 package gfx
 
 import (
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -20,7 +21,7 @@ func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, v Visuals) {
 	if !c.InBounds(pos) {
 		return
 	}
-	c.setColours(pos, depth, v.ForeColour, v.BackColour)
+	c.setColours(pos, depth, v.Colours)
 
 	switch v.Mode {
 	case DRAW_GLYPH:
@@ -38,7 +39,7 @@ func (c *Canvas) DrawGlyph(pos vec.Coord, depth int, glyph int) {
 	c.setGlyph(pos, depth, glyph)
 }
 
-func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, fore, back uint32, start_pos TextCellPosition) {
+func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, colours col.Pair, start_pos TextCellPosition) {
 	//build []rune version of txt string
 	var text_runes []rune = make([]rune, 0, len(txt))
 	if start_pos == DRAW_TEXT_RIGHT { //pad start with a space if we're starting on the right
@@ -57,7 +58,7 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, fore, back uint3
 		}
 
 		c.setText(cursor, depth, text_runes[i], text_runes[i+1])
-		c.setColours(cursor, depth, fore, back)
+		c.setColours(cursor, depth, colours)
 	}
 }
 

@@ -66,7 +66,7 @@ func (b *Border) Render() {
 		if len([]rune(decoratedTitle))%2 == 1 {
 			decoratedTitle += string(b.style.TextDecorationPad)
 		}
-		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, gfx.COL_DEFAULT, gfx.COL_DEFAULT, gfx.DRAW_TEXT_LEFT)
+		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.DRAW_TEXT_LEFT)
 	}
 
 	//decorate and draw hint
@@ -76,7 +76,7 @@ func (b *Border) Render() {
 			decoratedHint = string(b.style.TextDecorationPad) + decoratedHint
 		}
 		hintOffset := w - len([]rune(decoratedHint))/2 - 1
-		b.bottom.DrawText(vec.Coord{hintOffset, 0}, 0, decoratedHint, gfx.COL_DEFAULT, gfx.COL_DEFAULT, 0)
+		b.bottom.DrawText(vec.Coord{hintOffset, 0}, 0, decoratedHint, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, 0)
 	}
 
 	//draw scrollbar if necessary

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -62,8 +63,8 @@ func (tb *Textbox) Render() {
 				if tb.center {
 					x_offset = (tb.Bounds().W*2 - len(line)) / 2
 				}
-				pos := vec.Coord{x_offset/2, i}
-				tb.DrawText(pos, 0, line, gfx.COL_DEFAULT, gfx.COL_DEFAULT, gfx.TextCellPosition(x_offset%2))
+				pos := vec.Coord{x_offset / 2, i}
+				tb.DrawText(pos, 0, line, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.TextCellPosition(x_offset%2))
 			}
 		}
 

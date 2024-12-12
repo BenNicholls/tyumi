@@ -4,6 +4,7 @@ package ui
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
@@ -52,8 +53,8 @@ func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 	e.TreeNode.Init(e)
 }
 
-func (e *ElementPrototype) SetDefaultColours(fore uint32, back uint32) {
-	e.Canvas.SetDefaultColours(fore, back)
+func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
+	e.Canvas.SetDefaultColours(colours)
 	e.updated = true
 }
 
@@ -120,7 +121,7 @@ func (e *ElementPrototype) AddChild(child Element) {
 	if child_border := child.getBorder(); child_border.styleFlag == BORDER_STYLE_INHERIT {
 		child_border.style = e.border.style
 	}
-	
+
 	e.TreeNode.AddChild(child)
 }
 

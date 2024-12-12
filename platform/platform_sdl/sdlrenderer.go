@@ -196,18 +196,18 @@ func (sdlr *SDLRenderer) Render() {
 				for c_i, char := range cell.Chars {
 					dst = makeRect(cursor.X*sdlr.tileSize+c_i*sdlr.tileSize/2, cursor.Y*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
 					src = makeRect((int(char)%32)*sdlr.tileSize/2, (int(char)/32)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
-					sdlr.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.ForeColour, cell.BackColour, int(char))
+					sdlr.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.Colours, int(char))
 				}
 			} else {
 				g := cell.Glyph
 				dst = makeRect(cursor.X*sdlr.tileSize, cursor.Y*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
 				src = makeRect((g%16)*sdlr.tileSize, (g/16)*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
-				sdlr.copyToRenderer(gfx.DRAW_GLYPH, src, dst, cell.ForeColour, cell.BackColour, g)
+				sdlr.copyToRenderer(gfx.DRAW_GLYPH, src, dst, cell.Colours, g)
 			}
 
 		}
 	}
-	
+
 	sdlr.console.Clean()
 
 	sdlr.renderer.SetRenderTarget(t) //point renderer at window again
@@ -226,11 +226,11 @@ func (sdlr *SDLRenderer) Render() {
 }
 
 // Copies a rect of pixeldata from a source texture to a rect on the renderer's target.
-func (sdlr *SDLRenderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, fore, back uint32, g int) {
+func (sdlr *SDLRenderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, colours col.Pair, g int) {
 	//change backcolour if it is different from previous draw
-	if back != sdlr.backDrawColour {
-		sdlr.backDrawColour = back
-		sdlr.renderer.SetDrawColor(col.RGBA(back))
+	if colours.Back != sdlr.backDrawColour {
+		sdlr.backDrawColour = colours.Back
+		sdlr.renderer.SetDrawColor(col.RGBA(sdlr.backDrawColour))
 	}
 
 	if sdlr.showChanges {
@@ -248,14 +248,14 @@ func (sdlr *SDLRenderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, fo
 
 	//change texture color mod if it is different from previous draw, then draw glyph/text
 	if mode == gfx.DRAW_GLYPH {
-		if fore != sdlr.foreDrawColourGlyph {
-			sdlr.foreDrawColourGlyph = fore
+		if colours.Fore != sdlr.foreDrawColourGlyph {
+			sdlr.foreDrawColourGlyph = colours.Fore
 			sdlr.setTextureColour(sdlr.glyphs, sdlr.foreDrawColourGlyph)
 		}
 		sdlr.renderer.Copy(sdlr.glyphs, &src, &dst)
 	} else {
-		if fore != sdlr.foreDrawColourText {
-			sdlr.foreDrawColourText = fore
+		if colours.Fore != sdlr.foreDrawColourText {
+			sdlr.foreDrawColourText = colours.Fore
 			sdlr.setTextureColour(sdlr.font, sdlr.foreDrawColourText)
 		}
 		sdlr.renderer.Copy(sdlr.font, &src, &dst)

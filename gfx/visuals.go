@@ -19,27 +19,21 @@ type Visuals struct {
 	Chars [2]rune
 }
 
-func NewGlyphVisuals(gl int, fore, back uint32) (vis Visuals) {
+func NewGlyphVisuals(gl int, colours col.Pair) (vis Visuals) {
 	vis = Visuals{
-		Glyph:      gl,
-		Colours: col.Pair{
-			Fore: fore,
-			Back: back,
-		},
-		Mode:       DRAW_GLYPH,
+		Glyph:   gl,
+		Colours: colours,
+		Mode:    DRAW_GLYPH,
 	}
 
 	return
 }
 
-func NewTextVisuals(char1, char2 rune, fore, back uint32) (vis Visuals) {
+func NewTextVisuals(char1, char2 rune, colours col.Pair) (vis Visuals) {
 	vis = Visuals{
-		Colours: col.Pair{
-			Fore: fore,
-			Back: back,
-		},
-		Mode:       DRAW_TEXT,
-		Chars:      [2]rune{char1, char2},
+		Colours: colours,
+		Mode:    DRAW_TEXT,
+		Chars:   [2]rune{char1, char2},
 	}
 
 	return

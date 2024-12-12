@@ -57,7 +57,8 @@ type InputCursorAnimation struct {
 
 func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor *InputCursorAnimation) {
 	cursor = new(InputCursorAnimation)
-	cursor.BlinkAnimation = *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.WHITE, col.BLACK), rate)
+	vis := gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.Pair{col.WHITE, col.BLACK})
+	cursor.BlinkAnimation = *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, vis, rate)
 
 	return
 }

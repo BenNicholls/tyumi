@@ -23,7 +23,6 @@ type Element interface {
 	MoveTo(vec.Coord)
 	Move(int, int)
 	IsVisible() bool
-	IsUpdated() bool
 	DrawToParent()
 	getCanvas() *gfx.Canvas
 	getBorder() *Border
@@ -171,10 +170,6 @@ func (e *ElementPrototype) UpdateState() bool {
 	return false
 }
 
-func (e *ElementPrototype) IsUpdated() bool {
-	return e.updated
-}
-
 func (e *ElementPrototype) ForceRedraw() {
 	e.forceRedraw = true
 }
@@ -203,9 +198,7 @@ func (e *ElementPrototype) Render() {
 		//instead of fixing, might be better to redesign how borders work. Or make elements
 		//dynamically adjust their bounds when borders are activated?? hmm.
 		if child.IsVisible() && vec.FindIntersectionRect(e.getCanvas(), child).Area() > 0 {
-			if child.IsUpdated() {
-				child.Render()
-			}
+			child.Render()
 			if child.getCanvas().Dirty() || e.forceRedraw {
 				child.DrawToParent()
 			}

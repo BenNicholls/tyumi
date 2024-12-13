@@ -15,8 +15,7 @@ const (
 
 // Border neighbour flags
 const (
-	BORDER_LONELY = 0 //border cell with no nieghbours. why would this ever exist???? i don't know but it's nice to have an unusable zero value
-	BORDER_L      = 1 << iota
+	BORDER_L = 1 << iota
 	BORDER_R
 	BORDER_U
 	BORDER_D
@@ -30,6 +29,7 @@ const (
 	BORDER_DL = BORDER_D | BORDER_L
 
 	BORDER_ALL = BORDER_LR | BORDER_UD
+	BORDER_LONELY = 0 //border cell with no neighbours. why would this ever exist???? i don't know but it's nice to have an unusable zero value
 )
 
 // default borderstyle used by all elements
@@ -39,10 +39,10 @@ var DefaultBorderStyle BorderStyle
 var BorderStyles map[string]BorderStyle
 
 type BorderStyle struct {
-	Glyphs            [BORDER_ALL]int //glyphs for border drawing, indexed by the BORDER_* constants above
 	TextDecorationL   rune            //character to print on the left of titles/hints
 	TextDecorationR   rune            //character to print on the right of titles/hints
 	TextDecorationPad rune            //character to pad title/hint in case the decorated string isn't an even number of chars
+	Glyphs            [BORDER_ALL + 1]int //glyphs for border drawing, indexed by the BORDER_* constants above
 
 	Colours col.Pair //colours for the border. use gfx.COL_DEFAULT to use the default colours of the ui element instead
 

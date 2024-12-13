@@ -1,5 +1,5 @@
 // UI is Tyumi's UI system. A base UI element is defined and successively more complex elements are composed from it. UI
-// elements can be nested in Containers for composition alongside/inside one another.
+// elements can be nested for composition alongside/inside one another.
 package ui
 
 import (
@@ -182,10 +182,16 @@ func (e *ElementPrototype) Render() {
 	}
 
 	if e.bordered {
+		if e.forceRedraw {
+			e.border.dirty = true	
+		}
 		e.border.Render()
 	}
 
 	if e.forceRedraw {
+		for _, child := range e.GetChildren() { //make sure siblings recompute border links
+			child.getBorder().dirty = true
+		}
 		e.Canvas.Clear()
 	}
 
@@ -217,7 +223,7 @@ func (e *ElementPrototype) DrawToParent() {
 
 	e.DrawToCanvas(parent.getCanvas(), e.position, e.depth)
 	if e.bordered {
-		e.border.DrawToCanvas(parent.getCanvas(), e.position.X, e.position.Y, e.depth)
+		e.border.DrawToCanvas(parent.getCanvas(), e.position, e.depth)
 	}
 }
 

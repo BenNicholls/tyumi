@@ -27,7 +27,7 @@ func (c *Canvas) Size() vec.Dims {
 	return vec.Dims{c.width, c.height}
 }
 
-func (c *Canvas) Bounds() vec.Rect {
+func (c Canvas) Bounds() vec.Rect {
 	return vec.Rect{vec.ZERO_COORD, vec.Dims{c.width, c.height}}
 }
 
@@ -78,6 +78,13 @@ func (c *Canvas) GetCell(pos vec.Coord) (cell Cell) {
 
 func (c *Canvas) getCell(pos vec.Coord) *Cell {
 	return &c.cells[pos.Y*c.width+pos.X]
+}
+
+func (c *Canvas) GetDepth(pos vec.Coord) int {
+	if !c.InBounds(pos) {
+		panic("bad depth get! do a bounds check first!!!") 
+	}
+	return c.getDepth(pos)
 }
 
 func (c *Canvas) getDepth(pos vec.Coord) int {

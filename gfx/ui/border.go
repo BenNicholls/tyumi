@@ -122,12 +122,72 @@ func (b *Border) Render() {
 	b.dirty = false
 }
 
-func (b *Border) DrawToCanvas(canvas *gfx.Canvas, x, y, depth int) {
+func (b *Border) DrawToCanvas(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	w, h := b.top.Size().W, b.left.Size().H
-	b.top.DrawToCanvas(canvas, vec.Coord{x - 1, y - 1}, depth)
-	b.bottom.DrawToCanvas(canvas, vec.Coord{x, y + h - 1}, depth)
-	b.left.DrawToCanvas(canvas, vec.Coord{x - 1, y}, depth)
-	b.right.DrawToCanvas(canvas, vec.Coord{x + w - 1, y - 1}, depth)
+	offset_top := offset.Add(vec.Coord{-1, -1})
+	offset_bottom := offset.Add(vec.Coord{0, h - 1})
+	offset_left := offset.Add(vec.Coord{-1, 0})
+	offset_right := offset.Add(vec.Coord{w - 1, -1})
+
+	if !b.style.DisableLink {
+		b.linkBorderSegment(&b.top, dst_canvas, offset_top, vec.DIR_DOWN, depth)
+		b.linkBorderSegment(&b.bottom, dst_canvas, offset_bottom, vec.DIR_UP, depth)
+		b.linkBorderSegment(&b.left, dst_canvas, offset_left, vec.DIR_RIGHT, depth)
+		b.linkBorderSegment(&b.right, dst_canvas, offset_right, vec.DIR_LEFT, depth)
+	}
+
+	b.top.DrawToCanvas(dst_canvas, offset_top, depth)
+	b.bottom.DrawToCanvas(dst_canvas, offset_bottom, depth)
+	b.left.DrawToCanvas(dst_canvas, offset_left, depth)
+	b.right.DrawToCanvas(dst_canvas, offset_right, depth)
+}
+
+func (b *Border) linkBorderSegment(border_segment, dst_canvas *gfx.Canvas, dst_offset vec.Coord, inner_dir vec.Direction, depth int) {
+	for src_cursor := range vec.EachCoord(border_segment) {
+		src_cell := border_segment.GetCell(src_cursor)
+		if src_cell.Mode == gfx.DRAW_TEXT {
+			continue
+		}
+		src_glyph := src_cell.Glyph
+		if !b.style.glyphIsLinkable(src_glyph) {
+			continue
+		}
+
+		linkedGlyph := b.getLinkedGlyph(src_glyph, src_cursor.Add(dst_offset), inner_dir, dst_canvas, depth)
+		linkedGlyph = b.getLinkedGlyph(linkedGlyph, src_cursor.Add(dst_offset), inner_dir.Inverted(), dst_canvas, depth)
+		if src_cursor == vec.ZERO_COORD {
+			linkedGlyph = b.getLinkedGlyph(linkedGlyph, src_cursor.Add(dst_offset), inner_dir.RotateCW(), dst_canvas, depth)
+		}
+		border_segment.DrawGlyph(src_cursor, 0, linkedGlyph)
+	}
+}
+
+func (b *Border) getLinkedGlyph(src_glyph int, glyph_dst_pos vec.Coord, link_dir vec.Direction, dst_canvas *gfx.Canvas, depth int) int {
+	glyph_flags := b.style.getBorderFlags(src_glyph)
+	neighbour_pos := glyph_dst_pos.Step(link_dir)
+	if dst_canvas.InBounds(neighbour_pos) && dst_canvas.GetDepth(neighbour_pos) == depth {
+		neighbour_cell := dst_canvas.GetCell(neighbour_pos)
+		if neighbour_cell.Mode == gfx.DRAW_GLYPH {
+			if b.style.glyphIsLinkable(neighbour_cell.Glyph) {
+				neighbour_cell_flags := b.style.getBorderFlags(neighbour_cell.Glyph)
+				if neighbour_cell_flags&getBorderFlagByDirection(link_dir.Inverted()) != 0 {
+					glyph_flags |= getBorderFlagByDirection(link_dir)
+				}
+			}
+		} else { // special cases for connecting with title/hint decorations
+			if link_dir == vec.DIR_RIGHT {
+				if neighbour_cell.Chars[0] == b.style.TextDecorationL || neighbour_cell.Chars[0] == b.style.TextDecorationPad {
+					glyph_flags |= BORDER_R
+				}
+			} else if link_dir == vec.DIR_LEFT {
+				if neighbour_cell.Chars[1] == b.style.TextDecorationR || neighbour_cell.Chars[1] == b.style.TextDecorationPad {
+					glyph_flags |= BORDER_L
+				}
+			}
+		}
+	}
+
+	return b.style.Glyphs[glyph_flags]
 }
 
 func (b *Border) EnableScrollbar(height, pos int) {

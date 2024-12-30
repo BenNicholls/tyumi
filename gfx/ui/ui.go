@@ -61,16 +61,30 @@ func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 }
 
 // Enable the border. Defaults to ui.DefaultBorderStyle. Use SetBorderStyle to use something else.
-// TODO: might be good to move this out into a SetupBorder() function, so EnableBorder() can be used
-// instead to turn drawing of the border on and off, which might make more sense? Is that a functionality
-// that is needed??
-func (e *ElementPrototype) EnableBorder(title, hint string) {
-	e.bordered = true
+func (e *ElementPrototype) EnableBorder() {
+	e.setBorder(true)
+}
+
+func (e *ElementPrototype) DisableBorder() {
+	e.setBorder(false)
+}
+
+func (e *ElementPrototype) setBorder(bordered bool) {
+	if bordered == e.bordered {
+		return
+	}
+
+	e.bordered = bordered
+	e.forceParentRedraw()
+}
+
+func (e *ElementPrototype) SetupBorder(title, hint string) {
 	e.border = NewBorder(e.Size())
 	e.border.title = title
 	e.border.hint = hint
 	e.border.setColours(e.DefaultColours())
 	e.border.style = &DefaultBorderStyle
+	e.EnableBorder()
 }
 
 // Sets the border style flag and, if possible, updates the used style. Sometimes you can't though...
@@ -110,9 +124,7 @@ func (e *ElementPrototype) MoveTo(pos vec.Coord) {
 	}
 
 	e.position = pos
-	if parent := e.GetParent(); parent != nil {
-		parent.ForceRedraw()
-	}
+	e.forceParentRedraw()
 }
 
 // THINK: should this take a coord too? or a Vec2i?
@@ -126,6 +138,7 @@ func (e *ElementPrototype) AddChild(child Element) {
 	}
 
 	e.TreeNode.AddChild(child)
+	e.ForceRedraw()
 }
 
 func (e *ElementPrototype) AddChildren(children ...Element) {
@@ -134,6 +147,11 @@ func (e *ElementPrototype) AddChildren(children ...Element) {
 			e.AddChild(child)
 		}
 	}
+}
+
+func (e *ElementPrototype) RemoveChild(child Element) {
+	e.TreeNode.RemoveChild(child)
+	e.ForceRedraw()
 }
 
 // update() is the internal update function. handles any internal update behaviour, and calls the UpdateState function
@@ -174,6 +192,13 @@ func (e *ElementPrototype) ForceRedraw() {
 	e.forceRedraw = true
 }
 
+func (e *ElementPrototype) forceParentRedraw() {
+	parent := e.GetParent()
+	if parent != nil {
+		parent.ForceRedraw()
+	}
+}
+
 // Renders any changes in the element to the internal canvas. If the element is not visible, we don't waste precious cpus
 // rendering to nothing.
 func (e *ElementPrototype) Render() {
@@ -183,7 +208,7 @@ func (e *ElementPrototype) Render() {
 
 	if e.bordered {
 		if e.forceRedraw {
-			e.border.dirty = true	
+			e.border.dirty = true
 		}
 		e.border.Render()
 	}
@@ -211,7 +236,6 @@ func (e *ElementPrototype) Render() {
 		}
 	}
 
-	e.updated = false
 	e.forceRedraw = false
 }
 
@@ -271,9 +295,7 @@ func (e *ElementPrototype) SetVisible(v bool) {
 		e.updated = true
 	}
 
-	if parent := e.GetParent(); parent != nil {
-		parent.ForceRedraw()
-	}
+	e.forceParentRedraw()
 }
 
 func (e *ElementPrototype) getCanvas() *gfx.Canvas {

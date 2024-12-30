@@ -127,6 +127,7 @@ func (l *List) Prev() {
 func (l *List) Render() {
 	if l.updated {
 		l.forceRedraw = true
+		l.updated = false
 	}
 
 	l.ElementPrototype.Render()

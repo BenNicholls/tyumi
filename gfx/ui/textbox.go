@@ -66,6 +66,7 @@ func (tb *Textbox) Render() {
 				pos := vec.Coord{x_offset / 2, i}
 				tb.DrawText(pos, 0, line, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.TextCellPosition(x_offset%2))
 			}
+			tb.updated = false
 		}
 
 		tb.ElementPrototype.Render()

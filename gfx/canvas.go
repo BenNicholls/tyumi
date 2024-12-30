@@ -54,6 +54,7 @@ func (c *Canvas) Clean() {
 	for i := range c.cells {
 		c.cells[i].Dirty = false
 	}
+	c.dirty = false
 }
 
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.
@@ -102,7 +103,7 @@ func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
 			col = c.defaultColours.Fore
 		}
 		cell.SetForeColour(col)
-		c.dirty = cell.Dirty
+		c.dirty = c.dirty || cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -114,7 +115,7 @@ func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
 			col = c.defaultColours.Back
 		}
 		cell.SetBackColour(col)
-		c.dirty = cell.Dirty
+		c.dirty = c.dirty || cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -128,7 +129,7 @@ func (c *Canvas) setGlyph(pos vec.Coord, depth, gl int) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
 		cell.SetGlyph(gl)
-		c.dirty = cell.Dirty
+		c.dirty = c.dirty || cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -137,7 +138,7 @@ func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
 		cell.SetText(char1, char2)
-		c.dirty = cell.Dirty
+		c.dirty = c.dirty || cell.Dirty
 		c.setDepth(pos, depth)
 	}
 }
@@ -148,13 +149,9 @@ func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
 func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellPosition) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
-		cell.Mode = DRAW_TEXT
-		if cell.Chars[int(char_pos)] != char {
-			cell.Chars[int(char_pos)] = char
-			cell.Dirty = true
-			c.setDepth(pos, depth)
-			c.dirty = true
-		}
+		cell.SetChar(char, char_pos)
+		c.dirty = c.dirty || cell.Dirty
+		c.setDepth(pos, depth)
 	}
 }
 

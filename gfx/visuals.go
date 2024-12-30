@@ -331,6 +331,6 @@ const (
 	TEXT_BORDER_UD         rune = rune(179)
 	TEXT_BORDER_DECO_LEFT  rune = rune(180)
 	TEXT_BORDER_DECO_RIGHT rune = rune(195)
-	TEXT_DEFAULT           rune = rune(255)
-	TEXT_NONE              rune = rune(32) //just a space
+	TEXT_DEFAULT           rune = rune(255) //indicates that text character should preserve what was there previously
+	TEXT_NONE              rune = rune(32)  //just a space
 )

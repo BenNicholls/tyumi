@@ -108,7 +108,7 @@ func (l *List) Next() {
 		return
 	}
 
-	l.selected, _ = util.ModularClamp(l.selected+1, 0, l.ChildCount()-1)
+	l.selected = util.CycleClamp(l.selected+1, 0, l.ChildCount()-1)
 	l.calibrate()
 	l.updated = true
 }
@@ -119,7 +119,7 @@ func (l *List) Prev() {
 		return
 	}
 
-	l.selected, _ = util.ModularClamp(l.selected-1, 0, l.ChildCount()-1)
+	l.selected = util.CycleClamp(l.selected-1, 0, l.ChildCount()-1)
 	l.calibrate()
 	l.updated = true
 }

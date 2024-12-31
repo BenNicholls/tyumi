@@ -56,12 +56,18 @@ func Clamp[T constraints.Ordered](val, min, max T) T {
 	return val
 }
 
-// ModularClamp is like clamp but instead of clamping at the endpoints, it overflows/underflows back to the other side of
-// the range. The second return param is the number of overflow cycles. negative for underflow, 0 for none, positive for
-// overflow. This kind of function probably has an actual name but hell if I know what it is.
+// CycleClamp is like clamp but instead of clamping at the endpoints, it overflows/underflows back to the other side of
+// the range. This range of the function is INCLUSIVE of min and max, so min <= val <= max.
+func CycleClamp(val, min, max int) int {
+	clamped_val, _ := CycleClampWithOverflow(val, min, max)
+	return clamped_val
+}
+
+// CycleClampWithOverflow is like CycleClamp but also returns the number of overflow cycles. negative for underflow, 
+// 0 for none, positive for overflow. 
 //NOTE: this function kind of doesn't work as expected since it is inclusive at the end points.
 //THINK: should this just be removed? it's pretty niche.
-func ModularClamp(val, min, max int) (int, int) {
+func CycleClampWithOverflow(val, min, max int) (int, int) {
 	if min > max {
 		min, max = max, min
 	}

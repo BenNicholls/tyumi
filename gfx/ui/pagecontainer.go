@@ -50,8 +50,7 @@ func (pc *PageContainer) NextPage() {
 		return
 	}
 
-	new_page_index, _ := util.ModularClamp(pc.currentPageIndex+1, 0, len(pc.pages)-1)
-	pc.selectPage(new_page_index)
+	pc.selectPage(util.CycleClamp(pc.currentPageIndex+1, 0, len(pc.pages)-1))
 }
 
 // Selects the previous page in the container. If at the start, wraps around to the last tab.
@@ -60,8 +59,7 @@ func (pc *PageContainer) PrevPage() {
 		return
 	}
 
-	new_page_index, _ := util.ModularClamp(pc.currentPageIndex-1, 0, len(pc.pages)-1)
-	pc.selectPage(new_page_index)
+	pc.selectPage(util.CycleClamp(pc.currentPageIndex-1, 0, len(pc.pages)-1))
 }
 
 func (pc *PageContainer) addPage(page *Page) {

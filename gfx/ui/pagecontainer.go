@@ -128,8 +128,8 @@ func (pc *PageContainer) Render() {
 	}
 }
 
-func (pc *PageContainer) HandleKeypress(key input.KeyboardEvent) {
-	switch key.Key {
+func (pc *PageContainer) HandleKeypress(event input.KeyboardEvent) {
+	switch event.Key {
 	case input.K_TAB:
 		pc.NextPage()
 	}

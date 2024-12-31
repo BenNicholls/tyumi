@@ -89,15 +89,15 @@ func RoundFloatToInt(f float64) int {
 	return int(f + math.Copysign(0.5, f))
 }
 
-// Lerp linearly interpolates a range (min-max) over (steps) intervals, and returns the (val)th step. Currently does this
+// Lerp linearly interpolates a range (start-end) over (steps) intervals, and returns the (val)th step. Currently does this
 // via a conversion to float64, so there might be some rounding errors in here I don't know about.
-func Lerp[T constraints.Integer|constraints.Float](min, max T, val, steps int) T {
+func Lerp[T constraints.Integer|constraints.Float](start, end T, val, steps int) T {
 	if val >= steps {
-		return T(max)
+		return T(end)
 	} else if val <= 0 {
-		return T(min)
+		return T(start)
 	}
 
-	stepVal := float64(max-min) / float64(steps)
-	return T(float64(min) + stepVal*float64(val))
+	stepVal := float64(end-start) / float64(steps)
+	return T(float64(start) + stepVal*float64(val))
 }

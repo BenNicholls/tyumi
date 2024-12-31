@@ -221,7 +221,9 @@ func (e *ElementPrototype) Render() {
 	}
 
 	for _, a := range e.animations {
-		a.Render(&e.Canvas)
+		if a.Dirty() {
+			a.Render(&e.Canvas)
+		}
 	}
 
 	for _, child := range e.GetChildren() {

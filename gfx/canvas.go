@@ -144,8 +144,6 @@ func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
 }
 
 // Changes a single character on the canvas at position (x,y) in text mode.
-// charNum: 0 = Left, 1 = Right (for ease with modulo operations). Throw whatever in here though, it gets
-// modulo 2'd anyways just in case.
 func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellPosition) {
 	if c.getDepth(pos) <= depth {
 		cell := c.getCell(pos)
@@ -157,6 +155,11 @@ func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellP
 
 // Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas.
 func (c *Canvas) Clear(areas ...vec.Rect) {
+	c.ClearAtDepth(-1, areas...)
+}
+
+//Clears all cells in the canvas at or below a certain depth. If depth < 0, clears everything
+func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	if len(areas) == 0 {
 		areas = append(areas, c.Bounds())
 	}
@@ -167,6 +170,9 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 				continue
 			}
 			cell := c.getCell(cursor)
+			if depth != -1 && c.getDepth(cursor) > depth {
+				continue
+			}
 			cell.Clear()
 			cell.SetBackColour(c.defaultColours.Back)
 			cell.SetForeColour(c.defaultColours.Fore)

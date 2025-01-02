@@ -1,6 +1,8 @@
 package input
 
 import (
+	"strconv"
+
 	"github.com/bennicholls/tyumi/event"
 )
 
@@ -46,6 +48,16 @@ func (kb KeyboardEvent) Text() (s string) {
 	} else {
 		return ""
 	}
+}
+
+func (kb KeyboardEvent) String() (s string) {
+	s = "KEY EVENT. PRESSED: "
+	if txt := kb.Text(); txt != "" {
+		s += txt
+	} else {
+		s += "some non text char (" + strconv.Itoa(int(kb.Key)) + ")"
+	}
+	return
 }
 
 // keycodes. these names are ripped right from github.com/veandco/go-sdl2/sdl/keycode.go

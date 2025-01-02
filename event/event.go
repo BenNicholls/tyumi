@@ -1,19 +1,21 @@
-//Event is Tyumi's generic event system. It handles registration, creation, storage, filtering,
-//and eventual doling-out of events.
+// Event is Tyumi's generic event system. It handles registration, creation, storage, filtering,
+// and eventual doling-out of events.
 package event
-
 
 //this array is populated with the registered listeners for each registered event type.
 var registeredEvents [][]*Stream
+var eventNames []string
 
 func init() {
 	registeredEvents = make([][]*Stream, 0)
+	eventNames = make([]string, 0)
 }
 
 //Definition for event objects. Compose custom events around the EventPrototype to satisfy
 //this interface cleanly.
 type Event interface {
 	ID() int
+	String() string
 }
 
 //Compose custom events around this
@@ -23,6 +25,10 @@ type EventPrototype struct {
 
 func (e EventPrototype) ID() int {
 	return e.id
+}
+
+func (e EventPrototype) String() string {
+	return eventNames[e.id]
 }
 
 func New(ID int) EventPrototype {
@@ -84,8 +90,9 @@ func (s *Stream) Process() {
 
 //Registers an event with the event system and returns the assigned ID. Also creates the list of
 //listeners
-func Register() int {
+func Register(name string) int {
 	registeredEvents = append(registeredEvents, make([]*Stream, 0))
+	eventNames = append(eventNames, name)
 	return len(registeredEvents) - 1
 }
 

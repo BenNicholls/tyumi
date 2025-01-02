@@ -77,10 +77,9 @@ func (t TreeNode[T]) GetChildren() []T {
 // Retrieves the node ID. This is a unique ID to each node and is used to make nodes comparable.
 // NOTE: this ID is generated at runtime when first needed, so may change between one run of the
 // program to the next.
-func (t TreeNode[T]) getID() int {
+func (t *TreeNode[T]) getID() int {
 	if t.node_id == 0 {
-		id_counter += 1
-		t.node_id = id_counter
+		t.node_id = gen_ID()
 	}
 
 	return t.node_id
@@ -127,7 +126,6 @@ func (t *TreeNode[T]) removeChildNode(node tree) {
 	for i, child := range t.children {
 		if child.getID() == node.getID() {
 			t.removeChildByIndex(i)
-
 			break
 		}
 	}

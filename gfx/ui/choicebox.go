@@ -13,13 +13,14 @@ type ChoiceBox struct {
 	Textbox
 
 	choices            []string
-	currentChoiceIndex int //will be -1 if no choices present
+	currentChoiceIndex int            //will be -1 if no choices present
 	arrowVisuals       [2]gfx.Visuals //LEFT and RIGHT
 }
 
-func NewChoiceBox(w, h int, pos vec.Coord, depth int, choices ...string) (cb ChoiceBox) {
-	cb.Textbox = NewTextbox(w, h, pos, depth, "No Choice", true) //reduced width to account for arrows
-	cb.currentChoiceIndex = -1 
+func NewChoiceBox(w, h int, pos vec.Coord, depth int, choices ...string) (cb *ChoiceBox) {
+	cb = new(ChoiceBox)
+	cb.Textbox.Init(w, h, pos, depth, "No Choice", true) //reduced width to account for arrows
+	cb.currentChoiceIndex = -1
 
 	cb.choices = choices
 	if len(cb.choices) > 0 {
@@ -51,7 +52,7 @@ func (cb *ChoiceBox) Prev() {
 		return
 	}
 
-	cb.selectChoice(util.CycleClamp(cb.currentChoiceIndex-1, 0, len(cb.choices)-1))	
+	cb.selectChoice(util.CycleClamp(cb.currentChoiceIndex-1, 0, len(cb.choices)-1))
 }
 
 func (cb *ChoiceBox) Next() {

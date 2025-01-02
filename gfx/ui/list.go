@@ -19,7 +19,8 @@ type List struct {
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
 }
 
-func NewList(w, h int, pos vec.Coord, depth int) (l List) {
+func NewList(w, h int, pos vec.Coord, depth int) (l *List) {
+	l = new(List)
 	l.ElementPrototype.Init(w, h, pos, depth)
 	return
 }

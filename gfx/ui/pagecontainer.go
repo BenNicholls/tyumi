@@ -21,7 +21,8 @@ type PageContainer struct {
 	currentPageIndex int //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
 }
 
-func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc PageContainer) {
+func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc *PageContainer) {
+	pc = new(PageContainer)
 	pc.ElementPrototype.Init(w, h, pos, depth)
 
 	pc.tabRow = new(ElementPrototype)
@@ -39,9 +40,9 @@ func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc PageContainer) {
 // with other ui stuff
 func (pc *PageContainer) CreatePage(title string) *Page {
 	newpage := newPage(pc.Bounds().W, pc.Bounds().H, title)
-	pc.addPage(&newpage)
+	pc.addPage(newpage)
 
-	return &newpage
+	return newpage
 }
 
 // Selects the next page in the container. If at the end, wraps around to the first tab.
@@ -132,7 +133,11 @@ func (pc *PageContainer) HandleKeypress(event input.KeyboardEvent) {
 	switch event.Key {
 	case input.K_TAB:
 		pc.NextPage()
+		return
 	}
+
+	//TODO: event handled flag so we can stop event propogation
+	pc.ElementPrototype.HandleKeypress(event)
 }
 
 // Page is the content for a tab in a PageContainer. Size is defined and controlled by the PageContainer.
@@ -145,16 +150,16 @@ type Page struct {
 	active bool //whether this page is selected (currently not used... this feels necessary but I can't think of why just yet)
 }
 
-func newPage(width, height int, title string) (p Page) {
+func newPage(width, height int, title string) (p *Page) {
 	if title == "" {
 		title = " "
 	}
+	p = new(Page)
 	p.title = title
 	p.Init(width, height, vec.Coord{0, 3}, 0)
 
-	newTab := NewTextbox(FIT_TEXT, 1, vec.Coord{1, 1}, 5, title, false)
-	newTab.SetupBorder("", "")
-	p.tab = &newTab
+	p.tab = NewTextbox(FIT_TEXT, 1, vec.Coord{1, 1}, 5, title, false)
+	p.tab.SetupBorder("", "")
 
 	p.deactivate()
 

@@ -14,8 +14,9 @@ type InputBox struct {
 	cursor *InputCursorAnimation
 }
 
-func NewInputbox(w, h int, pos vec.Coord, depth int) (ib InputBox) {
-	ib.Textbox = NewTextbox(w, h, pos, depth, "", false)
+func NewInputbox(w, h int, pos vec.Coord, depth int) (ib *InputBox) {
+	ib = new(InputBox)
+	ib.Textbox.Init(w, h, pos, depth, "", false)
 	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 1, 30)
 
 	ib.AddAnimation(ib.cursor)
@@ -23,10 +24,10 @@ func NewInputbox(w, h int, pos vec.Coord, depth int) (ib InputBox) {
 	return
 }
 
-func (ib *InputBox) HandleKeypress(e input.KeyboardEvent) {
-	if text := e.Text(); text != "" {
+func (ib *InputBox) HandleKeypress(event input.KeyboardEvent) {
+	if text := event.Text(); text != "" {
 		ib.Insert(text)
-	} else if e.Key == input.K_BACKSPACE {
+	} else if event.Key == input.K_BACKSPACE {
 		ib.Delete()
 	}
 }

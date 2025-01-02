@@ -21,11 +21,16 @@ type Textbox struct {
 // width is set to FIT_TEXT, the box will ensure the entire text fits on 1 line (aka height will be 1). Setting height =
 // FIT_TEXT will wrap the text at the provided width, and the textbox will have height = however many lines are required.
 // Note that this is just for initialization, the textbox won't change dimensions to fit later changes in the text.
-func NewTextbox(w, h int, pos vec.Coord, depth int, text string, center bool) Textbox {
-	tb := Textbox{
-		text:   text,
-		center: center,
-	}
+func NewTextbox(w, h int, pos vec.Coord, depth int, text string, center bool) (tb *Textbox) {
+	tb = new(Textbox)
+	tb.Init(w, h, pos, depth, text, center)
+	
+	return tb
+}
+
+func (tb *Textbox) Init(w, h int, pos vec.Coord, depth int, text string, center bool) {
+	tb.text = text
+	tb.center = center
 
 	//auto-fit text if required
 	if w == FIT_TEXT {
@@ -41,7 +46,6 @@ func NewTextbox(w, h int, pos vec.Coord, depth int, text string, center bool) Te
 	}
 
 	tb.ElementPrototype.Init(w, h, pos, depth)
-	return tb
 }
 
 func (tb *Textbox) ChangeText(txt string) {

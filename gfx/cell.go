@@ -25,48 +25,58 @@ func (c *Cell) SetTextCell(char1, char2 rune, colours col.Pair) {
 }
 
 func (c *Cell) SetForeColour(col uint32) {
-	if col != c.Colours.Fore {
-		c.Colours.Fore = col
-		c.Dirty = true
+	if col == c.Colours.Fore {
+		return
 	}
+	
+	c.Colours.Fore = col
+	c.Dirty = true
 }
 
 func (c *Cell) SetBackColour(col uint32) {
-	if col != c.Colours.Back {
-		c.Colours.Back = col
-		c.Dirty = true
+	if col == c.Colours.Back {
+		return
 	}
+
+	c.Colours.Back = col
+	c.Dirty = true
 }
 
 func (c *Cell) SetGlyph(gl int) {
-	if gl != c.Glyph || c.Mode != DRAW_GLYPH {
-		c.Mode = DRAW_GLYPH
-		c.Glyph = gl
-		c.Dirty = true
+	if gl == c.Glyph && c.Mode == DRAW_GLYPH {
+		return
 	}
+
+	c.Mode = DRAW_GLYPH
+	c.Glyph = gl
+	c.Dirty = true
 }
 
 func (c *Cell) SetText(char1, char2 rune) {
-	if char1 != c.Chars[0] || char2 != c.Chars[1] || c.Mode != DRAW_TEXT {
-		c.Mode = DRAW_TEXT
-		if char1 != TEXT_DEFAULT {
-			c.Chars[0] = char1
-		}
-		if char2 != TEXT_DEFAULT {
-			c.Chars[1] = char2
-		}
-		c.Dirty = true
+	if char1 == c.Chars[0] && char2 == c.Chars[1] && c.Mode == DRAW_TEXT {
+		return
 	}
+
+	c.Mode = DRAW_TEXT
+	if char1 != TEXT_DEFAULT {
+		c.Chars[0] = char1
+	}
+	if char2 != TEXT_DEFAULT {
+		c.Chars[1] = char2
+	}
+	c.Dirty = true
 }
 
 func (c *Cell) SetChar(char rune, char_pos TextCellPosition) {
-	if c.Chars[int(char_pos)] != char || c.Mode != DRAW_TEXT {
-		c.Mode = DRAW_TEXT
-		if char != TEXT_DEFAULT {
-			c.Chars[int(char_pos)] = char
-		}
-		c.Dirty = true
+	if c.Chars[int(char_pos)] == char && c.Mode == DRAW_TEXT {
+		return
 	}
+
+	c.Mode = DRAW_TEXT
+	if char != TEXT_DEFAULT {
+		c.Chars[int(char_pos)] = char
+	}
+	c.Dirty = true
 }
 
 // Re-inits a cell back to default blankness.

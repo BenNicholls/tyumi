@@ -83,7 +83,7 @@ func (c *Canvas) getCell(pos vec.Coord) *Cell {
 
 func (c *Canvas) GetDepth(pos vec.Coord) int {
 	if !c.InBounds(pos) {
-		panic("bad depth get! do a bounds check first!!!") 
+		panic("bad depth get! do a bounds check first!!!")
 	}
 	return c.getDepth(pos)
 }
@@ -97,27 +97,31 @@ func (c *Canvas) setDepth(pos vec.Coord, depth int) {
 }
 
 func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
-	if c.getDepth(pos) <= depth {
-		cell := c.getCell(pos)
-		if col == COL_DEFAULT {
-			col = c.defaultColours.Fore
-		}
-		cell.SetForeColour(col)
-		c.dirty = c.dirty || cell.Dirty
-		c.setDepth(pos, depth)
+	if c.getDepth(pos) > depth {
+		return
 	}
+
+	cell := c.getCell(pos)
+	if col == COL_DEFAULT {
+		col = c.defaultColours.Fore
+	}
+	cell.SetForeColour(col)
+	c.dirty = c.dirty || cell.Dirty
+	c.setDepth(pos, depth)
 }
 
 func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
-	if c.getDepth(pos) <= depth {
-		cell := c.getCell(pos)
-		if col == COL_DEFAULT {
-			col = c.defaultColours.Back
-		}
-		cell.SetBackColour(col)
-		c.dirty = c.dirty || cell.Dirty
-		c.setDepth(pos, depth)
+	if c.getDepth(pos) > depth {
+		return
 	}
+
+	cell := c.getCell(pos)
+	if col == COL_DEFAULT {
+		col = c.defaultColours.Back
+	}
+	cell.SetBackColour(col)
+	c.dirty = c.dirty || cell.Dirty
+	c.setDepth(pos, depth)
 }
 
 func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
@@ -126,31 +130,37 @@ func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
 }
 
 func (c *Canvas) setGlyph(pos vec.Coord, depth, gl int) {
-	if c.getDepth(pos) <= depth {
-		cell := c.getCell(pos)
-		cell.SetGlyph(gl)
-		c.dirty = c.dirty || cell.Dirty
-		c.setDepth(pos, depth)
+	if c.getDepth(pos) > depth {
+		return
 	}
+
+	cell := c.getCell(pos)
+	cell.SetGlyph(gl)
+	c.dirty = c.dirty || cell.Dirty
+	c.setDepth(pos, depth)
 }
 
 func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
-	if c.getDepth(pos) <= depth {
-		cell := c.getCell(pos)
-		cell.SetText(char1, char2)
-		c.dirty = c.dirty || cell.Dirty
-		c.setDepth(pos, depth)
+	if c.getDepth(pos) > depth {
+		return
 	}
+
+	cell := c.getCell(pos)
+	cell.SetText(char1, char2)
+	c.dirty = c.dirty || cell.Dirty
+	c.setDepth(pos, depth)
 }
 
 // Changes a single character on the canvas at position (x,y) in text mode.
 func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellPosition) {
-	if c.getDepth(pos) <= depth {
-		cell := c.getCell(pos)
-		cell.SetChar(char, char_pos)
-		c.dirty = c.dirty || cell.Dirty
-		c.setDepth(pos, depth)
+	if c.getDepth(pos) > depth {
+		return
 	}
+
+	cell := c.getCell(pos)
+	cell.SetChar(char, char_pos)
+	c.dirty = c.dirty || cell.Dirty
+	c.setDepth(pos, depth)
 }
 
 // Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas.
@@ -158,7 +168,7 @@ func (c *Canvas) Clear(areas ...vec.Rect) {
 	c.ClearAtDepth(-1, areas...)
 }
 
-//Clears all cells in the canvas at or below a certain depth. If depth < 0, clears everything
+// Clears all cells in the canvas at or below a certain depth. If depth < 0, clears everything
 func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	if len(areas) == 0 {
 		areas = append(areas, c.Bounds())
@@ -182,7 +192,7 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	c.dirty = true
 }
 
-//reports whether the cavas should be drawn out
+// reports whether the cavas should be drawn out
 func (c Canvas) Dirty() bool {
 	return c.dirty
 }

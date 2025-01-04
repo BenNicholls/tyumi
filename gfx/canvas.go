@@ -37,8 +37,7 @@ func (c *Canvas) Init(w, h int) {
 	c.width, c.height = util.Abs(w), util.Abs(h)
 	c.cells = make([]Cell, c.Size().Area())
 	c.depthmap = make([]int, c.Size().Area())
-	c.defaultColours.Fore = col.WHITE
-	c.defaultColours.Back = col.BLACK
+	c.defaultColours = col.Pair{col.WHITE, col.BLACK}
 	c.Clear()
 }
 
@@ -184,8 +183,7 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 				continue
 			}
 			cell.Clear()
-			cell.SetBackColour(c.defaultColours.Back)
-			cell.SetForeColour(c.defaultColours.Fore)
+			cell.SetColours(c.defaultColours)
 			c.setDepth(cursor, -1)
 		}
 	}

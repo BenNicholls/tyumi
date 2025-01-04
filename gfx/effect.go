@@ -1,6 +1,7 @@
 package gfx
 
 import (
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -26,7 +27,5 @@ func (c *Canvas) DrawEffect(effect Effect, areas ...vec.Rect) {
 }
 
 func InvertEffect(cell *Cell) {
-	f := cell.Colours.Fore
-	cell.SetForeColour(cell.Colours.Back)
-	cell.SetBackColour(f)
+	cell.SetColours(col.Pair{cell.Colours.Back, cell.Colours.Fore})
 }

@@ -13,15 +13,13 @@ type Cell struct {
 // Sets the properties of a cell all at once for Glyph Mode.
 func (c *Cell) SetGlyphCell(gl int, colours col.Pair) {
 	c.SetGlyph(gl)
-	c.SetForeColour(colours.Fore)
-	c.SetBackColour(colours.Back)
+	c.SetColours(colours)
 }
 
 // Sets the properties of a cell all at once for Text Mode.
 func (c *Cell) SetTextCell(char1, char2 rune, colours col.Pair) {
 	c.SetText(char1, char2)
-	c.SetForeColour(colours.Fore)
-	c.SetBackColour(colours.Back)
+	c.SetColours(colours)
 }
 
 func (c *Cell) SetForeColour(col uint32) {
@@ -39,6 +37,15 @@ func (c *Cell) SetBackColour(col uint32) {
 	}
 
 	c.Colours.Back = col
+	c.Dirty = true
+}
+
+func (c *Cell) SetColours(colours col.Pair) {
+	if colours == c.Colours {
+		return
+	}
+
+	c.Colours = colours
 	c.Dirty = true
 }
 

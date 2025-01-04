@@ -174,10 +174,6 @@ func (e *ElementPrototype) Update() {
 		}
 
 		a.Update()
-
-		if a.Dirty() {
-			e.updated = true
-		}
 	}
 }
 
@@ -221,9 +217,7 @@ func (e *ElementPrototype) Render() {
 	}
 
 	for _, a := range e.animations {
-		if a.Dirty() {
-			a.Render(&e.Canvas)
-		}
+		a.Render(&e.Canvas)
 	}
 
 	for _, child := range e.GetChildren() {

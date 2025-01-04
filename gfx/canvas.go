@@ -198,3 +198,31 @@ func (c Canvas) Dirty() bool {
 func (c Canvas) DefaultColours() col.Pair {
 	return c.defaultColours
 }
+
+// Returns a copy of a region of the canvas. If the area is not in the canvas, copy will be empty.
+func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
+	copy.Init(area.W, area.H)
+	copy.defaultColours = c.defaultColours
+
+	if intersection := vec.FindIntersectionRect(c, area); intersection.Area() == 0 {
+		return
+	}
+
+	for cursor := range vec.EachCoord(area) {
+		if !c.InBounds(cursor) {
+			continue
+		}
+
+		cell := c.getCell(cursor)
+		depth := c.getDepth(cursor)
+		copy_cursor := cursor.Subtract(area.Coord)
+		copy.setColours(copy_cursor, depth, cell.Colours)
+		if cell.Mode == DRAW_GLYPH {
+			copy.setGlyph(copy_cursor, depth, cell.Glyph)
+		} else {
+			copy.setText(copy_cursor, depth, cell.Chars[0], cell.Chars[1])
+		}
+	}
+
+	return
+}

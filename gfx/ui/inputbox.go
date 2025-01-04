@@ -61,6 +61,7 @@ func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor *InputCurso
 	cursor = &InputCursorAnimation{
 		BlinkAnimation: *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, vis, rate),
 	}
+	cursor.Enable()
 
 	return
 }

@@ -72,12 +72,12 @@ func (c *Canvas) GetCell(pos vec.Coord) (cell Cell) {
 	if !c.InBounds(pos) {
 		return
 	}
-	cell = c.cells[pos.Y*c.width+pos.X]
+	cell = c.cells[pos.ToIndex(c.width)]
 	return
 }
 
 func (c *Canvas) getCell(pos vec.Coord) *Cell {
-	return &c.cells[pos.Y*c.width+pos.X]
+	return &c.cells[pos.ToIndex(c.width)]
 }
 
 func (c *Canvas) GetDepth(pos vec.Coord) int {
@@ -88,11 +88,11 @@ func (c *Canvas) GetDepth(pos vec.Coord) int {
 }
 
 func (c *Canvas) getDepth(pos vec.Coord) int {
-	return c.depthmap[pos.Y*c.width+pos.X]
+	return c.depthmap[pos.ToIndex(c.width)]
 }
 
 func (c *Canvas) setDepth(pos vec.Coord, depth int) {
-	c.depthmap[pos.Y*c.width+pos.X] = depth
+	c.depthmap[pos.ToIndex(c.width)] = depth
 }
 
 func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {

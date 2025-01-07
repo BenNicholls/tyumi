@@ -6,7 +6,7 @@ package col
 import "github.com/bennicholls/tyumi/util"
 
 //Make returns a uint32 colour in ARGB formed from provided int components
-func Make(r, g, b, a int) (colour uint32) {
+func Make(a, r, g, b int) (colour uint32) {
 	colour = uint32((a % 256) << 24)
 	colour |= uint32(r%256) << 16
 	colour |= uint32(g%256) << 8
@@ -17,7 +17,7 @@ func Make(r, g, b, a int) (colour uint32) {
 
 //Takes r,g,b ints and creates a colour with alpha 255 in ARGB format.
 func MakeOpaque(r, g, b int) uint32 {
-	return Make(r, g, b, 255)
+	return Make(255, r, g, b)
 }
 
 //RGBA returns the RGBA components of an ARGB8888 formatted uint32 colour.
@@ -27,6 +27,12 @@ func RGBA(colour uint32) (r, g, b, a uint8) {
 	r = uint8((colour >> 16) & 0x000000FF)
 	a = uint8(colour >> 24)
 
+	return
+}
+
+//RGB returns the RGB components of an ARGB8888 formatted uint32 colour.
+func RGB(colour uint32) (r, g, b uint8) {
+	r, g, b, _ = RGBA(colour)
 	return
 }
 
@@ -50,7 +56,7 @@ func Blend(c1, c2 uint32, mode BlendMode) uint32 {
 		a = 255 - int(255-a1)*int(255-a2)/255
 	}
 
-	return Make(r, g, b, a)
+	return Make(a, r, g, b)
 }
 
 type BlendMode int
@@ -101,8 +107,8 @@ func (p *Palette) Add(p2 Palette) {
 func GenerateGradient(num int, c1, c2 uint32) (p Palette) {
 	p = make(Palette, num)
 
-	r1, g1, b1, _ := RGBA(c1)
-	r2, g2, b2, _ := RGBA(c2)
+	r1, g1, b1 := RGB(c1)
+	r2, g2, b2 := RGB(c2)
 
 	for i := range p {
 		p[i] = MakeOpaque(util.Lerp(int(r1), int(r2), i, len(p)), util.Lerp(int(g1), int(g2), i, len(p)), util.Lerp(int(b1), int(b2), i, len(p)))
@@ -113,8 +119,21 @@ func GenerateGradient(num int, c1, c2 uint32) (p Palette) {
 	return
 }
 
+// Lineraly interpolates the colour between colour1 and colour2 over (steps) number of steps, returning the (val)th value.
+// NOTE: this completely disregards tranparent colours.
+func Lerp(colour1, colour2 uint32, val, steps int) uint32 {
+	r1, g1, b1 := RGB(colour1)
+	r2, g2, b2 := RGB(colour2)
+	return MakeOpaque(util.Lerp(int(r1), int(r2), val, steps), util.Lerp(int(g1), int(g2), val, steps), util.Lerp(int(b1), int(b2), val, steps))
+}
+
 // A Pair of colours, fore and back
 type Pair struct {
 	Fore uint32
 	Back uint32
+}
+
+// Linearly interpolates between p and p2 over (steps) number of steps, returning the (val)th value.
+func (p Pair) Lerp(p2 Pair, val, steps int) Pair {
+	return Pair{Lerp(p.Fore, p2.Fore, val, steps), Lerp(p.Back, p2.Back, val, steps)}
 }

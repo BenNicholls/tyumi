@@ -1,6 +1,7 @@
 package gfx
 
 import (
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -163,4 +164,56 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 		}
 		ba.dirty = false
 	}
+}
+
+// FlashAnimation makes an area flash once.
+type FlashAnimation struct {
+	Animation
+	flashColours    col.Pair
+	originalColours []col.Pair
+}
+
+func NewFlashAnimation(area vec.Rect, depth int, flashColours col.Pair, duration_frames int) (fa *FlashAnimation) {
+	fa = &FlashAnimation{
+		Animation: Animation{
+			area:     area,
+			depth:    depth,
+			duration: duration_frames,
+		},
+		flashColours: flashColours,
+	}
+
+	return
+}
+
+func (fa *FlashAnimation) Update() {
+	fa.Animation.Update()
+	fa.dirty = true
+
+	if fa.reset {
+		fa.originalColours = nil
+	}
+}
+
+func (fa *FlashAnimation) Render(c *Canvas) {
+	if !fa.dirty || !fa.enabled {
+		return
+	}
+
+	if fa.originalColours == nil {
+		//populate original colours to lerp to
+		fa.originalColours = make([]col.Pair, fa.area.Area())
+		for cursor := range vec.EachCoord(fa.area) {
+			cell := c.getCell(cursor)
+			col_index := cursor.Subtract(fa.area.Coord).ToIndex(fa.area.W)
+			fa.originalColours[col_index] = cell.Colours
+		}
+	}
+
+	for cursor := range vec.EachCoord(fa.area) {
+		col_index := cursor.Subtract(fa.area.Coord).ToIndex(fa.area.W)
+		c.DrawColours(cursor, fa.depth, fa.flashColours.Lerp(fa.originalColours[col_index], fa.ticks, fa.duration))
+	}
+
+	fa.dirty = false
 }

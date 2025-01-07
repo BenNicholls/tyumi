@@ -31,6 +31,15 @@ func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, v Visuals) {
 	}
 }
 
+// DrawColours draws a colour pair (fore/back) to a cell at pos, respecting depth.
+func (c *Canvas) DrawColours(pos vec.Coord, depth int, colours col.Pair) {
+	if !c.InBounds(pos) {
+		return
+	}
+
+	c.setColours(pos, depth, colours)
+}
+
 func (c *Canvas) DrawGlyph(pos vec.Coord, depth int, glyph int) {
 	if !c.InBounds(pos) {
 		return
@@ -53,7 +62,7 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, colours col.Pair
 	//iterate by pairs of runes, drawing 1 cell per loop
 	for i := 0; i < len(text_runes); i += 2 {
 		cursor := vec.Coord{pos.X + i/2, pos.Y}
-		if !c.InBounds(cursor) { //make sure we're drawing in the canvas. TODO: some kind of easy bounds check thing??
+		if !c.InBounds(cursor) { //make sure we're drawing in the canvas.
 			continue
 		}
 
@@ -85,8 +94,6 @@ func (c *Canvas) FloodFill(pos vec.Coord, depth int, v Visuals) {
 // DrawToCanvas draws the canvas c to a destination canvas, offset by some Coord at depth z. This process will mark
 // any copied cells in c as clean.
 // TODO: this function should take in flags to determine how the canvas is copied
-//
-//	could also pass this a rect to indicate subareas of the canvas that need to be copied
 func (c *Canvas) DrawToCanvas(dst *Canvas, offset vec.Coord, depth int) {
 	draw_area := vec.FindIntersectionRect(dst, vec.Rect{offset, c.Size()})
 	for dst_cursor := range vec.EachCoord(draw_area) {

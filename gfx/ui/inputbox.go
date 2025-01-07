@@ -61,14 +61,14 @@ func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor *InputCurso
 	cursor = &InputCursorAnimation{
 		BlinkAnimation: *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, vis, rate),
 	}
-	cursor.Enable()
+	cursor.Start()
 
 	return
 }
 
 // Moves the cursor to (x, y), and blinks the indicated character (0 for left side, 1 for right side)
 func (cursor *InputCursorAnimation) MoveTo(x, y, charNum int) {
-	cursor.BlinkAnimation.MoveTo(x, y)
+	cursor.BlinkAnimation.MoveTo(vec.Coord{x, y})
 	if charNum%2 == 0 {
 		cursor.Vis.ChangeChars(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT)
 	} else {

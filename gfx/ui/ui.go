@@ -3,6 +3,8 @@
 package ui
 
 import (
+	"slices"
+
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
@@ -168,13 +170,18 @@ func (e *ElementPrototype) Update() {
 
 	//tick animations
 	for _, a := range e.animations {
-		if a.Done() {
-			//TODO: remove animation from list if it's done
-			continue
+		if a.Playing() {
+			a.Update()
+			if a.Done() {
+				e.forceRedraw = true
+			}
 		}
-
-		a.Update()
 	}
+
+	//remove finished one-shot animations
+	e.animations = slices.DeleteFunc[[]gfx.Animator](e.animations, func(a gfx.Animator) bool {
+		return a.IsOneShot() && a.Done()
+	})
 }
 
 // UpdateState() is a virtual function. Implement this to provide ui update behaviour on a thread-safe, per-frame basis,
@@ -216,10 +223,6 @@ func (e *ElementPrototype) Render() {
 		e.Canvas.Clear()
 	}
 
-	for _, a := range e.animations {
-		a.Render(&e.Canvas)
-	}
-
 	for _, child := range e.GetChildren() {
 		//BUG: visibility culling doesn't take the border of the child into account.
 		//instead of fixing, might be better to redesign how borders work. Or make elements
@@ -229,6 +232,12 @@ func (e *ElementPrototype) Render() {
 			if child.getCanvas().Dirty() || e.forceRedraw {
 				child.DrawToParent()
 			}
+		}
+	}
+
+	for _, a := range e.animations {
+		if a.Playing() {
+			a.Render(&e.Canvas)
 		}
 	}
 

@@ -9,14 +9,18 @@ import (
 type Animator interface {
 	Update()
 	Render(*Canvas)
+	Playing() bool
 	Done() bool
+	IsOneShot() bool
 }
 
 // Base struct for animations. Embed this to satisfy Animator interface above.
 type Animation struct {
+	OneShot bool //indicates animation should play once and then be deleted
+	Repeat  bool //animation repeats when finished
+
 	area     vec.Rect
 	depth    int  //depth value of the animation
-	repeat   bool //animation repeats when finished
 	duration int  //duration of animation in ticks
 	ticks    int  //incremented each update
 	enabled  bool //animation is playing
@@ -32,62 +36,74 @@ func (a *Animation) Update() {
 	if a.reset {
 		a.ticks = 0
 		a.dirty = true
+		a.reset = false
 	} else {
-		if a.repeat {
+		if a.Repeat {
 			a.ticks = util.CycleClamp(a.ticks+1, 0, a.duration-1)
 		} else {
 			a.ticks += 1
 		}
 	}
-}
 
-func (a *Animation) Render(c *Canvas) {
-
+	if a.Done() {
+		a.enabled = false
+		a.reset = true
+	}
 }
 
 func (a Animation) Done() bool {
-	if a.repeat || a.ticks < a.duration {
+	if a.Repeat || a.ticks < a.duration {
 		return false
 	}
 
 	return true
 }
 
-func (a Animation) Dirty() bool {
-	return a.dirty
+func (a Animation) IsOneShot() bool {
+	return a.OneShot
 }
 
-func (a *Animation) Move(dx, dy int) {
-	a.area.Move(dx, dy)
+func (a *Animation) MoveTo(pos vec.Coord) {
+	a.area.MoveTo(pos.X, pos.Y)
 	a.dirty = true
 }
 
-func (a *Animation) MoveTo(x, y int) {
-	a.area.MoveTo(x, y)
-	a.dirty = true
+func (a Animation) Playing() bool {
+	return a.enabled
 }
 
-func (a *Animation) Enable() {
-	a.enabled = true
-}
-
-// can also be used as a pause button.
-func (a *Animation) Disable() {
-	a.enabled = false
-}
-
-// can also be used as a pause/play button
-func (a *Animation) ToggleEnabled() {
-	a.enabled = !a.enabled
-}
-
+// Starts an animation. If the animation is paused, it restarts it. If animation is playing, does nothing.
 func (a *Animation) Start() {
 	if a.enabled {
 		return
 	}
-
-	a.enabled = true
 	a.reset = true
+	a.Play()
+}
+
+// Plays an animation. If the animation is paused, continues it.
+func (a *Animation) Play() {
+	a.enabled = true
+}
+
+// Pauses a playing animation.
+func (a *Animation) Pause() {
+	a.enabled = false
+}
+
+// Stops an animation and resets it.
+func (a *Animation) Stop() {
+	if !a.enabled {
+		return
+	}
+
+	a.enabled = false
+	a.reset = true
+}
+
+// PlayPause pauses playing animations, and plays paused animations.
+func (a *Animation) PlayPause() {
+	a.enabled = !a.enabled
 }
 
 // Animation that makes an area blink. The entire provided area will be filled with visuals Vis while blinking,
@@ -97,6 +113,7 @@ type BlinkAnimation struct {
 	Vis             Visuals //what to draw when the area is blinking
 	originalVisuals Canvas  //base visuals drawn when area not blinking
 	blinking        bool    //whether the area is rendering a blink or not
+	recapture       bool    //whether we need to recapture the original visuals
 }
 
 func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba *BlinkAnimation) {
@@ -104,21 +121,23 @@ func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rat
 		Animation: Animation{
 			area:     vec.Rect{pos, size},
 			depth:    depth,
-			repeat:   true,
+			Repeat:   true,
 			duration: rate,
 			reset:    true,
 		},
 		Vis: vis,
+		recapture: true,
 	}
 
 	return
 }
 
-func (ba *BlinkAnimation) Update() {
-	if !ba.enabled {
-		return
-	}
+func (ba *BlinkAnimation) MoveTo(pos vec.Coord) {
+	ba.Animation.MoveTo(pos)
+	ba.recapture = true
+}
 
+func (ba *BlinkAnimation) Update() {
 	ba.Animation.Update()
 
 	if ba.ticks == 0 {
@@ -129,9 +148,9 @@ func (ba *BlinkAnimation) Update() {
 
 func (ba *BlinkAnimation) Render(c *Canvas) {
 	//capture original canvas state
-	if c.dirty || ba.reset {
+	if c.dirty || ba.recapture {
 		ba.originalVisuals = c.CopyArea(ba.area)
-		ba.reset = false
+		ba.recapture = false
 	}
 
 	if ba.dirty || c.dirty {

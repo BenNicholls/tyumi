@@ -20,6 +20,8 @@ type Element interface {
 	Update()           // do not override this, this is what the engine uses to tick the gamestate
 	UpdateState() bool //if you want custom update code, implement this.
 	Render()
+	RenderAnimations()
+	FinalizeRender()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
 	HandleKeypress(input.KeyboardEvent)
 	MoveTo(vec.Coord)
@@ -172,9 +174,6 @@ func (e *ElementPrototype) Update() {
 	for _, a := range e.animations {
 		if a.Playing() {
 			a.Update()
-			if a.Done() {
-				e.forceRedraw = true
-			}
 		}
 	}
 
@@ -229,18 +228,26 @@ func (e *ElementPrototype) Render() {
 		//dynamically adjust their bounds when borders are activated?? hmm.
 		if child.IsVisible() && vec.FindIntersectionRect(e.getCanvas(), child).Area() > 0 {
 			child.Render()
+			child.RenderAnimations()
 			if child.getCanvas().Dirty() || e.forceRedraw {
 				child.DrawToParent()
 			}
+			child.FinalizeRender()
 		}
 	}
+}
 
-	for _, a := range e.animations {
-		if a.Playing() {
-			a.Render(&e.Canvas)
+func (e *ElementPrototype) RenderAnimations() {
+	for _, animation := range e.animations {
+		if animation.Playing() && vec.FindIntersectionRect(e.getCanvas(), animation).Area() > 0 {
+			animation.Render(&e.Canvas)
 		}
 	}
+}
 
+// performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
+func (e *ElementPrototype) FinalizeRender() {
+	e.updated = false
 	e.forceRedraw = false
 }
 

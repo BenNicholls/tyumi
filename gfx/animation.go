@@ -2,12 +2,12 @@ package gfx
 
 import (
 	"github.com/bennicholls/tyumi/gfx/col"
-	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
 // Anything that can do animations on a Canvas
 type Animator interface {
+	vec.Bounded
 	Update()
 	Render(*Canvas)
 	Playing() bool
@@ -40,7 +40,7 @@ func (a *Animation) Update() {
 		a.reset = false
 	} else {
 		if a.Repeat {
-			a.ticks = util.CycleClamp(a.ticks+1, 0, a.duration-1)
+			a.ticks = (a.ticks + 1) % a.duration
 		} else {
 			a.ticks += 1
 		}
@@ -53,11 +53,7 @@ func (a *Animation) Update() {
 }
 
 func (a Animation) Done() bool {
-	if a.Repeat || a.ticks < a.duration {
-		return false
-	}
-
-	return true
+	return !a.Repeat && a.ticks >= a.duration
 }
 
 func (a Animation) IsOneShot() bool {
@@ -82,9 +78,13 @@ func (a *Animation) Start() {
 	a.Play()
 }
 
-// Plays an animation. If the animation is paused, continues it.
+// Plays an animation. If the animation is paused, continues it. If it's already playing, restarts it.
 func (a *Animation) Play() {
-	a.enabled = true
+	if a.enabled {
+		a.reset = true
+	} else {
+		a.enabled = true
+	}
 }
 
 // Pauses a playing animation.
@@ -105,6 +105,10 @@ func (a *Animation) Stop() {
 // PlayPause pauses playing animations, and plays paused animations.
 func (a *Animation) PlayPause() {
 	a.enabled = !a.enabled
+}
+
+func (a Animation) Bounds() vec.Rect {
+	return a.area
 }
 
 // Animation that makes an area blink. The entire provided area will be filled with visuals Vis while blinking,
@@ -212,7 +216,7 @@ func (fa *FlashAnimation) Render(c *Canvas) {
 
 	for cursor := range vec.EachCoord(fa.area) {
 		col_index := cursor.Subtract(fa.area.Coord).ToIndex(fa.area.W)
-		c.DrawColours(cursor, fa.depth, fa.flashColours.Lerp(fa.originalColours[col_index], fa.ticks, fa.duration))
+		c.DrawColours(cursor, fa.depth, fa.flashColours.Lerp(fa.originalColours[col_index], fa.ticks, fa.duration-1))
 	}
 
 	fa.dirty = false

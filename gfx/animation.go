@@ -126,7 +126,7 @@ func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rat
 			duration: rate,
 			reset:    true,
 		},
-		Vis: vis,
+		Vis:       vis,
 		recapture: true,
 	}
 

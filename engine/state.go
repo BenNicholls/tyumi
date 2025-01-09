@@ -14,7 +14,7 @@ const (
 	FIT_CONSOLE int = 0 //window size flag
 )
 
-//A gameobject to be handled by Tyumi's state machine.
+// A gameobject to be handled by Tyumi's state machine.
 type State interface {
 	Update()
 	UpdateUI()
@@ -24,23 +24,24 @@ type State interface {
 	Events() *event.Stream
 }
 
-//An embeddable prototype that satisfies the State interface. Build around this for easier gamestate management.
+// An embeddable prototype that satisfies the State interface. Build around this for easier gamestate management.
 type StatePrototype struct {
 	window ui.ElementPrototype
 
-	events event.Stream       //for engine events, game events, etc. processed at the end of each tick
-	inputEvents event.Stream  //for input events. processed at the start of each tick
+	events       event.Stream      //for engine events, game events, etc. processed at the end of each tick
+	inputEvents  event.Stream      //for input events. processed at the start of each tick
+	inputHandler func(event.Event) //user-provided input handling function. runs AFTER the UI has had a chance to process input.
 }
 
-//Init prepares the gamestate. If the console has been initialized, you can use FIT_CONSOLE as the
-//width and/or height to have the state size itself automatically.
+// Init prepares the gamestate. If the console has been initialized, you can use FIT_CONSOLE as the
+// width and/or height to have the state size itself automatically.
 func (sp *StatePrototype) Init(w, h int) {
 	if w == FIT_CONSOLE || h == FIT_CONSOLE {
 		if !console.ready {
 			log.Error("Cannot fit state window to console: console not initialized.")
 			return
 		}
-		
+
 		if w == FIT_CONSOLE {
 			w = console.Size().W
 		}
@@ -53,6 +54,7 @@ func (sp *StatePrototype) Init(w, h int) {
 
 	sp.events = event.NewStream(100)
 	sp.inputEvents = event.NewStream(100)
+	sp.inputEvents.AddHandler(sp.handleInput)
 
 	//setup automatic listening for input events.
 	sp.inputEvents.Listen(input.EV_KEYBOARD)
@@ -62,9 +64,9 @@ func (sp *StatePrototype) Update() {
 	return
 }
 
-//UpdateUI is called before each frame, allowing the user to apply ui changes for rendering all at once if they prefer.
-//Otherwise they can implement UpdateState() routines on the individual UI elements themselves and have them control their
-//own behaviour.
+// UpdateUI is called before each frame, allowing the user to apply ui changes for rendering all at once if they prefer.
+// Otherwise they can implement UpdateState() routines on the individual UI elements themselves and have them control their
+// own behaviour.
 func (sp *StatePrototype) UpdateUI() {
 	return
 }
@@ -86,20 +88,32 @@ func (sp *StatePrototype) InputEvents() *event.Stream {
 	return &sp.inputEvents
 }
 
-//sets the function for handling generic game events. these are collected during the tick(), and then processed
-//at the end of each tick() in the order they were received.
+// sets the function for handling generic game events. these are collected during the tick(), and then processed
+// at the end of each tick() in the order they were received.
 func (sp *StatePrototype) AddEventHandler(h func(event.Event)) {
 	sp.events.AddHandler(h)
 }
 
-//sets the function for handling inputs to the state object. inputs are collected, distributed and then
-//processed at the beginning of each tick()
-func (sp *StatePrototype) AddInputHandler(h func(event.Event)) {
-	sp.inputEvents.AddHandler(h)
+func (sp *StatePrototype) handleInput(e event.Event) {
+	switch e.ID() {
+	case input.EV_KEYBOARD:
+		sp.window.HandleKeypress(e.(input.KeyboardEvent))
+	}
+
+	if sp.inputHandler != nil {
+		sp.inputHandler(e)
+	}
 }
 
-//InitMainState initializes a state to be run by Tyumi at the beginning of execution.
-//This function DOES NOTHING if a state has already been initialized.
+// sets the function for handling inputs to the state object. inputs are collected, distributed and then
+// processed at the beginning of each tick(). This handler is called after the UI has had a chance to handle
+// the input.
+func (sp *StatePrototype) AddInputHandler(h func(event.Event)) {
+	sp.inputHandler = h
+}
+
+// InitMainState initializes a state to be run by Tyumi at the beginning of execution.
+// This function DOES NOTHING if a state has already been initialized.
 func InitMainState(s State) {
 	if mainState != nil || s == nil {
 		return

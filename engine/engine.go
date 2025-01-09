@@ -20,7 +20,7 @@ var mainState State
 var tick int //count of number of ticks since engine was initialized
 var running bool
 
-var events event.Stream //the main event stream for the engine. all events will go and be distributed from here
+var events event.Stream //the main event stream for engine-level events
 
 // Sets up the renderer. This must be done after initializaing the console, but before running the main game loop.
 // logs and returns an error if this was unsuccessful.
@@ -64,7 +64,6 @@ func Run() {
 	events = event.NewStream(250)
 	events.AddHandler(handleEvent)
 	events.Listen(input.EV_QUIT)
-	events.Listen(input.EV_KEYBOARD)
 
 	if mainState == nil {
 		log.Error("No game state for Tyumi to run! Ensure that engine.InitMainState() is run before the gameloop.")
@@ -97,16 +96,14 @@ func update() {
 	tick++
 }
 
-// This function updates any UI elements that need updating after the most recent tick in the current active state.
+// Updates any UI elements that need updating after the most recent tick in the current active state.
 func updateUI() {
 	mainState.UpdateUI()
 	mainState.Window().Update()
-	//    - tick animations
 }
 
 // builds the frame and renders using whatever the current renderer is (sdl, web, terminal, whatever)
-// this runs at speed determined by user-input FPS, defaulting to 60 FPS. this also updates any current animations in the active
-// state's ui tree
+// this runs at speed determined by user-input FPS, defaulting to 60 FPS.
 func render() {
 	mainState.Window().Render()
 	mainState.Window().RenderAnimations()
@@ -121,8 +118,5 @@ func handleEvent(e event.Event) {
 	case input.EV_QUIT: //quit input event, like from clicking the close window button on the window
 		running = false
 		mainState.Shutdown()
-	case input.EV_KEYBOARD:
-		//pass keyboard events to the main ui to be processed by any relevant input handlers
-		mainState.Window().HandleKeypress(e.(input.KeyboardEvent))
 	}
 }

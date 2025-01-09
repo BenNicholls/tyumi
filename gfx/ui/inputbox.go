@@ -24,11 +24,13 @@ func NewInputbox(w, h int, pos vec.Coord, depth int) (ib *InputBox) {
 	return
 }
 
-func (ib *InputBox) HandleKeypress(event input.KeyboardEvent) {
+func (ib *InputBox) HandleKeypress(event *input.KeyboardEvent) {
 	if text := event.Text(); text != "" {
 		ib.Insert(text)
+		event.SetHandled()
 	} else if event.Key == input.K_BACKSPACE {
 		ib.Delete()
+		event.SetHandled()
 	}
 }
 

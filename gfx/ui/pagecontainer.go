@@ -129,14 +129,14 @@ func (pc *PageContainer) Render() {
 	}
 }
 
-func (pc *PageContainer) HandleKeypress(event input.KeyboardEvent) {
+func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) {
 	switch event.Key {
 	case input.K_TAB:
 		pc.NextPage()
+		event.SetHandled()
 		return
 	}
 
-	//TODO: event handled flag so we can stop event propogation
 	pc.ElementPrototype.HandleKeypress(event)
 }
 

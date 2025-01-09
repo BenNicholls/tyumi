@@ -140,11 +140,13 @@ func (l *List) Render() {
 	}
 }
 
-func (l *List) HandleKeypress(e input.KeyboardEvent) {
-	switch e.Key {
+func (l *List) HandleKeypress(event *input.KeyboardEvent) {
+	switch event.Key {
 	case input.K_UP, input.K_PAGEUP:
 		l.Prev()
+		event.SetHandled()
 	case input.K_DOWN, input.K_PAGEDOWN:
 		l.Next()
+		event.SetHandled()
 	}
 }

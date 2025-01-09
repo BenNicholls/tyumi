@@ -12,8 +12,9 @@ type KeyboardEvent struct {
 	Key Keycode
 }
 
-func NewKeyboardEvent(key Keycode) (kbe KeyboardEvent) {
-	kbe.EventPrototype = event.New(EV_KEYBOARD)
+func NewKeyboardEvent(key Keycode) (kbe *KeyboardEvent) {
+	kbe = new(KeyboardEvent)
+	kbe.EventPrototype = *event.New(EV_KEYBOARD)
 	kbe.Key = key
 	return
 }

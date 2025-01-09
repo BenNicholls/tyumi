@@ -90,26 +90,27 @@ func (sp *StatePrototype) InputEvents() *event.Stream {
 
 // sets the function for handling generic game events. these are collected during the tick(), and then processed
 // at the end of each tick() in the order they were received.
-func (sp *StatePrototype) AddEventHandler(h func(event.Event)) {
-	sp.events.AddHandler(h)
+func (sp *StatePrototype) AddEventHandler(handler func(event.Event)) {
+	sp.events.AddHandler(handler)
 }
 
-func (sp *StatePrototype) handleInput(e event.Event) {
-	switch e.ID() {
+func (sp *StatePrototype) handleInput(event event.Event) {
+	switch event.ID() {
 	case input.EV_KEYBOARD:
-		sp.window.HandleKeypress(e.(input.KeyboardEvent))
+		sp.window.HandleKeypress(event.(*input.KeyboardEvent))
 	}
 
 	if sp.inputHandler != nil {
-		sp.inputHandler(e)
+		sp.inputHandler(event)
 	}
 }
 
 // sets the function for handling inputs to the state object. inputs are collected, distributed and then
 // processed at the beginning of each tick(). This handler is called after the UI has had a chance to handle
-// the input.
-func (sp *StatePrototype) AddInputHandler(h func(event.Event)) {
-	sp.inputHandler = h
+// the input. If the UI handles the input, event.Handled() will be true. You can still choose to ignore that and
+// handle the event again if you like though.
+func (sp *StatePrototype) AddInputHandler(handler func(event.Event)) {
+	sp.inputHandler = handler
 }
 
 // InitMainState initializes a state to be run by Tyumi at the beginning of execution.

@@ -23,7 +23,7 @@ type Element interface {
 	RenderAnimations()
 	FinalizeRender()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
-	HandleKeypress(input.KeyboardEvent)
+	HandleKeypress(*input.KeyboardEvent)
 	MoveTo(vec.Coord)
 	Move(int, int)
 	IsVisible() bool
@@ -263,8 +263,12 @@ func (e *ElementPrototype) DrawToParent() {
 	}
 }
 
-func (e *ElementPrototype) HandleKeypress(event input.KeyboardEvent) {
+func (e *ElementPrototype) HandleKeypress(event *input.KeyboardEvent) {
 	for _, child := range e.GetChildren() {
+		if event.Handled() {
+			break
+		}
+
 		if child.IsVisible() {
 			child.HandleKeypress(event)
 		}

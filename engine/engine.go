@@ -117,6 +117,7 @@ func handleEvent(e event.Event) {
 	switch e.ID() {
 	case input.EV_QUIT: //quit input event, like from clicking the close window button on the window
 		running = false
-		mainState.Shutdown()
+		mainState.Shutdown()		
+		e.SetHandled()
 	}
 }

@@ -43,18 +43,15 @@ func IsInside(x, y int, b Bounded) bool {
 // FindIntersectionRect calculates the intersection of two rectangularly-bound objects as a rect if no intersection,
 // returns Rect{0,0,0,0}
 func FindIntersectionRect(r1, r2 Bounded) (r Rect) {
-	b1 := r1.Bounds()
-	b2 := r2.Bounds()
+	b1, b2 := r1.Bounds(), r2.Bounds()
 
 	//check for intersection
 	if b1.X >= b2.X+b2.W || b2.X >= b1.X+b1.W || b1.Y >= b2.Y+b2.H || b2.Y >= b1.Y+b1.H {
 		return
 	}
 
-	r.X = util.Max(b1.X, b2.X)
-	r.Y = util.Max(b1.Y, b2.Y)
-	r.W = util.Min(b1.X+b1.W, b2.X+b2.W) - r.X
-	r.H = util.Min(b1.Y+b1.H, b2.Y+b2.H) - r.Y
+	r.X, r.Y = util.Max(b1.X, b2.X), util.Max(b1.Y, b2.Y)
+	r.W, r.H = util.Min(b1.X+b1.W, b2.X+b2.W) - r.X, util.Min(b1.Y+b1.H, b2.Y+b2.H) - r.Y
 
 	return
 }

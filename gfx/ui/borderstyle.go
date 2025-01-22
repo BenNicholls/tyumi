@@ -65,6 +65,7 @@ func (bs BorderStyle) DecorateText(text string) (decoratedText string) {
 	if bs.TextDecorationR != rune(0) {
 		decoratedText += string(bs.TextDecorationR)
 	}
+
 	return
 }
 
@@ -91,8 +92,9 @@ func getBorderFlagByDirection(dir vec.Direction) int {
 		return BORDER_L
 	case vec.DIR_RIGHT:
 		return BORDER_R
+	default:
+		return BORDER_LONELY
 	}
-	return BORDER_LONELY
 }
 
 func (bs *BorderStyle) glyphIsLinkable(glyph int) bool {

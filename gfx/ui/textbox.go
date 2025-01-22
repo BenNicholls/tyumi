@@ -34,8 +34,7 @@ func (tb *Textbox) Init(w, h int, pos vec.Coord, depth int, text string, center 
 
 	//auto-fit text if required
 	if w == FIT_TEXT {
-		h = 1
-		w = (len(text) + 1) / 2
+		w, h = (len(text) + 1) / 2, 1
 		tb.lines = make([]string, 1)
 		tb.lines[0] = text
 	} else if h == FIT_TEXT {

@@ -103,7 +103,7 @@ func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle
 			e.border.style = parent_border.style
 		}
 	case BORDER_STYLE_CUSTOM:
-		if len(borderStyle) < 1 {
+		if borderStyle == nil {
 			log.Error("Custom border style application failed: no borderstyle provided.")
 			return
 		}
@@ -146,10 +146,8 @@ func (e *ElementPrototype) AddChild(child Element) {
 }
 
 func (e *ElementPrototype) AddChildren(children ...Element) {
-	if len(children) > 0 {
-		for _, child := range children {
-			e.AddChild(child)
-		}
+	for _, child := range children {
+		e.AddChild(child)
 	}
 }
 
@@ -252,8 +250,8 @@ func (e *ElementPrototype) FinalizeRender() {
 }
 
 func (e *ElementPrototype) DrawToParent() {
-	var parent Element
-	if parent = e.GetParent(); parent == nil {
+	parent := e.GetParent()
+	if parent == nil {
 		return
 	}
 
@@ -279,13 +277,14 @@ func (e *ElementPrototype) HandleKeypress(event *input.KeyboardEvent) {
 func (e *ElementPrototype) AddAnimation(a gfx.Animator) {
 	if e.animations == nil {
 		e.animations = make([]gfx.Animator, 0)
-	} else {
-		for _, anim := range e.animations {
-			if a == anim {
-				return
-			}
+	} 
+	
+	//check for duplicate add
+	for _, anim := range e.animations {
+		if a == anim {
+			return
 		}
-	}
+	}	
 
 	e.animations = append(e.animations, a)
 }

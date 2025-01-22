@@ -42,10 +42,7 @@ func (c *Canvas) Init(w, h int) {
 }
 
 func (c *Canvas) InBounds(pos vec.Coord) bool {
-	if pos.X >= c.width || pos.Y >= c.height || pos.X < 0 || pos.Y < 0 {
-		return false
-	}
-	return true
+	return pos.X < c.width && pos.Y < c.height && pos.X >= 0 && pos.Y >= 0 
 }
 
 // Clean sets all cells in the canvas as clean (dirty = false).
@@ -61,6 +58,7 @@ func (c *Canvas) SetDefaultColours(colours col.Pair) {
 	if c.defaultColours == colours {
 		return
 	}
+
 	c.defaultColours = colours
 	c.Clear()
 }
@@ -72,6 +70,7 @@ func (c *Canvas) GetCell(pos vec.Coord) (cell Cell) {
 	if !c.InBounds(pos) {
 		return
 	}
+
 	cell = c.cells[pos.ToIndex(c.width)]
 	return
 }
@@ -84,6 +83,7 @@ func (c *Canvas) GetDepth(pos vec.Coord) int {
 	if !c.InBounds(pos) {
 		panic("bad depth get! do a bounds check first!!!")
 	}
+
 	return c.getDepth(pos)
 }
 
@@ -100,10 +100,10 @@ func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
 		return
 	}
 
-	cell := c.getCell(pos)
 	if col == COL_DEFAULT {
 		col = c.defaultColours.Fore
 	}
+	cell := c.getCell(pos)
 	cell.SetForeColour(col)
 	c.dirty = c.dirty || cell.Dirty
 	c.setDepth(pos, depth)
@@ -114,10 +114,10 @@ func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
 		return
 	}
 
-	cell := c.getCell(pos)
 	if col == COL_DEFAULT {
 		col = c.defaultColours.Back
 	}
+	cell := c.getCell(pos)
 	cell.SetBackColour(col)
 	c.dirty = c.dirty || cell.Dirty
 	c.setDepth(pos, depth)
@@ -187,6 +187,7 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 			c.setDepth(cursor, -1)
 		}
 	}
+
 	c.dirty = true
 }
 

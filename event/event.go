@@ -41,6 +41,7 @@ func (e EventPrototype) String() (s string) {
 	if e.handled {
 		s += " (handled)"
 	}
+
 	return
 }
 
@@ -63,6 +64,7 @@ type Stream struct {
 
 func NewStream(size int) (es Stream) {
 	es.stream = make(chan Event, size)
+	
 	return
 }
 
@@ -118,6 +120,7 @@ func (s *Stream) Process() {
 func Register(name string) int {
 	registeredEvents = append(registeredEvents, make([]*Stream, 0))
 	eventNames = append(eventNames, name)
+
 	return len(registeredEvents) - 1
 }
 

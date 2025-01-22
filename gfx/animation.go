@@ -74,6 +74,7 @@ func (a *Animation) Start() {
 	if a.enabled {
 		return
 	}
+	
 	a.reset = true
 	a.Play()
 }

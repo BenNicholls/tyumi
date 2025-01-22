@@ -28,9 +28,7 @@ type Border struct {
 	dirty bool //flag indicates when border needs to be re-rendered.
 }
 
-func NewBorder(element_size vec.Dims) Border {
-	b := Border{}
-
+func NewBorder(element_size vec.Dims) (b Border) {
 	b.top.Init(element_size.W+1, 1)
 	b.bottom.Init(element_size.W+1, 1)
 	b.left.Init(1, element_size.H+1)
@@ -38,10 +36,14 @@ func NewBorder(element_size vec.Dims) Border {
 
 	b.dirty = true
 
-	return b
+	return
 }
 
 func (b *Border) setColours(col col.Pair) {
+	if b.colours == col {
+		return
+	}
+	
 	b.colours = col
 	b.dirty = true
 }

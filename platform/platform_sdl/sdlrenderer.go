@@ -70,8 +70,8 @@ func (sdlr *SDLRenderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title s
 	}
 
 	sdlr.SetFramerate(60)
-
 	sdlr.ready = true
+
 	return
 }
 
@@ -184,7 +184,6 @@ func (sdlr *SDLRenderer) ToggleFullscreen() {
 
 // Renders the console to the GPU and flips the buffer.
 func (sdlr *SDLRenderer) Render() {
-	//render the scene!
 	var src, dst sdl.Rect
 	t := sdlr.renderer.GetRenderTarget()             //store window texture, we'll switch back to it once we're done with the buffer.
 	sdlr.renderer.SetRenderTarget(sdlr.canvasBuffer) //point renderer at buffer texture, we'll draw there
@@ -204,7 +203,6 @@ func (sdlr *SDLRenderer) Render() {
 				src = makeRect((g%16)*sdlr.tileSize, (g/16)*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
 				sdlr.copyToRenderer(gfx.DRAW_GLYPH, src, dst, cell.Colours, g)
 			}
-
 		}
 	}
 

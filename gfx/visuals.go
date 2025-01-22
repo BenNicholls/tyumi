@@ -12,18 +12,17 @@ type Drawable interface {
 //Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
 //hence the 2 Chars.
 type Visuals struct {
-	Glyph   int
+	Mode    DrawMode
 	Colours col.Pair
-
-	Mode  DrawMode
-	Chars [2]rune
+	Glyph   int
+	Chars   [2]rune
 }
 
 func NewGlyphVisuals(gl int, colours col.Pair) (vis Visuals) {
 	vis = Visuals{
-		Glyph:   gl,
-		Colours: colours,
 		Mode:    DRAW_GLYPH,
+		Colours: colours,
+		Glyph:   gl,
 	}
 
 	return
@@ -31,8 +30,8 @@ func NewGlyphVisuals(gl int, colours col.Pair) (vis Visuals) {
 
 func NewTextVisuals(char1, char2 rune, colours col.Pair) (vis Visuals) {
 	vis = Visuals{
-		Colours: colours,
 		Mode:    DRAW_TEXT,
+		Colours: colours,
 		Chars:   [2]rune{char1, char2},
 	}
 

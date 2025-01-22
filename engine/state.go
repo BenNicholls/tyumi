@@ -52,9 +52,8 @@ func (sp *StatePrototype) Init(w, h int) {
 
 	sp.window.Init(w, h, vec.ZERO_COORD, 0)
 
-	sp.events = event.NewStream(100)
-	sp.inputEvents = event.NewStream(100)
-	sp.inputEvents.AddHandler(sp.handleInput)
+	sp.events = event.NewStream(100, nil)
+	sp.inputEvents = event.NewStream(100, sp.handleInput)
 
 	//setup automatic listening for input events.
 	sp.inputEvents.Listen(input.EV_KEYBOARD)

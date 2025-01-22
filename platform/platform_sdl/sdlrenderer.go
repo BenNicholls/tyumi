@@ -242,6 +242,8 @@ func (sdlr *SDLRenderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, co
 		return
 	} else if mode == gfx.DRAW_TEXT && g == 32 {
 		return
+	} else if colours.Fore == sdlr.backDrawColour { //skip drawing foreground if it is the same as the background
+		return
 	}
 
 	//change texture color mod if it is different from previous draw, then draw glyph/text

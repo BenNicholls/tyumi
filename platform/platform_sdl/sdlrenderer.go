@@ -3,12 +3,10 @@ package platform_sdl
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
-	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -26,9 +24,7 @@ type SDLRenderer struct {
 	showFPS     bool
 	showChanges bool
 
-	frameTime               time.Time
-	frameTargetDur, elapsed time.Duration
-	frames                  int
+	frames int
 
 	//store render colours so we don't have to set them for every renderer.Copy()
 	backDrawColour      uint32
@@ -69,7 +65,6 @@ func (sdlr *SDLRenderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title s
 		return err
 	}
 
-	sdlr.SetFramerate(60)
 	sdlr.ready = true
 
 	return
@@ -214,12 +209,6 @@ func (sdlr *SDLRenderer) Render() {
 	sdlr.renderer.Clear()
 	sdlr.forceRedraw = false
 
-	//framerate limiter, so the cpu doesn't implode
-	sdlr.elapsed = time.Since(sdlr.frameTime)
-	if sdlr.elapsed < sdlr.frameTargetDur {
-		time.Sleep(sdlr.frameTargetDur - sdlr.elapsed)
-	}
-	sdlr.frameTime = time.Now()
 	sdlr.frames++
 }
 
@@ -266,12 +255,6 @@ func (sdlr *SDLRenderer) setTextureColour(tex *sdl.Texture, colour uint32) {
 	r, g, b, a := col.RGBA(colour)
 	tex.SetColorMod(r, g, b)
 	tex.SetAlphaMod(a)
-}
-
-// Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
-func (sdlr *SDLRenderer) SetFramerate(f int) {
-	f = util.Min(f, 1000)
-	sdlr.frameTargetDur = time.Duration(1000/float64(f+1)) * time.Millisecond
 }
 
 func (sdlr *SDLRenderer) ForceRedraw() {

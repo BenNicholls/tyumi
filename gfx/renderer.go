@@ -7,7 +7,6 @@ type Renderer interface {
 	ChangeFonts(glyphPath, fontPath string) error
 	SetFullscreen(bool)
 	ToggleFullscreen()
-	SetFramerate(int)
 	Render()
 	ForceRedraw()
 	ToggleDebugMode(string)

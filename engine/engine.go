@@ -3,12 +3,14 @@ package engine
 import (
 	"errors"
 	"runtime"
+	"time"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/platform"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -18,9 +20,16 @@ var console Console
 var mainState State
 
 var tick int //count of number of ticks since engine was initialized
+var frameTargetDur time.Duration // target duration of each frame, based on user-set framerate
+var frameTime time.Time // time current frame began
+
 var running bool
 
 var events event.Stream //the main event stream for engine-level events
+
+func init() {
+	SetFramerate(60)
+}
 
 // Sets up the renderer. This must be done after initializaing the console, but before running the main game loop.
 // logs and returns an error if this was unsuccessful.
@@ -55,6 +64,12 @@ func SetupCustomRenderer(r gfx.Renderer, glyphPath, fontPath, title string) erro
 	return error
 }
 
+// Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
+func SetFramerate(f int) {
+	f = util.Min(f, 1000)
+	frameTargetDur = time.Duration(1000/float64(f+1)) * time.Millisecond
+}
+
 // This is the gameloop
 func Run() {
 	runtime.LockOSThread() //most of sdl is single threaded
@@ -77,14 +92,20 @@ func Run() {
 	}
 
 	for running = true; running; {
+		beginFrame()
 		inputProcessor() //take inputs from platform, convert to tyumi events as appropriate, and distribute
 		update()         //step forward the gamestate
 		updateUI()       //update changed UI elements
 		render()         //composite frame together, post process, and render to screen
 		events.Process() //processes internal events
+		endFrame()
 	}
 
 	renderer.Cleanup()
+}
+
+func beginFrame() {
+	frameTime = time.Now()
 }
 
 // This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.
@@ -92,7 +113,6 @@ func update() {
 	mainState.InputEvents().Process()
 	mainState.Update()
 	mainState.Events().Process() //process any gameplay events from this frame.
-	tick++
 }
 
 // Updates any UI elements that need updating after the most recent tick in the current active state.
@@ -108,7 +128,15 @@ func render() {
 	mainState.Window().RenderAnimations()
 	mainState.Window().DrawToCanvas(&console.Canvas, vec.ZERO_COORD, 0)
 	mainState.Window().FinalizeRender()
-	renderer.Render()
+	if console.Dirty() {
+		renderer.Render()
+	}
+}
+
+func endFrame() {
+	//framerate limiter, so the cpu doesn't implode
+	time.Sleep(frameTargetDur - time.Since(frameTime))
+	tick++
 }
 
 // handles events from the engine's internal event stream. runs once per tick()

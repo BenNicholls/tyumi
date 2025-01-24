@@ -66,6 +66,7 @@ func beginFrame() {
 
 // This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.
 func update() {
+	console.events.Process()
 	mainState.InputEvents().Process()
 	mainState.Update()
 	mainState.Events().Process() //process any gameplay events from this frame.

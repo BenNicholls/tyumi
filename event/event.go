@@ -2,6 +2,8 @@
 // and eventual doling-out of events.
 package event
 
+import "github.com/bennicholls/tyumi/log"
+
 //Definition for event objects. Compose custom events around the EventPrototype to satisfy
 //this interface cleanly.
 type Event interface {
@@ -18,6 +20,11 @@ type EventPrototype struct {
 }
 
 func New(ID int) *EventPrototype {
+	if ID >= len(registeredEvents) || ID < 0 {
+		log.Warning("Attempted to create event with unregistered ID: ", ID)
+		return &EventPrototype{id: 0}
+	}
+
 	return &EventPrototype{id: ID}
 }
 
@@ -46,6 +53,11 @@ func (e *EventPrototype) SetHandled() {
 
 //fire the event into the void. the event will be sent to all listening event streams
 func Fire(e Event) {
+	if e.ID() >= len(registeredEvents) || e.ID() < 0{
+		log.Error("Attempted to fire unregistered event with ID ", e.ID())
+		return
+	}
+
 	for _, s := range registeredEvents[e.ID()].listeners {
 		s.Add(e)
 	}

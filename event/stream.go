@@ -52,6 +52,10 @@ func (s *Stream) Next() Event {
 // Begins listening for the specified event.
 func (s *Stream) Listen(ids ...int) {
 	for _, id := range ids {
+		if id < 0 || id >= len(registeredEvents) {
+			log.Warning("Attempted to listen for unregistered event ID: ", id)
+			continue
+		}
 		registeredEvents[id].addListener(s)
 	}
 }

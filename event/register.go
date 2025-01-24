@@ -3,7 +3,8 @@ package event
 var registeredEvents []eventInfo
 
 func init() {
-	registeredEvents = make([]eventInfo, 0)
+	registeredEvents = make([]eventInfo, 1)
+	Register("ERROR event (if you see this, someone did a boo boo.)")
 }
 
 // eventInfo describes each registered event type.

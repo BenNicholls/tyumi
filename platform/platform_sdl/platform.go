@@ -1,25 +1,26 @@
 package platform_sdl
 
-import "github.com/bennicholls/tyumi/gfx"
-import "github.com/bennicholls/tyumi/input"
+import (
+	"github.com/bennicholls/tyumi/platform"
+	"github.com/bennicholls/tyumi/vec"
+)
 
 type SDLPlatform struct {
-	renderer gfx.Renderer
-	event_processor input.Processor
+	renderer *SDLRenderer
+
 }
 
 func (sdlp *SDLPlatform) Init() (err error) {
 	sdlp.renderer = NewRenderer()
-	sdlp.event_processor = processEvents
 	return
 }
 
-func (sdlp *SDLPlatform) GetRenderer() gfx.Renderer {
+func (sdlp *SDLPlatform) GetRenderer() platform.Renderer {
 	return sdlp.renderer
 }
 
-func (sdlp *SDLPlatform) GetEventProcessor() input.Processor {
-	return sdlp.event_processor
+func (sdlp *SDLPlatform) GetEventGenerator() platform.EventGenerator {
+	return sdlp.processEvents
 }
 
 func (sdlp *SDLPlatform) Shutdown() {

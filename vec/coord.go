@@ -1,12 +1,16 @@
 package vec
 
-import "github.com/bennicholls/tyumi/util"
+import (
+	"fmt"
+
+	"github.com/bennicholls/tyumi/util"
+)
 
 var (
 	ZERO_COORD Coord = Coord{0, 0}
 )
 
-//Coord is an (X, Y) pair that represents a spot on some 2d grid.
+// Coord is an (X, Y) pair that represents a spot on some 2d grid.
 type Coord Vec2i
 
 func (c *Coord) Move(dx, dy int) {
@@ -33,6 +37,10 @@ func (c Coord) Step(d Direction) Coord {
 // ToIndex converts a Coord to a 1D index in a 2D array with the given stride.
 func (c Coord) ToIndex(stride int) int {
 	return c.Y*stride + c.X
+}
+
+func (c Coord) String() string {
+	return fmt.Sprintf("(X: %d, Y: %d)", c.X, c.Y)
 }
 
 // ManhattanDistance calculates the manhattan (or taxicab) distance on a square grid.
@@ -82,7 +90,7 @@ func (d Direction) RotateCCW() Direction {
 	return DIR_NONE
 }
 
-//TODO this should be somewhere else...
+// TODO this should be somewhere else...
 type Dims struct {
 	W, H int
 }

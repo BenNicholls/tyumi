@@ -1,9 +1,12 @@
 package vec
 
-import "math"
-import "github.com/bennicholls/tyumi/util"
+import (
+	"math"
 
-//Vec2f is a 2 dimensional vector of floats
+	"github.com/bennicholls/tyumi/util"
+)
+
+// Vec2f is a 2 dimensional vector of floats
 type Vec2f struct {
 	X, Y float64
 }
@@ -21,7 +24,7 @@ func (v1 Vec2f) Add(v2 Vec2f) Vec2f {
 	return Vec2f{v1.X + v2.X, v1.Y + v2.Y}
 }
 
-//returns vec2f = v1 - v2
+// returns vec2f = v1 - v2
 func (v1 Vec2f) Sub(v2 Vec2f) Vec2f {
 	return Vec2f{v1.X - v2.X, v1.Y - v2.Y}
 }
@@ -50,17 +53,17 @@ func (v Vec2Polar) Get() (float64, float64) {
 	return v.R, v.Phi
 }
 
-//Add converts to recitlinear components and adds, then converts back to polar.
+// Add converts to recitlinear components and adds, then converts back to polar.
 func (v1 Vec2Polar) Add(v2 Vec2Polar) Vec2Polar {
 	return v1.ToRect().Add(v2.ToRect()).ToPolar()
 }
 
-//ToRect converts the Polar vector into a rectilinear form
+// ToRect converts the Polar vector into a rectilinear form
 func (v Vec2Polar) ToRect() Vec2f {
 	return Vec2f{v.R * math.Cos(v.Phi), v.R * math.Sin(v.Phi)}
 }
 
-//Reorients vector to ensure R is positive and 0 <= Phi < 2*pi
+// Reorients vector to ensure R is positive and 0 <= Phi < 2*pi
 func (v *Vec2Polar) Pos() {
 	if v.R < 0 {
 		v.Phi += math.Pi
@@ -76,8 +79,8 @@ func (v *Vec2Polar) Pos() {
 	}
 }
 
-//Returns the shortest anglular distance from v1 to v2. positive for counterclockwise, negative for clockwise.
-//NOTE: Do these need to be Pos()'d?? Hmm.
+// Returns the shortest anglular distance from v1 to v2. positive for counterclockwise, negative for clockwise.
+// NOTE: Do these need to be Pos()'d?? Hmm.
 func (v1 Vec2Polar) AngularDistance(v2 Vec2Polar) float64 {
 	d := v2.Phi - v1.Phi
 
@@ -102,7 +105,7 @@ func (v1 Vec2i) Sub(v2 Vec2i) Vec2i {
 	return Vec2i{v1.X - v2.X, v1.Y - v2.Y}
 }
 
-//Returns the magnitude of the vector. Note that this is a float and not an int.
+// Returns the magnitude of the vector. Note that this is a float and not an int.
 func (v Vec2i) Mag() float64 {
 	return v.ToVec2f().Mag()
 }

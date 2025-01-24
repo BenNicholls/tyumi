@@ -3,7 +3,7 @@ package platform_sdl
 import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/input"
-	"github.com/bennicholls/tyumi/platform"
+	"github.com/bennicholls/tyumi/engine"
 	"github.com/bennicholls/tyumi/vec"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -17,7 +17,7 @@ func (sdlp *SDLPlatform) processEvents() {
 	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
 		switch e := sdlevent.(type) {
 		case *sdl.QuitEvent:
-			event.Fire(event.New(platform.EV_QUIT))
+			event.Fire(event.New(engine.EV_QUIT))
 			break //don't care about other input events if we're quitting
 		case *sdl.KeyboardEvent:
 			//only want keydown events for now.

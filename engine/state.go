@@ -22,6 +22,7 @@ type State interface {
 	Window() *ui.ElementPrototype
 	InputEvents() *event.Stream
 	Events() *event.Stream
+	Ready() bool
 }
 
 // An embeddable prototype that satisfies the State interface. Build around this for easier gamestate management.
@@ -31,6 +32,8 @@ type StatePrototype struct {
 	events       event.Stream      //for engine events, game events, etc. processed at the end of each tick
 	inputEvents  event.Stream      //for input events. processed at the start of each tick
 	inputHandler func(event.Event) //user-provided input handling function. runs AFTER the UI has had a chance to process input.
+
+	ready bool // indicates the state has been successfully initialized
 }
 
 // Init prepares the gamestate. If the console has been initialized, you can use FIT_CONSOLE as the
@@ -57,6 +60,7 @@ func (sp *StatePrototype) Init(w, h int) {
 
 	//setup automatic listening for input events.
 	sp.inputEvents.Listen(input.EV_KEYBOARD)
+	sp.ready = true
 }
 
 func (sp *StatePrototype) Update() {
@@ -112,10 +116,24 @@ func (sp *StatePrototype) AddInputHandler(handler func(event.Event)) {
 	sp.inputHandler = handler
 }
 
-// InitMainState initializes a state to be run by Tyumi at the beginning of execution.
+func (sp *StatePrototype) Ready() bool {
+	return sp.ready
+}
+
+// SetInitialMainState sets a state to be run by Tyumi at the beginning of execution.
 // This function DOES NOTHING if a state has already been initialized.
-func InitMainState(s State) {
-	if mainState != nil || s == nil {
+func SetInitialMainState(s State) {
+	if mainState != nil {
+		return
+	}
+
+	if !console.ready {
+		log.Error("Cannot set main state: console not initialized. Run InitConsole() first.")
+		return
+	}
+	
+	if s == nil || !s.Ready() {
+		log.Error("Cannot set main state: state not initialized or ready.")
 		return
 	}
 

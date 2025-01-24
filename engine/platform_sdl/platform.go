@@ -1,7 +1,7 @@
 package platform_sdl
 
 import (
-	"github.com/bennicholls/tyumi/platform"
+	"github.com/bennicholls/tyumi/engine"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -16,16 +16,16 @@ func (sdlp *SDLPlatform) Init() (err error) {
 	return
 }
 
-func (sdlp *SDLPlatform) GetRenderer() platform.Renderer {
+func (sdlp *SDLPlatform) GetRenderer() engine.Renderer {
 	return sdlp.renderer
 }
 
-func (sdlp *SDLPlatform) GetEventGenerator() platform.EventGenerator {
+func (sdlp *SDLPlatform) GetEventGenerator() engine.EventGenerator {
 	return sdlp.processEvents
 }
 
 func (sdlp *SDLPlatform) Shutdown() {
-
+	sdlp.renderer.Cleanup()
 }
 
 func New() *SDLPlatform {

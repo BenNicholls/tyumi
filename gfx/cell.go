@@ -22,21 +22,21 @@ func (c *Cell) SetTextCell(char1, char2 rune, colours col.Pair) {
 	c.SetColours(colours)
 }
 
-func (c *Cell) SetForeColour(col uint32) {
-	if col == c.Colours.Fore {
+func (c *Cell) SetForeColour(colour uint32) {
+	if colour == c.Colours.Fore || colour == col.NONE {
 		return
 	}
-	
-	c.Colours.Fore = col
+
+	c.Colours.Fore = colour
 	c.Dirty = true
 }
 
-func (c *Cell) SetBackColour(col uint32) {
-	if col == c.Colours.Back {
+func (c *Cell) SetBackColour(colour uint32) {
+	if colour == c.Colours.Back || colour == col.NONE {
 		return
 	}
 
-	c.Colours.Back = col
+	c.Colours.Back = colour
 	c.Dirty = true
 }
 

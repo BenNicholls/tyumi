@@ -8,6 +8,7 @@ import (
 type SDLPlatform struct {
 	renderer *SDLRenderer
 
+	mouse_position vec.Coord
 }
 
 func (sdlp *SDLPlatform) Init() (err error) {

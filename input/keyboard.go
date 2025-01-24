@@ -12,7 +12,7 @@ type KeyboardEvent struct {
 	Key Keycode
 }
 
-func NewKeyboardEvent(key Keycode) (kbe *KeyboardEvent) {
+func newKeyboardEvent(key Keycode) (kbe *KeyboardEvent) {
 	kbe = new(KeyboardEvent)
 	kbe.EventPrototype = *event.New(EV_KEYBOARD)
 	kbe.Key = key
@@ -21,7 +21,7 @@ func NewKeyboardEvent(key Keycode) (kbe *KeyboardEvent) {
 
 // Emits keydown event. TODO: keyup event, other key events, etc.
 func FireKeydownEvent(key Keycode) {
-	event.Fire(NewKeyboardEvent(key))
+	event.Fire(newKeyboardEvent(key))
 }
 
 // If the keyboard event represents a direction. returns the x and y deltas for the direction.

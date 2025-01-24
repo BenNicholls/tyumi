@@ -4,18 +4,21 @@ import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/platform"
+	"github.com/bennicholls/tyumi/vec"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
 // sdl event processor
 func (sdlp *SDLPlatform) processEvents() {
+
+	//save mouse position so we can detect if we've moved to a new cell and fire a mouse move event
+	new_mouse_pos := sdlp.mouse_position
+
 	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
 		switch e := sdlevent.(type) {
-
 		case *sdl.QuitEvent:
 			event.Fire(event.New(platform.EV_QUIT))
 			break //don't care about other input events if we're quitting
-
 		case *sdl.KeyboardEvent:
 			//only want keydown events for now.
 			if e.Type == sdl.KEYDOWN {
@@ -23,7 +26,16 @@ func (sdlp *SDLPlatform) processEvents() {
 					input.FireKeydownEvent(key)
 				}
 			}
+		case *sdl.MouseMotionEvent:
+			new_mouse_pos = vec.Coord{int(e.X) / sdlp.renderer.tileSize, int(e.Y) / sdlp.renderer.tileSize}
+		case *sdl.MouseButtonEvent:
+			continue
 		}
+	}
+
+	if new_mouse_pos != sdlp.mouse_position {
+		input.FireMouseMoveEvent(new_mouse_pos, new_mouse_pos.Subtract(sdlp.mouse_position))
+		sdlp.mouse_position = new_mouse_pos
 	}
 
 	return

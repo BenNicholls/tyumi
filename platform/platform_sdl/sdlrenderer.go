@@ -2,7 +2,6 @@ package platform_sdl
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
@@ -24,7 +23,7 @@ type SDLRenderer struct {
 	showFPS     bool
 	showChanges bool
 
-	frames int
+	frames int // frames rendered. NOTE: this can differ from engine.tick since the renderer may not render every tick
 
 	//store render colours so we don't have to set them for every renderer.Copy()
 	backDrawColour      uint32
@@ -48,13 +47,13 @@ func (sdlr *SDLRenderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title s
 	//renderer defaults to 800x600, once fonts are loaded it figures out the resolution to use and resizes accordingly
 	sdlr.window, err = sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, 800, 600, sdl.WINDOW_OPENGL)
 	if err != nil {
-		log.Error("SDL Renderer: Failed to create window. sdl:" + fmt.Sprint(sdl.GetError()))
+		log.Error("SDL RENDERER: Failed to create window. sdl: ", sdl.GetError())
 		return errors.New("Failed to create window.")
 	}
 
 	sdlr.renderer, err = sdl.CreateRenderer(sdlr.window, -1, sdl.RENDERER_ACCELERATED)
 	if err != nil {
-		log.Error("SDL Renderer: Failed to create renderer. sdl:" + fmt.Sprint(sdl.GetError()))
+		log.Error("SDL RENDERER: Failed to create renderer. sdl: ", sdl.GetError())
 		return errors.New("Failed to create renderer.")
 	}
 	sdlr.renderer.Clear()
@@ -81,6 +80,7 @@ func (sdlr *SDLRenderer) Cleanup() {
 	sdlr.canvasBuffer.Destroy()
 	sdlr.renderer.Destroy()
 	sdlr.window.Destroy()
+	log.Info("SDL Renderer shut down!")
 }
 
 // Loads new fonts to the renderer and changes the tilesize (and by extension, the window size)
@@ -90,7 +90,7 @@ func (sdlr *SDLRenderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 	}
 	sdlr.glyphs, err = sdlr.loadTexture(glyphPath)
 	if err != nil {
-		log.Error("SDL Renderer: Could not load font at " + glyphPath)
+		log.Error("SDL RENDERER: Could not load font at ", glyphPath)
 		return
 	}
 	if sdlr.font != nil {
@@ -98,10 +98,10 @@ func (sdlr *SDLRenderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 	}
 	sdlr.font, err = sdlr.loadTexture(fontPath)
 	if err != nil {
-		log.Error("SDL Renderer: Could not load font at " + fontPath)
+		log.Error("SDL RENDERER: Could not load font at ", fontPath)
 		return
 	}
-	log.Info("SDL Renderer: Loaded fonts! Glyph: " + glyphPath + ", Text: " + fontPath)
+	log.Info("SDL RENDERER: Loaded fonts! Glyph: " + glyphPath + ", Text: " + fontPath)
 
 	_, _, gw, _, _ := sdlr.glyphs.Query()
 
@@ -109,14 +109,14 @@ func (sdlr *SDLRenderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 	if int(gw/16) != sdlr.tileSize {
 		sdlr.tileSize = int(gw / 16)
 		if sdlr.console == nil {
-			log.Error("SDL Renderer: Console not initialized, cannot determine screen size.")
+			log.Error("SDL RENDERER: Console not initialized, cannot determine screen size.")
 			err = errors.New("Console not intialized")
 			return
 		}
 		console_size := sdlr.console.Size()
 		sdlr.window.SetSize(int32(sdlr.tileSize*console_size.W), int32(sdlr.tileSize*console_size.H))
 		_ = sdlr.createCanvasBuffer() //TODO: handle this error?
-		log.Info("RENDERER: resized window.")
+		log.Info("SDL RENDERER: resized window.")
 	}
 
 	return
@@ -128,17 +128,20 @@ func (sdlr *SDLRenderer) loadTexture(path string) (*sdl.Texture, error) {
 	image, err := sdl.LoadBMP(path)
 	defer image.Free()
 	if err != nil {
-		return nil, errors.New("Failed to load image: " + fmt.Sprint(sdl.GetError()))
+		log.Error("SDL RENDERER: Failed to load image: ", sdl.GetError())
+		return nil, errors.New("Failed to load image")
 	}
 	image.SetColorKey(true, col.KEY)
 	texture, err := sdlr.renderer.CreateTextureFromSurface(image)
 	if err != nil {
-		return nil, errors.New("Failed to create texture: " + fmt.Sprint(sdl.GetError()))
+		log.Error("SDL RENDERER: Failed to create texture: ", sdl.GetError())
+		return nil, errors.New("Failed to create texture")
 	}
 	err = texture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	if err != nil {
 		texture.Destroy()
-		return nil, errors.New("Failed to set blendmode: " + fmt.Sprint(sdl.GetError()))
+		log.Error("SDL RENDERER: Failed to set blendmode: ", sdl.GetError())
+		return nil, errors.New("Failed to set blendmode")
 	}
 
 	return texture, nil
@@ -151,7 +154,7 @@ func (sdlr *SDLRenderer) createCanvasBuffer() (err error) {
 	console_size := sdlr.console.Size()
 	sdlr.canvasBuffer, err = sdlr.renderer.CreateTexture(sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, int32(console_size.W*sdlr.tileSize), int32(console_size.H*sdlr.tileSize))
 	if err != nil {
-		log.Error("CONSOLE: Failed to create buffer texture. sdl:" + fmt.Sprint(sdl.GetError()))
+		log.Error("SDL RENDERER: Failed to create buffer texture. sdl:", sdl.GetError())
 	}
 	return
 }
@@ -162,9 +165,11 @@ func (sdlr *SDLRenderer) SetFullscreen(enable bool) {
 	if enable {
 		sdlr.window.SetFullscreen(uint32(sdl.WINDOW_FULLSCREEN_DESKTOP))
 		sdlr.window.SetBordered(false)
+		log.Info("SDL RENDERER: Fullscreen enabled.")
 	} else {
 		sdlr.window.SetFullscreen(0)
 		sdlr.window.SetBordered(true)
+		log.Info("SDL RENDERER: Fullscreen disabled.")
 	}
 }
 
@@ -264,11 +269,13 @@ func (sdlr *SDLRenderer) ForceRedraw() {
 func (sdlr *SDLRenderer) ToggleDebugMode(m string) {
 	switch m {
 	case "fps":
-		sdlr.showFPS = !sdlr.showFPS
+		//sdlr.showFPS = !sdlr.showFPS
+		log.Warning("SDL RENDERER: FPS display doesn't work, largely due to laziness. Oops.")
 	case "changes":
 		sdlr.showChanges = !sdlr.showChanges
+		log.Debug("SDL RENDERER: Enabled cell change display debug mode.")
 	default:
-		log.Error("SDL Renderer: no debug mode called " + m)
+		log.Error("SDL RENDERER: no debug mode called ", m)
 	}
 }
 

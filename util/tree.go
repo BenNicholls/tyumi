@@ -152,3 +152,14 @@ func (t *TreeNode[T]) Deparent() {
 func (t TreeNode[T]) ChildCount() int {
 	return len(t.children)
 }
+
+// Walks the tree, starting from the provided root node. The function f is called in a depth-first manner. The type T
+// must be specified, inferring it doesn't really seem to work.
+// THINK: should the be non-depth-first versions?
+func WalkTree[T TreeType[T]](node T, f func(T)) {
+	for _, child := range node.GetChildren() {
+		WalkTree(child, f)
+	}
+
+	f(node)
+}

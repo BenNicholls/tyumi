@@ -26,22 +26,6 @@ func Abs[T constraints.Signed](val T) T {
 	return val
 }
 
-// Max returns the max of two numbers. Duh.
-func Max[T constraints.Ordered](i, j T) T {
-	if i < j {
-		return j
-	}
-	return i
-}
-
-// Min is the opposite of max.
-func Min[T constraints.Ordered](i, j T) T {
-	if i > j {
-		return j
-	}
-	return i
-}
-
 // Clamp checks if min <= val <= max. If val < min, returns min. If val > max, returns max. Otherwise returns val.
 func Clamp[T constraints.Ordered](val, min, max T) T {
 	if min > max {

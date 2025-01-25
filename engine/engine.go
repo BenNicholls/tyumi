@@ -6,7 +6,6 @@ import (
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/log"
-	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -29,7 +28,7 @@ func init() {
 
 // Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
 func SetFramerate(f int) {
-	f = util.Min(f, 1000)
+	f = min(f, 1000)
 	frameTargetDur = time.Duration(1000/float64(f+1)) * time.Millisecond
 }
 

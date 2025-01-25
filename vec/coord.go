@@ -98,3 +98,7 @@ type Dims struct {
 func (d Dims) Area() int {
 	return d.W * d.H
 }
+
+func (d Dims) String() string {
+	return fmt.Sprintf("(W: %d, H: %d)", d.W, d.H)
+}

@@ -2,8 +2,6 @@ package vec
 
 import (
 	"iter"
-
-	"github.com/bennicholls/tyumi/util"
 )
 
 // Bounded defines objects that can report a bounding box of some kind.
@@ -22,11 +20,15 @@ func (r Rect) Bounds() Rect {
 	return r
 }
 
+func (r Rect) String() string {
+	return "{" + r.Coord.String() + " " + r.Dims.String() + "}"
+}
+
 // Returns an iterator producing a sequence of all Coords within the Rect r.
 func EachCoord(b Bounded) iter.Seq[Coord] {
 	return func(yield func(Coord) bool) {
 		r := b.Bounds()
-		for i := 0; i < r.Area(); i++ {
+		for i := range r.Area() {
 			if !yield(Coord{r.X + (i % r.W), r.Y + (i / r.W)}) {
 				return
 			}
@@ -50,8 +52,8 @@ func FindIntersectionRect(r1, r2 Bounded) (r Rect) {
 		return
 	}
 
-	r.X, r.Y = util.Max(b1.X, b2.X), util.Max(b1.Y, b2.Y)
-	r.W, r.H = util.Min(b1.X+b1.W, b2.X+b2.W) - r.X, util.Min(b1.Y+b1.H, b2.Y+b2.H) - r.Y
+	r.X, r.Y = max(b1.X, b2.X), max(b1.Y, b2.Y)
+	r.W, r.H = min(b1.X+b1.W, b2.X+b2.W)-r.X, min(b1.Y+b1.H, b2.Y+b2.H)-r.Y
 
 	return
 }

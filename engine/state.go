@@ -19,7 +19,7 @@ type State interface {
 	Update()
 	UpdateUI()
 	Shutdown()
-	Window() *ui.ElementPrototype
+	Window() *ui.Window
 	InputEvents() *event.Stream
 	Events() *event.Stream
 	Ready() bool
@@ -27,7 +27,7 @@ type State interface {
 
 // An embeddable prototype that satisfies the State interface. Build around this for easier gamestate management.
 type StatePrototype struct {
-	window ui.ElementPrototype
+	window *ui.Window
 
 	events       event.Stream      //for engine events, game events, etc. processed at the end of each tick
 	inputEvents  event.Stream      //for input events. processed at the start of each tick
@@ -53,7 +53,7 @@ func (sp *StatePrototype) Init(w, h int) {
 		}
 	}
 
-	sp.window.Init(w, h, vec.ZERO_COORD, 0)
+	sp.window = ui.NewWindow(w, h, vec.ZERO_COORD, 0)
 
 	sp.events = event.NewStream(100, nil)
 	sp.inputEvents = event.NewStream(100, sp.handleInput)
@@ -79,8 +79,8 @@ func (sp *StatePrototype) Shutdown() {
 	return
 }
 
-func (sp *StatePrototype) Window() *ui.ElementPrototype {
-	return &sp.window
+func (sp *StatePrototype) Window() *ui.Window {
+	return sp.window
 }
 
 func (sp *StatePrototype) Events() *event.Stream {

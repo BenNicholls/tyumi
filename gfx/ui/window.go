@@ -1,0 +1,70 @@
+package ui
+
+import (
+	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/util"
+	"github.com/bennicholls/tyumi/vec"
+)
+
+// Window acts as a root node for the UI system. 
+type Window struct {
+	ElementPrototype
+
+	labels map[string]Element
+}
+
+func NewWindow(w, h int, pos vec.Coord, depth int) (wnd *Window) {
+	wnd = new(Window)
+	wnd.Init(w, h, pos, depth)
+	wnd.TreeNode.Init(wnd)
+	wnd.labels = make(map[string]Element)
+	return
+}
+
+// returns this window so subelements can find this. how a window would find a parent window remains a topic
+// of active and fruitless discussion. thankfully i haven't thought about nesting windows yet so it doesn't keep
+// me up at night
+// THINK: i think dialogs are going to be subwindows? they might be substates though, so maybe nesting windows won't
+// be a thing
+func (wnd *Window) getWindow() *Window {
+	return wnd
+}
+
+func (wnd *Window) addLabel(label string, e Element) {
+	if _, ok := wnd.labels[label]; ok {
+		log.Warning("Duplicate label: ", label)
+		return
+	}
+
+	wnd.labels[label] = e
+}
+
+func (wnd *Window) removeLabel(label string) {
+	delete(wnd.labels, label)
+}
+
+func (wnd *Window) onSubNodeAdded(subNode Element) {
+	//find labelled subnodes of the new element and add them to the label map
+	util.WalkTree[Element](subNode, func (e Element) {
+		if e.IsLabelled() {
+			wnd.addLabel(e.GetLabel(), e)
+		}
+	})	
+}
+
+func (wnd *Window) onSubNodeRemoved(subNode Element) {
+	//find labelled subnodes of the removed element and remove them from the label map
+	util.WalkTree[Element](subNode, func (e Element) {
+		if e.IsLabelled() {
+			wnd.removeLabel(e.GetLabel())
+		}
+	})	
+}
+
+// Labelled elements can be retrieved via their label string from the window they are in. Also the labels can be
+// used for other things that I have not thought up yet.
+type Labelled interface {
+	SetLabel(string)
+	GetLabel() string
+	IsLabelled() bool
+}

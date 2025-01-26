@@ -29,7 +29,7 @@ func (wnd *Window) Render() {
 
 	//render all subnodes
 	util.WalkSubTrees[Element](wnd, func(element Element) {
-		if element.IsVisible() && vec.FindIntersectionRect(element, element.GetParent().getCanvas()).Area() > 0 {
+		if element.IsVisible() {
 			element.drawChildren()
 			element.Render()
 			element.renderAnimations()

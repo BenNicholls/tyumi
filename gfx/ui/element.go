@@ -280,7 +280,7 @@ func (e *ElementPrototype) drawToParent() {
 
 func (e *ElementPrototype) drawChildren() {
 	for _, child := range e.GetChildren() {
-		if child.IsVisible() && vec.FindIntersectionRect(child, e.getCanvas()).Area() > 0 {
+		if child.IsVisible() {
 			if child.getCanvas().Dirty() || e.forceRedraw {
 				child.drawToParent()
 			}
@@ -317,7 +317,22 @@ func (e *ElementPrototype) AddAnimation(a gfx.Animator) {
 }
 
 func (e *ElementPrototype) IsVisible() bool {
-	return e.visible
+	if !e.visible {
+		return false
+	}
+
+	if parent := e.GetParent(); parent != nil {
+		bounds := e.Bounds()
+		if e.bordered {
+			bounds.X, bounds.Y = bounds.X-1, bounds.Y-1
+			bounds.W, bounds.H = bounds.W+2, bounds.H+2
+		}
+		if vec.FindIntersectionRect(bounds, parent.getCanvas()).Area() == 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (e *ElementPrototype) ToggleVisible() {

@@ -4,8 +4,8 @@ package event
 
 import "github.com/bennicholls/tyumi/log"
 
-//Definition for event objects. Compose custom events around the EventPrototype to satisfy
-//this interface cleanly.
+// Definition for event objects. Compose custom events around the EventPrototype to satisfy
+// this interface cleanly.
 type Event interface {
 	ID() int
 	String() string
@@ -13,7 +13,7 @@ type Event interface {
 	SetHandled()
 }
 
-//Compose custom events around this
+// Compose custom events around this
 type EventPrototype struct {
 	id      int
 	handled bool
@@ -51,9 +51,9 @@ func (e *EventPrototype) SetHandled() {
 	e.handled = true
 }
 
-//fire the event into the void. the event will be sent to all listening event streams
+// fire the event into the void. the event will be sent to all listening event streams
 func Fire(e Event) {
-	if e.ID() >= len(registeredEvents) || e.ID() < 0{
+	if e.ID() >= len(registeredEvents) || e.ID() < 0 {
 		log.Error("Attempted to fire unregistered event with ID ", e.ID())
 		return
 	}

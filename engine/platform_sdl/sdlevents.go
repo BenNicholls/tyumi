@@ -1,9 +1,9 @@
 package platform_sdl
 
 import (
+	"github.com/bennicholls/tyumi/engine"
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/input"
-	"github.com/bennicholls/tyumi/engine"
 	"github.com/bennicholls/tyumi/vec"
 	"github.com/veandco/go-sdl2/sdl"
 )

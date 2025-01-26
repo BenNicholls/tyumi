@@ -131,7 +131,7 @@ func SetInitialMainState(s State) {
 		log.Error("Cannot set main state: console not initialized. Run InitConsole() first.")
 		return
 	}
-	
+
 	if s == nil || !s.Ready() {
 		log.Error("Cannot set main state: state not initialized or ready.")
 		return

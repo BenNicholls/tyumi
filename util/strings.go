@@ -1,11 +1,11 @@
-//utility functions for handling strings, text, runes, etc.
+// utility functions for handling strings, text, runes, etc.
 package util
 
 import "strings"
 
-//WrapText wraps the provided string at WIDTH characters. optionally takes another int, used to determine the maximum
-//number of lines. returns a slice of strings, each element a wrapped line. for words longer than width it just brutally
-//cuts them off. no mercy.
+// WrapText wraps the provided string at WIDTH characters. optionally takes another int, used to determine the maximum
+// number of lines. returns a slice of strings, each element a wrapped line. for words longer than width it just brutally
+// cuts them off. no mercy.
 func WrapText(str string, width int, maxlines ...int) (lines []string) {
 	capped := false
 	if len(maxlines) == 1 {
@@ -58,7 +58,7 @@ func WrapText(str string, width int, maxlines ...int) (lines []string) {
 	return
 }
 
-//Returns a string of lorem ipsum test text with the requested number of words. 
+// Returns a string of lorem ipsum test text with the requested number of words.
 func LoremIpsum(words int) string {
 	l := strings.Split("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", " ")
 	if words <= len(l) {

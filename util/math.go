@@ -47,10 +47,10 @@ func CycleClamp(val, min, max int) int {
 	return clamped_val
 }
 
-// CycleClampWithOverflow is like CycleClamp but also returns the number of overflow cycles. negative for underflow, 
-// 0 for none, positive for overflow. 
-//NOTE: this function kind of doesn't work as expected since it is inclusive at the end points.
-//THINK: should this just be removed? it's pretty niche.
+// CycleClampWithOverflow is like CycleClamp but also returns the number of overflow cycles. negative for underflow,
+// 0 for none, positive for overflow.
+// NOTE: this function kind of doesn't work as expected since it is inclusive at the end points.
+// THINK: should this just be removed? it's pretty niche.
 func CycleClampWithOverflow(val, min, max int) (int, int) {
 	if min > max {
 		min, max = max, min
@@ -74,7 +74,7 @@ func RoundFloatToInt(f float64) int {
 }
 
 // Lerp linearly interpolates a range (start-end) over (steps) intervals, and returns the (val)th step.
-func Lerp[T constraints.Integer|constraints.Float](start, end T, val, steps int) T {
+func Lerp[T constraints.Integer | constraints.Float](start, end T, val, steps int) T {
 	if val >= steps {
 		return end
 	} else if val <= 0 {

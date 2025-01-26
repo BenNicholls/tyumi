@@ -2,15 +2,15 @@ package gfx
 
 import "github.com/bennicholls/tyumi/gfx/col"
 
-//Defines anything with the ability to be drawn.
+// Defines anything with the ability to be drawn.
 type Drawable interface {
 	Visuals() Visuals
 }
 
-//The basic visual definition of a single-tile object that can be drawn to the screen.
-//Visuals can be one of 2 Modes: Glyph drawing, or Text drawing.
-//Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
-//hence the 2 Chars.
+// The basic visual definition of a single-tile object that can be drawn to the screen.
+// Visuals can be one of 2 Modes: Glyph drawing, or Text drawing.
+// Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
+// hence the 2 Chars.
 type Visuals struct {
 	Mode    DrawMode
 	Colours col.Pair
@@ -38,20 +38,20 @@ func NewTextVisuals(char1, char2 rune, colours col.Pair) (vis Visuals) {
 	return
 }
 
-//Changes the glyph. Also enables glyph drawmode.
+// Changes the glyph. Also enables glyph drawmode.
 func (v *Visuals) ChangeGlyph(g int) {
 	v.Glyph = g
 	v.Mode = DRAW_GLYPH
 }
 
-//Changes the characters. Also enables text drawmode.
+// Changes the characters. Also enables text drawmode.
 func (v *Visuals) ChangeChars(char1, char2 rune) {
 	v.Chars[0] = char1
 	v.Chars[1] = char2
 	v.Mode = DRAW_TEXT
 }
 
-//Needed to satisfy Visuals interface. :(
+// Needed to satisfy Visuals interface. :(
 func (v Visuals) Visuals() Visuals {
 	return v
 }
@@ -63,7 +63,7 @@ const (
 	DRAW_TEXT
 )
 
-//code page 437 glyphs
+// code page 437 glyphs
 const (
 	GLYPH_NONE int = iota
 	GLYPH_FACE1
@@ -324,7 +324,7 @@ const (
 	MAXGLYPHS
 )
 
-//Special text runes.
+// Special text runes.
 const (
 	TEXT_BORDER_LR         rune = rune(196)
 	TEXT_BORDER_UD         rune = rune(179)

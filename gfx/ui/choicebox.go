@@ -33,7 +33,7 @@ func NewChoiceBox(w, h int, pos vec.Coord, depth int, choices ...string) (cb *Ch
 	cb.arrowVisuals[1] = gfx.NewGlyphVisuals(gfx.GLYPH_TRIANGLE_RIGHT, cb.DefaultColours())
 
 	cb.arrowAnimations[0] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{0, 0}, vec.Dims{1, 1}}, 1, col.Pair{col.RED, gfx.COL_DEFAULT}, 15)
-	cb.arrowAnimations[1] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{cb.Bounds().W-1, 0}, vec.Dims{1, 1}}, 1, col.Pair{col.RED, gfx.COL_DEFAULT}, 15)
+	cb.arrowAnimations[1] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{cb.Bounds().W - 1, 0}, vec.Dims{1, 1}}, 1, col.Pair{col.RED, gfx.COL_DEFAULT}, 15)
 	cb.AddAnimation(cb.arrowAnimations[0])
 	cb.AddAnimation(cb.arrowAnimations[1])
 
@@ -74,7 +74,7 @@ func (cb *ChoiceBox) Next() {
 
 func (cb *ChoiceBox) Render() {
 	cb.Textbox.Render()
-	
+
 	if cb.updated {
 		cb.DrawVisuals(vec.Coord{0, 0}, 1, cb.arrowVisuals[0])
 		cb.DrawVisuals(vec.Coord{cb.Bounds().W - 1, 0}, 1, cb.arrowVisuals[1])

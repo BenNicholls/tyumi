@@ -3,7 +3,7 @@ package event
 import "github.com/bennicholls/tyumi/log"
 
 // A Handler is called when processing events in the eventstream. It takes 1 argument e: the event being processed.
-// It is expected that, if the Handler successfully handles the event, it should call e.SetHandled() 
+// It is expected that, if the Handler successfully handles the event, it should call e.SetHandled()
 type Handler func(e Event)
 
 // Stream is a queue of events.

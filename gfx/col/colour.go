@@ -5,7 +5,7 @@ package col
 
 import "github.com/bennicholls/tyumi/util"
 
-//Make returns a uint32 colour in ARGB formed from provided int components
+// Make returns a uint32 colour in ARGB formed from provided int components
 func Make(a, r, g, b int) (colour uint32) {
 	colour = uint32((a % 256) << 24)
 	colour |= uint32(r%256) << 16
@@ -15,12 +15,12 @@ func Make(a, r, g, b int) (colour uint32) {
 	return
 }
 
-//Takes r,g,b ints and creates a colour with alpha 255 in ARGB format.
+// Takes r,g,b ints and creates a colour with alpha 255 in ARGB format.
 func MakeOpaque(r, g, b int) uint32 {
 	return Make(255, r, g, b)
 }
 
-//RGBA returns the RGBA components of an ARGB8888 formatted uint32 colour.
+// RGBA returns the RGBA components of an ARGB8888 formatted uint32 colour.
 func RGBA(colour uint32) (r, g, b, a uint8) {
 	b = uint8(colour & 0x000000FF)
 	g = uint8((colour >> 8) & 0x000000FF)
@@ -30,13 +30,13 @@ func RGBA(colour uint32) (r, g, b, a uint8) {
 	return
 }
 
-//RGB returns the RGB components of an ARGB8888 formatted uint32 colour.
+// RGB returns the RGB components of an ARGB8888 formatted uint32 colour.
 func RGB(colour uint32) (r, g, b uint8) {
 	r, g, b, _ = RGBA(colour)
 	return
 }
 
-//Blends 2 colours c1 and c2. c1 is the active colour (it's on "top").
+// Blends 2 colours c1 and c2. c1 is the active colour (it's on "top").
 func Blend(c1, c2 uint32, mode BlendMode) uint32 {
 	r1, g1, b1, a1 := RGBA(c1)
 	r2, g2, b2, a2 := RGBA(c2)
@@ -66,7 +66,7 @@ const (
 	BLEND_SCREEN
 )
 
-//colours! hardcoded for your pleasure.
+// colours! hardcoded for your pleasure.
 const (
 	NONE      uint32 = 0x00000000
 	WHITE     uint32 = 0xFFFFFFFF
@@ -92,7 +92,7 @@ const KEY = FUSCHIA //key color. renderers should use this to support spriteshee
 
 type Palette []uint32
 
-//Adds the palette p2 to the end of p.
+// Adds the palette p2 to the end of p.
 func (p *Palette) Add(p2 Palette) {
 	if (*p)[len(*p)-1] == p2[0] {
 		*p = append(*p, p2[1:]...)
@@ -101,9 +101,9 @@ func (p *Palette) Add(p2 Palette) {
 	}
 }
 
-//Generate a palette with num items, passing from colour c1 to c2. The colours are
-//lineraly interpolated evenly from one to the next. Gradient is NOT circular.
-//TODO: Circular palette function?
+// Generate a palette with num items, passing from colour c1 to c2. The colours are
+// lineraly interpolated evenly from one to the next. Gradient is NOT circular.
+// TODO: Circular palette function?
 func GenerateGradient(num int, c1, c2 uint32) (p Palette) {
 	p = make(Palette, num)
 

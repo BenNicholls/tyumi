@@ -42,7 +42,7 @@ func (c *Canvas) Init(w, h int) {
 }
 
 func (c *Canvas) InBounds(pos vec.Coord) bool {
-	return pos.X < c.width && pos.Y < c.height && pos.X >= 0 && pos.Y >= 0 
+	return pos.X < c.width && pos.Y < c.height && pos.X >= 0 && pos.Y >= 0
 }
 
 // Clean sets all cells in the canvas as clean (dirty = false).

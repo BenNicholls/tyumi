@@ -24,7 +24,7 @@ type Textbox struct {
 func NewTextbox(w, h int, pos vec.Coord, depth int, text string, center bool) (tb *Textbox) {
 	tb = new(Textbox)
 	tb.Init(w, h, pos, depth, text, center)
-	
+
 	return tb
 }
 
@@ -34,7 +34,7 @@ func (tb *Textbox) Init(w, h int, pos vec.Coord, depth int, text string, center 
 
 	//auto-fit text if required
 	if w == FIT_TEXT {
-		w, h = (len(text) + 1) / 2, 1
+		w, h = (len(text)+1)/2, 1
 		tb.lines = make([]string, 1)
 		tb.lines[0] = text
 	} else if h == FIT_TEXT {
@@ -58,8 +58,6 @@ func (tb *Textbox) ChangeText(txt string) {
 }
 
 func (tb *Textbox) Render() {
-	tb.ElementPrototype.Render()
-
 	if tb.updated {
 		tb.ClearAtDepth(0)
 		for i, line := range tb.lines {
@@ -70,5 +68,5 @@ func (tb *Textbox) Render() {
 			pos := vec.Coord{x_offset / 2, i}
 			tb.DrawText(pos, 0, line, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.TextCellPosition(x_offset%2))
 		}
-	}	
+	}
 }

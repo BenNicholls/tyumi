@@ -1,4 +1,4 @@
-// A package for decoding and handling .xp files produced by Kyzrati's fabulous REXPaint program, the gold-standard in 
+// A package for decoding and handling .xp files produced by Kyzrati's fabulous REXPaint program, the gold-standard in
 // ASCII art drawing programs. It can be found at www.gridsagegames.com/rexpaint.
 //
 // reximage is part of the Tyumi engine by Benjamin Nicholls, but feel free to use it as a standalone package!
@@ -78,7 +78,7 @@ func (cd CellData) RGBA() (fore, back uint32) {
 	return
 }
 
-// Import imports an image from the xp file at the provided path. Returns the Imagedata and an error. If an error is 
+// Import imports an image from the xp file at the provided path. Returns the Imagedata and an error. If an error is
 // present, ImageData will be no good.
 func Import(path string) (image ImageData, err error) {
 	image = ImageData{}

@@ -360,8 +360,19 @@ func (e *ElementPrototype) getCanvas() *gfx.Canvas {
 }
 
 func (e *ElementPrototype) SetLabel(label string) {
+	if e.label != "" {
+		//changing labels. if we're in a window, remove the old label from the map
+		if window := e.getWindow(); window != nil {
+			window.removeLabel(e.label)
+		}
+	}
+	
 	e.label = label
+	
 	//get window, if it exists, and update the label map
+	if window := e.getWindow(); window != nil {
+		window.addLabel(e.label, e)
+	}
 }
 
 func (e *ElementPrototype) GetLabel() string {

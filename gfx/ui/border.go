@@ -43,7 +43,7 @@ func (b *Border) setColours(col col.Pair) {
 	if b.colours == col {
 		return
 	}
-	
+
 	b.colours = col
 	b.dirty = true
 }
@@ -72,7 +72,7 @@ func (b *Border) Render() {
 		b.bottom.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
 	}
 
-	for cursor := range vec.EachCoord(b.left.Bounds()) {
+	for cursor := range vec.EachCoord(b.left.Bounds()) { //left and right
 		b.left.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
 		b.right.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
 	}
@@ -120,8 +120,6 @@ func (b *Border) Render() {
 			b.right.DrawGlyph(vec.Coord{0, i + barPos + 2}, 0, gfx.GLYPH_FILL)
 		}
 	}
-
-	b.dirty = false
 }
 
 func (b *Border) DrawToCanvas(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
@@ -131,11 +129,12 @@ func (b *Border) DrawToCanvas(dst_canvas *gfx.Canvas, offset vec.Coord, depth in
 	offset_left := offset.Add(vec.Coord{-1, 0})
 	offset_right := offset.Add(vec.Coord{w - 1, -1})
 
-	if !b.style.DisableLink {
+	if b.dirty && !b.style.DisableLink {
 		b.linkBorderSegment(&b.top, dst_canvas, offset_top, vec.DIR_DOWN, depth)
 		b.linkBorderSegment(&b.bottom, dst_canvas, offset_bottom, vec.DIR_UP, depth)
 		b.linkBorderSegment(&b.left, dst_canvas, offset_left, vec.DIR_RIGHT, depth)
 		b.linkBorderSegment(&b.right, dst_canvas, offset_right, vec.DIR_LEFT, depth)
+		b.dirty = false
 	}
 
 	b.top.DrawToCanvas(dst_canvas, offset_top, depth)

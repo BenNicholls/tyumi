@@ -80,9 +80,7 @@ func updateUI() {
 // builds the frame and renders using the current platform's renderer.
 func render() {
 	mainState.Window().Render()
-	mainState.Window().RenderAnimations()
 	mainState.Window().DrawToCanvas(&console.Canvas, vec.ZERO_COORD, 0)
-	mainState.Window().FinalizeRender()
 	if console.Dirty() {
 		renderer.Render()
 	}
@@ -124,7 +122,7 @@ func engineIsInitialized() bool {
 		log.Error("Cannot run Tyumi: platform did not provide an event generator.")
 		return false
 	}
-	
+
 	if mainState == nil {
 		log.Error("Cannot run Tyumi, no MainState set! Run SetInitialMainState() first.")
 		return false

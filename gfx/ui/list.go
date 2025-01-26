@@ -61,8 +61,7 @@ func (l *List) calibrate() {
 
 	//if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
 	if l.contentHeight > l.Bounds().H {
-
-		intersect := vec.FindIntersectionRect(l.GetChildren()[l.selected], vec.Rect{vec.ZERO_COORD, l.Size()})
+		intersect := vec.FindIntersectionRect(l.GetChildren()[l.selected], l.Canvas)
 		if sh := l.GetChildren()[l.selected].Bounds().H; intersect.H != sh {
 			scrollDelta := 0
 
@@ -125,16 +124,18 @@ func (l *List) Prev() {
 	l.updated = true
 }
 
-func (l *List) Render() {
+func (l *List) prepareRender() {
 	if l.updated {
 		l.forceRedraw = true
 	}
 
-	l.ElementPrototype.Render()
+	l.ElementPrototype.prepareRender()
+}
 
+func (l *List) Render() {
 	//render highlight for selected item.
 	//TODO: different options for how the selected item is highlighted. currently just inverts the colours
-	if l.highlight {
+	if l.highlight && l.updated {
 		area := l.GetChildren()[l.selected].Bounds()
 		l.Canvas.DrawEffect(gfx.InvertEffect, area)
 	}

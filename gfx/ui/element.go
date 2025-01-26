@@ -16,19 +16,27 @@ type Element interface {
 	vec.Bounded
 	util.TreeType[Element]
 	Labelled
+
 	Update()           // do not override this, this is what the engine uses to tick the gamestate
 	UpdateState() bool //if you want custom update code, implement this.
+
+	prepareRender()
 	Render()
-	RenderAnimations()
-	FinalizeRender()
+	renderAnimations()
+	finalizeRender()
+	drawToParent()
+	drawChildren()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
+
 	HandleKeypress(*input.KeyboardEvent)
+
 	MoveTo(vec.Coord)
 	Move(int, int)
+
 	IsVisible() bool
-	DrawToParent()
-	getCanvas() *gfx.Canvas
+	IsBordered() bool
 	getBorder() *Border
+	getCanvas() *gfx.Canvas
 	getWindow() *Window
 }
 
@@ -81,6 +89,10 @@ func (e *ElementPrototype) setBorder(bordered bool) {
 
 	e.bordered = bordered
 	e.forceParentRedraw()
+}
+
+func (e *ElementPrototype) IsBordered() bool {
+	return e.bordered
 }
 
 func (e *ElementPrototype) SetupBorder(title, hint string) {
@@ -215,43 +227,38 @@ func (e *ElementPrototype) forceParentRedraw() {
 	}
 }
 
-// Renders any changes in the element to the internal canvas. If the element is not visible, we don't waste precious cpus
-// rendering to nothing.
-func (e *ElementPrototype) Render() {
+// performs some pre-render checks. done for the whole tree before any rendering is done.
+func (e *ElementPrototype) prepareRender() {
 	if !e.visible {
 		return
 	}
 
-	if e.bordered {
-		if e.forceRedraw {
+	if e.forceRedraw {
+		if e.bordered {
 			e.border.dirty = true
 		}
-		e.border.Render()
-	}
 
-	if e.forceRedraw {
 		for _, child := range e.GetChildren() { //make sure siblings recompute border links
 			child.getBorder().dirty = true
 		}
 		e.Canvas.Clear()
 	}
-
-	for _, child := range e.GetChildren() {
-		//BUG: visibility culling doesn't take the border of the child into account.
-		//instead of fixing, might be better to redesign how borders work. Or make elements
-		//dynamically adjust their bounds when borders are activated?? hmm.
-		if child.IsVisible() && vec.FindIntersectionRect(e.getCanvas(), child).Area() > 0 {
-			child.Render()
-			child.RenderAnimations()
-			if child.getCanvas().Dirty() || e.forceRedraw {
-				child.DrawToParent()
-			}
-			child.FinalizeRender()
-		}
-	}
 }
 
-func (e *ElementPrototype) RenderAnimations() {
+// Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour.
+// Note that this is called *after* any subelements are drawn to the canvas, and *before* any running animations
+// are rendered.
+func (e *ElementPrototype) Render() {
+
+}
+
+// performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
+func (e *ElementPrototype) finalizeRender() {
+	e.updated = false
+	e.forceRedraw = false
+}
+
+func (e *ElementPrototype) renderAnimations() {
 	for _, animation := range e.animations {
 		if animation.Playing() && vec.FindIntersectionRect(e.getCanvas(), animation).Area() > 0 {
 			animation.Render(&e.Canvas)
@@ -259,13 +266,7 @@ func (e *ElementPrototype) RenderAnimations() {
 	}
 }
 
-// performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
-func (e *ElementPrototype) FinalizeRender() {
-	e.updated = false
-	e.forceRedraw = false
-}
-
-func (e *ElementPrototype) DrawToParent() {
+func (e *ElementPrototype) drawToParent() {
 	parent := e.GetParent()
 	if parent == nil {
 		return
@@ -274,6 +275,16 @@ func (e *ElementPrototype) DrawToParent() {
 	e.DrawToCanvas(parent.getCanvas(), e.position, e.depth)
 	if e.bordered {
 		e.border.DrawToCanvas(parent.getCanvas(), e.position, e.depth)
+	}
+}
+
+func (e *ElementPrototype) drawChildren() {
+	for _, child := range e.GetChildren() {
+		if child.IsVisible() && vec.FindIntersectionRect(child, e.getCanvas()).Area() > 0 {
+			if child.getCanvas().Dirty() || e.forceRedraw {
+				child.drawToParent()
+			}
+		}
 	}
 }
 

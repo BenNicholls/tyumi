@@ -6,7 +6,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// Window acts as a root node for the UI system. 
+// Window acts as a root node for the UI system.
 type Window struct {
 	ElementPrototype
 
@@ -19,6 +19,30 @@ func NewWindow(w, h int, pos vec.Coord, depth int) (wnd *Window) {
 	wnd.TreeNode.Init(wnd)
 	wnd.labels = make(map[string]Element)
 	return
+}
+
+func (wnd *Window) Render() {
+	//prepare_render
+	util.WalkTree[Element](wnd, func(element Element) {
+		element.prepareRender()
+	})
+
+	//render all subnodes
+	util.WalkSubTrees[Element](wnd, func(element Element) {
+		if element.IsVisible() && vec.FindIntersectionRect(element, element.GetParent().getCanvas()).Area() > 0 {
+			element.drawChildren()
+			element.Render()
+			element.renderAnimations()
+			if element.IsBordered() {
+				element.getBorder().Render()
+			}
+			element.finalizeRender() // does this need to go in a seperate walk??
+		}
+	})
+
+	wnd.renderAnimations()
+	wnd.drawChildren()
+	wnd.finalizeRender()
 }
 
 // returns this window so subelements can find this. how a window would find a parent window remains a topic
@@ -45,20 +69,20 @@ func (wnd *Window) removeLabel(label string) {
 
 func (wnd *Window) onSubNodeAdded(subNode Element) {
 	//find labelled subnodes of the new element and add them to the label map
-	util.WalkTree[Element](subNode, func (e Element) {
+	util.WalkTree[Element](subNode, func(e Element) {
 		if e.IsLabelled() {
 			wnd.addLabel(e.GetLabel(), e)
 		}
-	})	
+	})
 }
 
 func (wnd *Window) onSubNodeRemoved(subNode Element) {
 	//find labelled subnodes of the removed element and remove them from the label map
-	util.WalkTree[Element](subNode, func (e Element) {
+	util.WalkTree[Element](subNode, func(e Element) {
 		if e.IsLabelled() {
 			wnd.removeLabel(e.GetLabel())
 		}
-	})	
+	})
 }
 
 // Labelled elements can be retrieved via their label string from the window they are in. Also the labels can be

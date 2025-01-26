@@ -108,8 +108,6 @@ func (pc *PageContainer) getSelectedPage() *Page {
 }
 
 func (pc *PageContainer) Render() {
-	pc.ElementPrototype.Render()
-
 	if pc.updated { //blank out border below selected page's tab
 		selected_tab := pc.getSelectedPage().tab
 		tab_bounds := selected_tab.Bounds()

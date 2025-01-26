@@ -163,3 +163,11 @@ func WalkTree[T TreeType[T]](node T, f func(T)) {
 
 	f(node)
 }
+
+// Walks the tree, calling function f on all subnodes in the tree below the provided node.
+// This is identical to Walktree, except it doesn't call f on the root node.
+func WalkSubTrees[T TreeType[T]](node T, f func(T)) {
+	for _, child := range node.GetChildren() {
+		WalkTree(child, f)
+	}
+}

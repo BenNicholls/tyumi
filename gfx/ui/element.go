@@ -28,7 +28,7 @@ type Element interface {
 	drawChildren()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
 
-	HandleKeypress(*input.KeyboardEvent)
+	HandleKeypress(*input.KeyboardEvent) (event_handled bool)
 
 	MoveTo(vec.Coord)
 	Move(int, int)
@@ -288,16 +288,8 @@ func (e *ElementPrototype) drawChildren() {
 	}
 }
 
-func (e *ElementPrototype) HandleKeypress(event *input.KeyboardEvent) {
-	for _, child := range e.GetChildren() {
-		if event.Handled() {
-			break
-		}
-
-		if child.IsVisible() {
-			child.HandleKeypress(event)
-		}
-	}
+func (e *ElementPrototype) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+	return
 }
 
 // Adds an animation to the ui element.
@@ -347,7 +339,6 @@ func (e *ElementPrototype) SetVisible(v bool) {
 	}
 
 	e.visible = v
-
 	if e.visible {
 		e.updated = true
 	}

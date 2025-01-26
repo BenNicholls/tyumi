@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
@@ -43,6 +44,16 @@ func (wnd *Window) Render() {
 	wnd.renderAnimations()
 	wnd.drawChildren()
 	wnd.finalizeRender()
+}
+
+func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
+	util.WalkSubTrees[Element](wnd, func(element Element) {
+		if !event_handled && element.IsVisible() {
+			event_handled = element.HandleKeypress(key_event)
+		}
+	})
+
+	return
 }
 
 // returns this window so subelements can find this. how a window would find a parent window remains a topic

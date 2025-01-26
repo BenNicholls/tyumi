@@ -3,8 +3,8 @@ package event
 import "github.com/bennicholls/tyumi/log"
 
 // A Handler is called when processing events in the eventstream. It takes 1 argument e: the event being processed.
-// It is expected that, if the Handler successfully handles the event, it should call e.SetHandled()
-type Handler func(e Event)
+// It is expected that, if the Handler successfully handles the event, it returns true
+type Handler func(e Event) (handled bool)
 
 // Stream is a queue of events.
 type Stream struct {
@@ -67,6 +67,9 @@ func (s *Stream) Process() {
 	}
 
 	for e := s.Next(); e != nil; e = s.Next() {
-		s.handler(e)
+		handled := s.handler(e)
+		if handled {
+			e.setHandled()
+		}
 	}
 }

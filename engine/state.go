@@ -29,9 +29,9 @@ type State interface {
 type StatePrototype struct {
 	window *ui.Window
 
-	events       event.Stream      //for engine events, game events, etc. processed at the end of each tick
-	inputEvents  event.Stream      //for input events. processed at the start of each tick
-	inputHandler func(event.Event) //user-provided input handling function. runs AFTER the UI has had a chance to process input.
+	events       event.Stream  //for engine events, game events, etc. processed at the end of each tick
+	inputEvents  event.Stream  //for input events. processed at the start of each tick
+	inputHandler event.Handler //user-provided input handling function. runs AFTER the UI has had a chance to process input.
 
 	ready bool // indicates the state has been successfully initialized
 }
@@ -93,26 +93,28 @@ func (sp *StatePrototype) InputEvents() *event.Stream {
 
 // sets the function for handling generic game events. these are collected during the tick(), and then processed
 // at the end of each tick() in the order they were received.
-func (sp *StatePrototype) AddEventHandler(handler func(event.Event)) {
+func (sp *StatePrototype) AddEventHandler(handler event.Handler) {
 	sp.events.AddHandler(handler)
 }
 
-func (sp *StatePrototype) handleInput(event event.Event) {
+func (sp *StatePrototype) handleInput(event event.Event) (event_handled bool) {
 	switch event.ID() {
 	case input.EV_KEYBOARD:
-		sp.window.HandleKeypress(event.(*input.KeyboardEvent))
+		event_handled = sp.window.HandleKeypress(event.(*input.KeyboardEvent))
 	}
 
 	if sp.inputHandler != nil {
-		sp.inputHandler(event)
+		event_handled = event_handled || sp.inputHandler(event)
 	}
+
+	return
 }
 
 // sets the function for handling inputs to the state object. inputs are collected, distributed and then
 // processed at the beginning of each tick(). This handler is called after the UI has had a chance to handle
 // the input. If the UI handles the input, event.Handled() will be true. You can still choose to ignore that and
 // handle the event again if you like though.
-func (sp *StatePrototype) AddInputHandler(handler func(event.Event)) {
+func (sp *StatePrototype) SetInputHandler(handler event.Handler) {
 	sp.inputHandler = handler
 }
 

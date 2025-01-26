@@ -31,11 +31,13 @@ func InitConsole(w, h int) {
 	console.mouseCursorVisuals = gfx.NewGlyphVisuals(gfx.GLYPH_BORDER_UUDDLLRR, col.Pair{col.WHITE, col.NONE})
 }
 
-func (c *Console) handleEvents(e event.Event) {
+func (c *Console) handleEvents(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case input.EV_MOUSEMOVE:
 		c.Clear(vec.Rect{c.mouseCursorPos, vec.Dims{1, 1}})
 		c.mouseCursorPos = e.(*input.MouseMoveEvent).Position
 		c.DrawVisuals(c.mouseCursorPos, 100000000, c.mouseCursorVisuals) //TODO: cursor should probably have a proper depth level just for it
 	}
+
+	return
 }

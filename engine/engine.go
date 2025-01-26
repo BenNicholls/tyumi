@@ -93,13 +93,15 @@ func endFrame() {
 }
 
 // handles events from the engine's internal event stream. runs once per tick
-func handleEvent(e event.Event) {
+func handleEvent(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_QUIT: //quit event, like from clicking the close window button on the window
 		running = false
 		mainState.Shutdown()
-		e.SetHandled()
+		event_handled = true
 	}
+
+	return
 }
 
 func engineIsInitialized() bool {

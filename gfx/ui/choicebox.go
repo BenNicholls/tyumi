@@ -81,13 +81,15 @@ func (cb *ChoiceBox) Render() {
 	}
 }
 
-func (cb *ChoiceBox) HandleKeypress(event *input.KeyboardEvent) {
+func (cb *ChoiceBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
 	switch event.Key {
 	case input.K_RIGHT:
 		cb.Next()
-		event.SetHandled()
+		event_handled = true
 	case input.K_LEFT:
 		cb.Prev()
-		event.SetHandled()
+		event_handled = true
 	}
+
+	return
 }

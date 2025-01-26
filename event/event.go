@@ -10,7 +10,7 @@ type Event interface {
 	ID() int
 	String() string
 	Handled() bool
-	SetHandled()
+	setHandled()
 }
 
 // Compose custom events around this
@@ -47,7 +47,7 @@ func (e EventPrototype) String() (s string) {
 
 // Marks the event as handled. This doesn't prevent propogation/processing of the event on its own, but can be checked
 // to dip out of event handling early if desired.
-func (e *EventPrototype) SetHandled() {
+func (e *EventPrototype) setHandled() {
 	e.handled = true
 }
 

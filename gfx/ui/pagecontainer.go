@@ -127,15 +127,14 @@ func (pc *PageContainer) Render() {
 	}
 }
 
-func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) {
+func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
 	switch event.Key {
 	case input.K_TAB:
 		pc.NextPage()
-		event.SetHandled()
-		return
-	}
+		event_handled = true
+	}	
 
-	pc.ElementPrototype.HandleKeypress(event)
+	return
 }
 
 // Page is the content for a tab in a PageContainer. Size is defined and controlled by the PageContainer.

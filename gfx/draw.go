@@ -71,6 +71,13 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, colours col.Pair
 	}
 }
 
+// Draws the provided visuals to the rectangular area
+func (c *Canvas) DrawRect(area vec.Rect, depth int, v Visuals) {
+	for cursor := range vec.EachCoord(area) {
+		c.DrawVisuals(cursor, depth, v)
+	}
+}
+
 // draws a circle of radius r centered at (px, py), copying the visuals from v, with option to fill the circle with same
 // visuals
 func (c *Canvas) DrawCircle(center vec.Coord, depth, r int, v Visuals, fill bool) {

@@ -85,7 +85,9 @@ func (l *List) calibrate() {
 		l.scrollOffset = 0
 	}
 
-	l.border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
+	if l.border != nil {
+		l.border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
+	}
 }
 
 // Toggles highlighting of currently selected item.

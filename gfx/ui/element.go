@@ -52,7 +52,7 @@ type ElementPrototype struct {
 	forceRedraw bool   //indicates this object needs to clear and render everything from zero
 	label       string // an optional identifier for the element
 
-	border     Border
+	border     *Border
 	animations []gfx.Animator //animations on this element. these are updated once per frame.
 }
 
@@ -67,13 +67,14 @@ func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 
 func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
-	if e.bordered {
+	if e.border != nil {
 		e.border.setColours(e.DefaultColours())
 	}
 	e.updated = true
 }
 
-// Enable the border. Defaults to ui.DefaultBorderStyle. Use SetBorderStyle to use something else.
+// Enable the border. Defaults to ui.DefaultBorderStyle. Use SetBorderStyle to use something else. If no border
+// has been setup via SetupBorder(), a default one will be created.
 func (e *ElementPrototype) EnableBorder() {
 	e.setBorder(true)
 }
@@ -88,6 +89,11 @@ func (e *ElementPrototype) setBorder(bordered bool) {
 	}
 
 	e.bordered = bordered
+	if e.bordered == true && e.border == nil {
+		//setup default border if none has been setup
+		e.SetupBorder("", "")
+	}
+
 	e.forceParentRedraw()
 }
 
@@ -95,6 +101,9 @@ func (e *ElementPrototype) IsBordered() bool {
 	return e.bordered
 }
 
+// Creates and enables a border for the element. Title will be shown in the top left, and hint will be shown in the
+// bottom right.
+// TODO: centered titles? setting borderstyle at the same time?
 func (e *ElementPrototype) SetupBorder(title, hint string) {
 	e.border = NewBorder(e.Size())
 	e.border.title = title
@@ -107,13 +116,19 @@ func (e *ElementPrototype) SetupBorder(title, hint string) {
 // Sets the border style flag and, if possible, updates the used style. Sometimes you can't though...
 // for example, setting the flag to BORDER_INHERIT while the element does not have a parent.
 func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle ...BorderStyle) {
+	if e.border == nil {
+		log.Error("UI: Could not apply borderstyle, element has no border to style.")
+		return
+	}
+
 	switch styleFlag {
 	case BORDER_STYLE_DEFAULT:
 		e.border.style = &DefaultBorderStyle
 	case BORDER_STYLE_INHERIT:
 		if parent := e.GetParent(); parent != nil {
-			parent_border := parent.getBorder()
-			e.border.style = parent_border.style
+			if parent_border := parent.getBorder(); parent_border != nil {
+				e.border.style = parent_border.style
+			}
 		}
 	case BORDER_STYLE_CUSTOM:
 		if borderStyle == nil {
@@ -128,7 +143,7 @@ func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle
 }
 
 func (e *ElementPrototype) getBorder() *Border {
-	return &e.border
+	return e.border
 }
 
 func (e *ElementPrototype) getWindow() *Window {
@@ -159,7 +174,7 @@ func (e *ElementPrototype) Move(dx, dy int) {
 }
 
 func (e *ElementPrototype) AddChild(child Element) {
-	if child_border := child.getBorder(); child_border.styleFlag == BORDER_STYLE_INHERIT {
+	if child_border := child.getBorder(); child_border != nil && child_border.styleFlag == BORDER_STYLE_INHERIT {
 		child_border.style = e.border.style
 	}
 

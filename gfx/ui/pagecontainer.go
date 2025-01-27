@@ -123,7 +123,6 @@ func (pc *PageContainer) Render() {
 		cursor.Move(1, 0)
 		brush.Glyph = selected_tab.border.style.Glyphs[BORDER_UR]
 		pc.DrawVisuals(cursor, pc.depth, brush)
-		pc.updated = false
 	}
 }
 
@@ -156,7 +155,7 @@ func newPage(width, height int, title string) (p *Page) {
 	p.Init(width, height, vec.Coord{0, 3}, 0)
 
 	p.tab = NewTextbox(FIT_TEXT, 1, vec.Coord{1, 1}, 5, title, false)
-	p.tab.SetupBorder("", "")
+	p.tab.EnableBorder()
 
 	p.deactivate()
 

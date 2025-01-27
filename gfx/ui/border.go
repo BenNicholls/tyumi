@@ -28,7 +28,9 @@ type Border struct {
 	dirty bool //flag indicates when border needs to be re-rendered.
 }
 
-func NewBorder(element_size vec.Dims) (b Border) {
+func NewBorder(element_size vec.Dims) (b *Border) {
+	b = new(Border)
+	
 	b.top.Init(element_size.W+1, 1)
 	b.bottom.Init(element_size.W+1, 1)
 	b.left.Init(1, element_size.H+1)

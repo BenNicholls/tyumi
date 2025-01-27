@@ -28,13 +28,13 @@ func NewList(w, h int, pos vec.Coord, depth int) (l *List) {
 func (l *List) AddChild(elem Element) {
 	l.ElementPrototype.AddChild(elem)
 	l.calibrate()
-	l.updated = true
+	l.Updated = true
 }
 
 func (l *List) AddChildren(elems ...Element) {
 	l.ElementPrototype.AddChildren(elems...)
 	l.calibrate()
-	l.updated = true
+	l.Updated = true
 }
 
 func (l *List) RemoveChild(e Element) {
@@ -112,7 +112,7 @@ func (l *List) Next() {
 
 	l.selected = util.CycleClamp(l.selected+1, 0, l.ChildCount()-1)
 	l.calibrate()
-	l.updated = true
+	l.Updated = true
 }
 
 // Selects the previous item in the list
@@ -123,11 +123,11 @@ func (l *List) Prev() {
 
 	l.selected = util.CycleClamp(l.selected-1, 0, l.ChildCount()-1)
 	l.calibrate()
-	l.updated = true
+	l.Updated = true
 }
 
 func (l *List) prepareRender() {
-	if l.updated {
+	if l.Updated {
 		l.forceRedraw = true
 	}
 
@@ -137,7 +137,7 @@ func (l *List) prepareRender() {
 func (l *List) Render() {
 	//render highlight for selected item.
 	//TODO: different options for how the selected item is highlighted. currently just inverts the colours
-	if l.highlight && l.updated {
+	if l.highlight {
 		area := l.GetChildren()[l.selected].Bounds()
 		l.Canvas.DrawEffect(gfx.InvertEffect, area)
 	}

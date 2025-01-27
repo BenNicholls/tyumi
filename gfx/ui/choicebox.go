@@ -75,10 +75,8 @@ func (cb *ChoiceBox) Next() {
 func (cb *ChoiceBox) Render() {
 	cb.Textbox.Render()
 
-	if cb.updated {
-		cb.DrawVisuals(vec.Coord{0, 0}, 1, cb.arrowVisuals[0])
-		cb.DrawVisuals(vec.Coord{cb.Bounds().W - 1, 0}, 1, cb.arrowVisuals[1])
-	}
+	cb.DrawVisuals(vec.Coord{0, 0}, 1, cb.arrowVisuals[0])
+	cb.DrawVisuals(vec.Coord{cb.Bounds().W - 1, 0}, 1, cb.arrowVisuals[1])
 }
 
 func (cb *ChoiceBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {

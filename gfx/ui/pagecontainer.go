@@ -100,7 +100,7 @@ func (pc *PageContainer) selectPage(page_index int) {
 	new_page := pc.getSelectedPage()
 	new_page.activate()
 	pc.AddChild(new_page)
-	pc.updated = true
+	pc.Updated = true
 }
 
 func (pc *PageContainer) getSelectedPage() *Page {
@@ -108,22 +108,21 @@ func (pc *PageContainer) getSelectedPage() *Page {
 }
 
 func (pc *PageContainer) Render() {
-	if pc.updated { //blank out border below selected page's tab
-		selected_tab := pc.getSelectedPage().tab
-		tab_bounds := selected_tab.Bounds()
-		cursor := tab_bounds.Coord
-		cursor.Move(-1, 1)
-		brush := gfx.NewGlyphVisuals(selected_tab.border.style.Glyphs[BORDER_UL], selected_tab.border.colours)
-		pc.DrawVisuals(cursor, pc.depth, brush)
-		brush.Glyph = gfx.GLYPH_NONE
-		for range tab_bounds.W {
-			cursor.Move(1, 0)
-			pc.DrawVisuals(cursor, pc.depth, brush)
-		}
+	//blank out border below selected page's tab
+	selected_tab := pc.getSelectedPage().tab
+	tab_bounds := selected_tab.Bounds()
+	cursor := tab_bounds.Coord
+	cursor.Move(-1, 1)
+	brush := gfx.NewGlyphVisuals(selected_tab.border.style.Glyphs[BORDER_UL], selected_tab.border.colours)
+	pc.DrawVisuals(cursor, pc.depth, brush)
+	brush.Glyph = gfx.GLYPH_NONE
+	for range tab_bounds.W {
 		cursor.Move(1, 0)
-		brush.Glyph = selected_tab.border.style.Glyphs[BORDER_UR]
 		pc.DrawVisuals(cursor, pc.depth, brush)
 	}
+	cursor.Move(1, 0)
+	brush.Glyph = selected_tab.border.style.Glyphs[BORDER_UR]
+	pc.DrawVisuals(cursor, pc.depth, brush)
 }
 
 func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {

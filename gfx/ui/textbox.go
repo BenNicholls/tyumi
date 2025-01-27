@@ -54,19 +54,17 @@ func (tb *Textbox) ChangeText(txt string) {
 
 	tb.text = txt
 	tb.lines = util.WrapText(txt, tb.Size().W*2, tb.Size().H)
-	tb.updated = true
+	tb.Updated = true
 }
 
 func (tb *Textbox) Render() {
-	if tb.updated {
-		tb.ClearAtDepth(0)
-		for i, line := range tb.lines {
-			x_offset := 0
-			if tb.center {
-				x_offset = (tb.Bounds().W*2 - len(line)) / 2
-			}
-			pos := vec.Coord{x_offset / 2, i}
-			tb.DrawText(pos, 0, line, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.TextCellPosition(x_offset%2))
+	tb.ClearAtDepth(0)
+	for i, line := range tb.lines {
+		x_offset := 0
+		if tb.center {
+			x_offset = (tb.Bounds().W*2 - len(line)) / 2
 		}
+		pos := vec.Coord{x_offset / 2, i}
+		tb.DrawText(pos, 0, line, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.TextCellPosition(x_offset%2))
 	}
 }

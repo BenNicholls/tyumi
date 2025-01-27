@@ -44,7 +44,9 @@ func (wnd *Window) Render() {
 	util.WalkSubTrees[Element](wnd, func(element Element) {
 		if element.IsVisible() {
 			element.drawChildren()
-			element.Render()
+			if element.IsUpdated() {
+				element.Render()
+			}
 			element.renderAnimations()
 			if element.IsBordered() {
 				element.getBorder().Render()

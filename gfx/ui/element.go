@@ -34,6 +34,7 @@ type Element interface {
 	Move(int, int)
 
 	IsVisible() bool
+	IsUpdated() bool
 	IsBordered() bool
 	getBorder() *Border
 	getCanvas() *gfx.Canvas
@@ -43,17 +44,16 @@ type Element interface {
 type ElementPrototype struct {
 	gfx.Canvas
 	util.TreeNode[Element]
+	Updated bool //indicates this object's state has changed and needs to be re-rendered.
 
 	position    vec.Coord
 	depth       int //depth for the UI system, relative to the element's parent. if no parent, relative to the console
 	visible     bool
 	bordered    bool
-	updated     bool   //indicates this object's state has changed and needs to be re-rendered.
 	forceRedraw bool   //indicates this object needs to clear and render everything from zero
 	label       string // an optional identifier for the element
-
-	border     *Border
-	animations []gfx.Animator //animations on this element. these are updated once per frame.
+	border      *Border
+	animations  []gfx.Animator //animations on this element. these are updated once per frame.
 }
 
 func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
@@ -61,7 +61,7 @@ func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 	e.position = pos
 	e.depth = depth
 	e.visible = true
-	e.updated = true
+	e.Updated = true
 	e.TreeNode.Init(e)
 }
 
@@ -70,7 +70,7 @@ func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 	if e.border != nil {
 		e.border.setColours(e.DefaultColours())
 	}
-	e.updated = true
+	e.Updated = true
 }
 
 // Enable the border. Defaults to ui.DefaultBorderStyle. Use SetBorderStyle to use something else. If no border
@@ -205,6 +205,10 @@ func (e *ElementPrototype) Update() {
 	return
 }
 
+func (e *ElementPrototype) IsUpdated() bool {
+	return e.Updated
+}
+
 func (e *ElementPrototype) updateAnimations() {
 	for _, a := range e.animations {
 		if a.Playing() {
@@ -259,7 +263,7 @@ func (e *ElementPrototype) Render() {
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
 func (e *ElementPrototype) finalizeRender() {
-	e.updated = false
+	e.Updated = false
 	e.forceRedraw = false
 }
 
@@ -345,7 +349,7 @@ func (e *ElementPrototype) SetVisible(v bool) {
 
 	e.visible = v
 	if e.visible {
-		e.updated = true
+		e.Updated = true
 	}
 
 	e.forceParentRedraw()

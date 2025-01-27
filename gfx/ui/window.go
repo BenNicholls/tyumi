@@ -22,6 +22,18 @@ func NewWindow(w, h int, pos vec.Coord, depth int) (wnd *Window) {
 	return
 }
 
+// Updates all visible subelements in the window, as well as all visible animations.
+func (wnd *Window) Update() {
+	util.WalkSubTrees[Element](wnd, func(element Element) {
+		if element.IsVisible() {
+			element.Update()
+			element.updateAnimations()
+		}
+	})
+
+	wnd.updateAnimations()
+}
+
 func (wnd *Window) Render() {
 	//prepare_render
 	util.WalkTree[Element](wnd, func(element Element) {

@@ -132,7 +132,7 @@ func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) (event_handl
 	case input.K_TAB:
 		pc.NextPage()
 		event_handled = true
-	}	
+	}
 
 	return
 }

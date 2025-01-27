@@ -68,7 +68,7 @@ func (sp *StatePrototype) Update() {
 }
 
 // UpdateUI is called before each frame, allowing the user to apply ui changes for rendering all at once if they prefer.
-// Otherwise they can implement UpdateState() routines on the individual UI elements themselves and have them control their
+// Otherwise they can implement Update() routines on the individual UI elements themselves and have them control their
 // own behaviour.
 func (sp *StatePrototype) UpdateUI() {
 	return

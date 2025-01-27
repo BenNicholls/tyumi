@@ -17,8 +17,8 @@ type Element interface {
 	util.TreeType[Element]
 	Labelled
 
-	Update()           // do not override this, this is what the engine uses to tick the gamestate
-	UpdateState() bool //if you want custom update code, implement this.
+	Update()
+	updateAnimations()
 
 	prepareRender()
 	Render()
@@ -184,36 +184,23 @@ func (e *ElementPrototype) RemoveChild(child Element) {
 	e.ForceRedraw()
 }
 
-// update() is the internal update function. handles any internal update behaviour, and calls the UpdateState function
-// to allow user-defined update behaviour to occur.
+// Update() can be overriden to update the state of the UI Element. Note that the element's animations are updated
+// separately and do not need to be managed here.
 func (e *ElementPrototype) Update() {
-	for _, e := range e.GetChildren() {
-		e.Update()
-	}
+	return
+}
 
-	//run user-provided state update function.
-	if e.UpdateState() {
-		e.updated = true
-	}
-
-	//tick animations
+func (e *ElementPrototype) updateAnimations() {
 	for _, a := range e.animations {
 		if a.Playing() {
 			a.Update()
 		}
 	}
 
-	//remove finished one-shot animations
+	// remove finished one-shot animations
 	e.animations = slices.DeleteFunc[[]gfx.Animator](e.animations, func(a gfx.Animator) bool {
 		return a.IsOneShot() && a.Done()
 	})
-}
-
-// UpdateState() is a virtual function. Implement this to provide ui update behaviour on a thread-safe, per-frame basis,
-// instead of updating the state of the element as the gamestate progresses. Return true if you want to trigger a
-// render of the ui element.
-func (e *ElementPrototype) UpdateState() bool {
-	return false
 }
 
 func (e *ElementPrototype) ForceRedraw() {
@@ -239,8 +226,11 @@ func (e *ElementPrototype) prepareRender() {
 		}
 
 		for _, child := range e.GetChildren() { //make sure siblings recompute border links
-			child.getBorder().dirty = true
+			if child.IsBordered() {
+				child.getBorder().dirty = true
+			}
 		}
+
 		e.Canvas.Clear()
 	}
 }
@@ -249,7 +239,7 @@ func (e *ElementPrototype) prepareRender() {
 // Note that this is called *after* any subelements are drawn to the canvas, and *before* any running animations
 // are rendered.
 func (e *ElementPrototype) Render() {
-
+	return
 }
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
@@ -357,9 +347,9 @@ func (e *ElementPrototype) SetLabel(label string) {
 			window.removeLabel(e.label)
 		}
 	}
-	
+
 	e.label = label
-	
+
 	//get window, if it exists, and update the label map
 	if window := e.getWindow(); window != nil {
 		window.addLabel(e.label, e)

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/vec"
 )
 
 type KeyboardEvent struct {
@@ -24,20 +25,21 @@ func FireKeydownEvent(key Keycode) {
 	event.Fire(newKeyboardEvent(key))
 }
 
-// If the keyboard event represents a direction. returns the x and y deltas for the direction.
-func (kb KeyboardEvent) Direction() (dx, dy int) {
+// If the keyboard event represents a direction, returns a vec.Direction (or vec.DIR_NONE if not). Currently only does
+// cardinal directions.
+func (kb KeyboardEvent) Direction() vec.Direction {
 	switch kb.Key {
 	case K_UP:
-		return 0, -1
+		return vec.DIR_UP
 	case K_DOWN:
-		return 0, 1
+		return vec.DIR_DOWN
 	case K_LEFT:
-		return -1, 0
+		return vec.DIR_LEFT
 	case K_RIGHT:
-		return 1, 0
+		return vec.DIR_RIGHT
+	default:
+		return vec.DIR_NONE
 	}
-
-	return
 }
 
 // If the keyboard event represents text in some way (letter, number, anything traditionally

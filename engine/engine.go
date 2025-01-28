@@ -32,6 +32,11 @@ func SetFramerate(f int) {
 	frameTargetDur = time.Duration(1000/float64(f+1)) * time.Millisecond
 }
 
+// Gets the tick number for the current tick (duh)
+func GetTick() int {
+	return tick
+}
+
 // This is the gameloop
 func Run() {
 	runtime.LockOSThread() //most of sdl is single threaded

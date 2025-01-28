@@ -116,6 +116,7 @@ func (sdlr *SDLRenderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 		console_size := sdlr.console.Size()
 		sdlr.window.SetSize(int32(sdlr.tileSize*console_size.W), int32(sdlr.tileSize*console_size.H))
 		_ = sdlr.createCanvasBuffer() //TODO: handle this error?
+		sdlr.window.SetPosition(sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED)
 		log.Info("SDL RENDERER: resized window.")
 	}
 

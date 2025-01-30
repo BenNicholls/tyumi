@@ -34,6 +34,10 @@ func (c Coord) Step(d Direction) Coord {
 	return c.Add(Coord(d))
 }
 
+func (c Coord) Scale(scale int) Coord {
+	return Coord{c.X * scale, c.Y * scale}
+}
+
 // ToIndex converts a Coord to a 1D index in a 2D array with the given stride.
 func (c Coord) ToIndex(stride int) int {
 	return c.Y*stride + c.X
@@ -46,6 +50,11 @@ func (c Coord) String() string {
 // ManhattanDistance calculates the manhattan (or taxicab) distance on a square grid.
 func ManhattanDistance(c1, c2 Coord) int {
 	return util.Abs(c2.X-c1.X) + util.Abs(c2.Y-c1.Y)
+}
+
+// IndexToCoord returns a coord representing an index from a 1D array representing a 2D grid with the given stride
+func IndexToCoord(index, stride int) Coord {
+	return Coord{index % stride, index / stride}
 }
 
 type Direction Vec2i

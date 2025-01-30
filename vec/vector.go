@@ -105,6 +105,10 @@ func (v1 Vec2i) Sub(v2 Vec2i) Vec2i {
 	return Vec2i{v1.X - v2.X, v1.Y - v2.Y}
 }
 
+func (v Vec2i) Scale(scale int) Vec2i {
+	return Vec2i{v.X * scale, v.Y * scale}
+}
+
 // Returns the magnitude of the vector. Note that this is a float and not an int.
 func (v Vec2i) Mag() float64 {
 	return v.ToVec2f().Mag()

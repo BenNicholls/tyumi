@@ -28,6 +28,10 @@ func Abs[T constraints.Signed](val T) T {
 
 // Clamp checks if min <= val <= max. If val < min, returns min. If val > max, returns max. Otherwise returns val.
 func Clamp[T constraints.Ordered](val, min, max T) T {
+	if min == max {
+		return min
+	}
+	
 	if min > max {
 		min, max = max, min
 	}
@@ -43,6 +47,10 @@ func Clamp[T constraints.Ordered](val, min, max T) T {
 // CycleClamp is like clamp but instead of clamping at the endpoints, it overflows/underflows back to the other side of
 // the range. This range of the function is INCLUSIVE of min and max, so min <= val <= max.
 func CycleClamp(val, min, max int) int {
+	if min == max {
+		return min
+	}
+	
 	clamped_val, _ := CycleClampWithOverflow(val, min, max)
 	return clamped_val
 }

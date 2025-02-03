@@ -30,16 +30,19 @@ type Border struct {
 
 func NewBorder(element_size vec.Dims) (b *Border) {
 	b = new(Border)
+	b.resize(element_size)
 	
-	b.top.Init(element_size.W+1, 1)
-	b.bottom.Init(element_size.W+1, 1)
-	b.left.Init(1, element_size.H+1)
-	b.right.Init(1, element_size.H+1)
-
-	b.dirty = true
-
 	return
 }
+
+func (b *Border) resize(size vec.Dims) {
+	b.top.Init(size.W+1, 1)
+	b.bottom.Init(size.W+1, 1)
+	b.left.Init(1, size.H+1)
+	b.right.Init(1, size.H+1)
+
+	b.dirty = true
+} 
 
 func (b *Border) setColours(col col.Pair) {
 	if b.colours == col {

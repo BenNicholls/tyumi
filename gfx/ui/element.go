@@ -65,6 +65,23 @@ func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 	e.TreeNode.Init(e)
 }
 
+// Resizes the element. This clears the internal canvas and forces redraws of everything.
+func (e *ElementPrototype) Resize(size vec.Dims) {
+	if size == e.Size() {
+		return
+	}
+
+	e.Canvas.Init(size.W, size.H)
+
+	if e.border != nil {
+		e.border.resize(size)
+	}
+
+	e.Updated = true
+	e.forceRedraw = true
+	e.forceParentRedraw()
+}
+
 func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
 	if e.border != nil {

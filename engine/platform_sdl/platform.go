@@ -28,6 +28,7 @@ func (sdlp *SDLPlatform) Shutdown() {
 	sdlp.renderer.Cleanup()
 }
 
+// Creates a platform for use by Tyumi. Pass this into engine.SetPlatform()
 func New() *SDLPlatform {
 	sdlp := new(SDLPlatform)
 	return sdlp

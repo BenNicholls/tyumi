@@ -86,6 +86,7 @@ const (
 	TEAL      uint32 = 0xFF008080
 	NAVY      uint32 = 0xFF000080
 	PURPLE    uint32 = 0xFF800080
+	ORANGE    uint32 = 0xFFFFA500
 )
 
 const KEY = FUSCHIA //key color. renderers should use this to support spritesheet transparency for BMP

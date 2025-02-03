@@ -27,6 +27,7 @@ type Element interface {
 	drawToParent()
 	drawChildren()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
+	isRedrawing() bool
 
 	HandleKeypress(*input.KeyboardEvent) (event_handled bool)
 
@@ -246,6 +247,10 @@ func (e *ElementPrototype) updateAnimations() {
 
 func (e *ElementPrototype) ForceRedraw() {
 	e.forceRedraw = true
+}
+
+func (e *ElementPrototype) isRedrawing() bool {
+	return e.forceRedraw
 }
 
 func (e *ElementPrototype) forceParentRedraw() {

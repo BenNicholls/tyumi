@@ -149,6 +149,11 @@ func (e *ElementPrototype) getBorder() *Border {
 func (e *ElementPrototype) getWindow() *Window {
 	parent := e.GetParent()
 	if parent == nil {
+		//if this element *is* a window, we can find out by grabbing the self pointer from the internal
+		//treenode and try casting it.
+		if wnd, ok := e.GetSelf().(*Window); ok {
+			return wnd
+		}
 		return nil
 	}
 

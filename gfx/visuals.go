@@ -59,8 +59,9 @@ func (v Visuals) Visuals() Visuals {
 type DrawMode int
 
 const (
-	DRAW_GLYPH DrawMode = iota
-	DRAW_TEXT
+	DRAW_GLYPH DrawMode = iota // draws cell in glyph mode (square font)
+	DRAW_TEXT                  // draws cell in text mode (half-width font)
+	DRAW_NONE                  //do not draw this cell
 )
 
 // code page 437 glyphs

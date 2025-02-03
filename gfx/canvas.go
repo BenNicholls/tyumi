@@ -162,6 +162,14 @@ func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellP
 	c.setDepth(pos, depth)
 }
 
+// sets a cell at pos to DRAW_NONE
+func (c *Canvas) setBlank(pos vec.Coord) {
+	cell := c.getCell(pos)
+	cell.SetBlank()
+	c.dirty = c.dirty || cell.Dirty
+	c.setDepth(pos, -1) // not sure if this makes sense...
+}
+
 // Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas.
 func (c *Canvas) Clear(areas ...vec.Rect) {
 	c.ClearAtDepth(-1, areas...)
@@ -191,7 +199,7 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	c.dirty = true
 }
 
-// reports whether the cavas should be drawn out
+// reports whether the canvas should be drawn out
 func (c Canvas) Dirty() bool {
 	return c.dirty
 }

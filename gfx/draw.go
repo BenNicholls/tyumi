@@ -21,14 +21,27 @@ func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, v Visuals) {
 	if !c.InBounds(pos) {
 		return
 	}
-	c.setColours(pos, depth, v.Colours)
 
 	switch v.Mode {
 	case DRAW_GLYPH:
 		c.setGlyph(pos, depth, v.Glyph)
 	case DRAW_TEXT:
 		c.setText(pos, depth, v.Chars[0], v.Chars[1])
+	case DRAW_NONE:
+		c.setBlank(pos)
+		return // if we are not drawing this cell we can skip setting the colours below
 	}
+
+	c.setColours(pos, depth, v.Colours)
+}
+
+// DrawNone sets the cell at pos to mode DRAW_NONE, which prevents it from being drawn.
+func (c *Canvas) DrawNone(pos vec.Coord) {
+	if !c.InBounds(pos) {
+		return
+	}
+
+	c.setBlank(pos)
 }
 
 // DrawColours draws a colour pair (fore/back) to a cell at pos, respecting depth.
@@ -109,7 +122,9 @@ func (c *Canvas) DrawToCanvas(dst *Canvas, offset vec.Coord, depth int) {
 		}
 		src_cursor := dst_cursor.Subtract(offset)
 		cell := c.getCell(src_cursor)
-		dst.DrawVisuals(dst_cursor, depth, cell.Visuals)
+		if cell.Visuals.Mode != DRAW_NONE {
+			dst.DrawVisuals(dst_cursor, depth, cell.Visuals)
+		}
 		cell.Dirty = false
 	}
 

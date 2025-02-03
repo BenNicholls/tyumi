@@ -28,7 +28,9 @@ func (c *Cell) SetForeColour(colour uint32) {
 	}
 
 	c.Colours.Fore = colour
-	c.Dirty = true
+	if c.Mode != DRAW_NONE {
+		c.Dirty = true
+	}
 }
 
 func (c *Cell) SetBackColour(colour uint32) {
@@ -37,7 +39,9 @@ func (c *Cell) SetBackColour(colour uint32) {
 	}
 
 	c.Colours.Back = colour
-	c.Dirty = true
+	if c.Mode != DRAW_NONE {
+		c.Dirty = true
+	}
 }
 
 func (c *Cell) SetColours(colours col.Pair) {
@@ -46,7 +50,9 @@ func (c *Cell) SetColours(colours col.Pair) {
 	}
 
 	c.Colours = colours
-	c.Dirty = true
+	if c.Mode != DRAW_NONE {
+		c.Dirty = true
+	}
 }
 
 func (c *Cell) SetGlyph(gl int) {
@@ -83,6 +89,15 @@ func (c *Cell) SetChar(char rune, char_pos TextCellPosition) {
 	if char != TEXT_DEFAULT {
 		c.Chars[int(char_pos)] = char
 	}
+	c.Dirty = true
+}
+
+func (c *Cell) SetBlank() {
+	if c.Mode == DRAW_NONE {
+		return
+	}
+
+	c.Mode = DRAW_NONE
 	c.Dirty = true
 }
 

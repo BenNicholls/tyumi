@@ -22,3 +22,9 @@ func (c *Canvas) DrawCircle(center vec.Coord, depth, r int, v Visuals, fill bool
 		c.FloodFill(center, depth, v)
 	}
 }
+
+func (c *Canvas) DrawLine(line vec.Line, depth int, vis Visuals) {
+	for cursor := range line.EachCoord() {
+		c.DrawVisuals(cursor, depth, vis)
+	}
+}

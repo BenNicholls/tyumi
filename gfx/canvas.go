@@ -20,7 +20,7 @@ type Canvas struct {
 
 	width, height int
 
-	defaultColours col.Pair
+	defaultVisuals Visuals // Visuals drawn when the canvas is cleared. 
 }
 
 func (c *Canvas) Size() vec.Dims {
@@ -31,13 +31,20 @@ func (c Canvas) Bounds() vec.Rect {
 	return vec.Rect{vec.ZERO_COORD, vec.Dims{c.width, c.height}}
 }
 
-// Initializes the canvas. Can also be used for resizing, assuming you don't mind that the contents of the canvas
-// are destroyed.
+// Initializes the canvas, setting all cells to a nice black and white default drawing mode.
 func (c *Canvas) Init(w, h int) {
+	c.defaultVisuals = Visuals{
+		Mode: DRAW_GLYPH,
+		Colours: col.Pair{col.WHITE, col.BLACK},
+	}
+	c.Resize(w, h)
+}
+
+// Resizes the canvas. This also clears the canvas!
+func (c *Canvas) Resize(w, h int) {
 	c.width, c.height = util.Abs(w), util.Abs(h)
 	c.cells = make([]Cell, c.Size().Area())
 	c.depthmap = make([]int, c.Size().Area())
-	c.defaultColours = col.Pair{col.WHITE, col.BLACK}
 	c.Clear()
 }
 
@@ -55,11 +62,20 @@ func (c *Canvas) Clean() {
 
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.
 func (c *Canvas) SetDefaultColours(colours col.Pair) {
-	if c.defaultColours == colours {
+	if c.defaultVisuals.Colours == colours {
 		return
 	}
 
-	c.defaultColours = colours
+	c.defaultVisuals.Colours = colours
+	c.Clear()
+}
+
+// Sets the default visuals for a canvas, then does a reset of the canvas to apply them.
+func (c *Canvas) SetDefaultVisuals(vis Visuals) {
+	if c.defaultVisuals == vis {
+		return
+	}
+	c.defaultVisuals = vis
 	c.Clear()
 }
 
@@ -101,7 +117,7 @@ func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
 	}
 
 	if col == COL_DEFAULT {
-		col = c.defaultColours.Fore
+		col = c.defaultVisuals.Colours.Fore
 	}
 	cell := c.getCell(pos)
 	cell.SetForeColour(col)
@@ -115,7 +131,7 @@ func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
 	}
 
 	if col == COL_DEFAULT {
-		col = c.defaultColours.Back
+		col = c.defaultVisuals.Colours.Back
 	}
 	cell := c.getCell(pos)
 	cell.SetBackColour(col)
@@ -170,7 +186,8 @@ func (c *Canvas) setBlank(pos vec.Coord) {
 	c.setDepth(pos, -1) // not sure if this makes sense...
 }
 
-// Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas.
+// Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas. The appearance
+// of the reset cells can set using canvas.SetDefaultVisuals() 
 func (c *Canvas) Clear(areas ...vec.Rect) {
 	c.ClearAtDepth(-1, areas...)
 }
@@ -190,8 +207,8 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 			if depth != -1 && c.getDepth(cursor) > depth {
 				continue
 			}
-			cell.Clear()
-			cell.SetColours(c.defaultColours)
+
+			cell.SetVisuals(c.defaultVisuals)
 			c.setDepth(cursor, -1)
 		}
 	}
@@ -205,13 +222,13 @@ func (c Canvas) Dirty() bool {
 }
 
 func (c Canvas) DefaultColours() col.Pair {
-	return c.defaultColours
+	return c.defaultVisuals.Colours
 }
 
 // Returns a copy of a region of the canvas. If the area is not in the canvas, copy will be empty.
 func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 	copy.Init(area.W, area.H)
-	copy.defaultColours = c.defaultColours
+	copy.defaultVisuals = c.defaultVisuals
 
 	if intersection := vec.FindIntersectionRect(c, area); intersection.Area() == 0 {
 		return

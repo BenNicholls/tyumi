@@ -59,6 +59,7 @@ type ElementPrototype struct {
 
 func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 	e.Canvas.Init(w, h)
+	e.SetDefaultVisuals(defaultCanvasVisuals)
 	e.position = pos
 	e.depth = depth
 	e.visible = true
@@ -72,7 +73,7 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 		return
 	}
 
-	e.Canvas.Init(size.W, size.H)
+	e.Canvas.Resize(size.W, size.H)
 
 	if e.border != nil {
 		e.border.resize(size)
@@ -86,7 +87,7 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
 	if e.border != nil {
-		e.border.setColours(e.DefaultColours())
+		e.border.setColours(colours)
 	}
 	e.Updated = true
 }
@@ -277,7 +278,7 @@ func (e *ElementPrototype) prepareRender() {
 			}
 		}
 
-		e.Canvas.Clear()
+		e.Clear()
 	}
 }
 

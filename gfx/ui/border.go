@@ -36,10 +36,10 @@ func NewBorder(element_size vec.Dims) (b *Border) {
 }
 
 func (b *Border) resize(size vec.Dims) {
-	b.top.Init(size.W+1, 1)
-	b.bottom.Init(size.W+1, 1)
-	b.left.Init(1, size.H+1)
-	b.right.Init(1, size.H+1)
+	b.top.Resize(size.W+1, 1)
+	b.bottom.Resize(size.W+1, 1)
+	b.left.Resize(1, size.H+1)
+	b.right.Resize(1, size.H+1)
 
 	b.dirty = true
 } 

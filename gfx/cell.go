@@ -101,6 +101,16 @@ func (c *Cell) SetBlank() {
 	c.Dirty = true
 }
 
+// Sets the cell's Visuals to vis all at once
+func (c *Cell) SetVisuals(vis Visuals) {
+	if c.Visuals == vis {
+		return
+	}
+
+	c.Visuals = vis
+	c.Dirty = true
+}
+
 // Re-inits a cell back to default blankness.
 func (c *Cell) Clear() {
 	if c.Mode == DRAW_GLYPH {

@@ -227,7 +227,7 @@ func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 	copy.Init(area.W, area.H)
 	copy.defaultVisuals = c.defaultVisuals
 
-	if intersection := vec.FindIntersectionRect(c, area); intersection.Area() == 0 {
+	if !vec.Intersects(c, area) {
 		return
 	}
 

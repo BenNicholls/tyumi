@@ -297,7 +297,7 @@ func (e *ElementPrototype) finalizeRender() {
 
 func (e *ElementPrototype) renderAnimations() {
 	for _, animation := range e.animations {
-		if animation.Playing() && vec.FindIntersectionRect(e.getCanvas(), animation).Area() > 0 {
+		if animation.Playing() && vec.Intersects(e.getCanvas(), animation) {
 			animation.Render(&e.Canvas)
 		}
 	}
@@ -356,7 +356,7 @@ func (e *ElementPrototype) IsVisible() bool {
 			bounds.X, bounds.Y = bounds.X-1, bounds.Y-1
 			bounds.W, bounds.H = bounds.W+2, bounds.H+2
 		}
-		if vec.FindIntersectionRect(bounds, parent.getCanvas()).Area() == 0 {
+		if !vec.Intersects(bounds, parent.getCanvas()){
 			return false
 		}
 	}

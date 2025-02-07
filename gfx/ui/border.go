@@ -31,7 +31,7 @@ type Border struct {
 func NewBorder(element_size vec.Dims) (b *Border) {
 	b = new(Border)
 	b.resize(element_size)
-	
+
 	return
 }
 
@@ -42,7 +42,7 @@ func (b *Border) resize(size vec.Dims) {
 	b.right.Resize(1, size.H+1)
 
 	b.dirty = true
-} 
+}
 
 func (b *Border) setColours(col col.Pair) {
 	if b.colours == col {
@@ -142,10 +142,10 @@ func (b *Border) DrawToCanvas(dst_canvas *gfx.Canvas, offset vec.Coord, depth in
 		b.dirty = false
 	}
 
-	b.top.DrawToCanvas(dst_canvas, offset_top, depth)
-	b.bottom.DrawToCanvas(dst_canvas, offset_bottom, depth)
-	b.left.DrawToCanvas(dst_canvas, offset_left, depth)
-	b.right.DrawToCanvas(dst_canvas, offset_right, depth)
+	b.top.Draw(dst_canvas, offset_top, depth)
+	b.bottom.Draw(dst_canvas, offset_bottom, depth)
+	b.left.Draw(dst_canvas, offset_left, depth)
+	b.right.Draw(dst_canvas, offset_right, depth)
 }
 
 func (b *Border) linkBorderSegment(border_segment, dst_canvas *gfx.Canvas, dst_offset vec.Coord, inner_dir vec.Direction, depth int) {

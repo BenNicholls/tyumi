@@ -165,7 +165,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 				c.DrawVisuals(cursor, ba.depth, ba.Vis)
 			}
 		} else {
-			ba.originalVisuals.DrawToCanvas(c, ba.area.Coord, ba.depth)
+			ba.originalVisuals.Draw(c, ba.area.Coord, ba.depth)
 		}
 		ba.dirty = false
 	}

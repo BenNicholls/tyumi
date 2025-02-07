@@ -85,7 +85,7 @@ func updateUI() {
 // builds the frame and renders using the current platform's renderer.
 func render() {
 	mainState.Window().Render()
-	mainState.Window().DrawToCanvas(&console.Canvas, vec.ZERO_COORD, 0)
+	mainState.Window().Draw(&console.Canvas, vec.ZERO_COORD, 0)
 	if console.Dirty() {
 		renderer.Render()
 	}

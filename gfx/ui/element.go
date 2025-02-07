@@ -309,7 +309,7 @@ func (e *ElementPrototype) drawToParent() {
 		return
 	}
 
-	e.DrawToCanvas(parent.getCanvas(), e.position, e.depth)
+	e.Draw(parent.getCanvas(), e.position, e.depth)
 	if e.bordered {
 		e.border.DrawToCanvas(parent.getCanvas(), e.position, e.depth)
 	}

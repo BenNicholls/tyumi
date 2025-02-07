@@ -1,14 +1,17 @@
 package gfx
 
-import "github.com/bennicholls/tyumi/gfx/col"
+import (
+	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/vec"
+)
 
-// Defines anything with the ability to be drawn.
+// Defines anything with the ability to be drawn to a canvas
 type Drawable interface {
-	Visuals() Visuals
+	Draw(dst_canvas *Canvas, offset vec.Coord, depth int)
 }
 
 // The basic visual definition of a single-tile object that can be drawn to the screen.
-// Visuals can be one of 2 Modes: Glyph drawing, or Text drawing.
+// Visuals can be one of 3 Modes: Glyph drawing, or Text drawing, or disabled.
 // Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
 // hence the 2 Chars.
 type Visuals struct {
@@ -51,9 +54,8 @@ func (v *Visuals) ChangeChars(char1, char2 rune) {
 	v.Mode = DRAW_TEXT
 }
 
-// Needed to satisfy Visuals interface. :(
-func (v Visuals) Visuals() Visuals {
-	return v
+func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
+	dst_canvas.DrawVisuals(offset, depth, v)
 }
 
 type DrawMode int

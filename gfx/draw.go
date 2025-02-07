@@ -12,10 +12,6 @@ const (
 	DRAW_TEXT_RIGHT TextCellPosition = 1
 )
 
-func (c *Canvas) Draw(pos vec.Coord, depth int, d Drawable) {
-	c.DrawVisuals(pos, depth, d.Visuals())
-}
-
 // THINK: this checks/sets the depth 3-4 times i think. hmmm.
 func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, v Visuals) {
 	if !c.InBounds(pos) {
@@ -111,19 +107,19 @@ func (c *Canvas) FloodFill(pos vec.Coord, depth int, v Visuals) {
 	//hey, write this function. it'll be fun i promise
 }
 
-// DrawToCanvas draws the canvas c to a destination canvas, offset by some Coord at depth z. This process will mark
+// Draw draws the canvas c to a destination canvas, offset by some Coord at depth z. This process will mark
 // any copied cells in c as clean.
 // TODO: this function should take in flags to determine how the canvas is copied
-func (c *Canvas) DrawToCanvas(dst *Canvas, offset vec.Coord, depth int) {
-	draw_area := vec.FindIntersectionRect(dst, vec.Rect{offset, c.Size()})
+func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
+	draw_area := vec.FindIntersectionRect(dst_canvas, vec.Rect{offset, c.Size()})
 	for dst_cursor := range vec.EachCoord(draw_area) {
-		if dst.getDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
+		if dst_canvas.getDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
 			continue
 		}
 		src_cursor := dst_cursor.Subtract(offset)
 		cell := c.getCell(src_cursor)
 		if cell.Visuals.Mode != DRAW_NONE {
-			dst.DrawVisuals(dst_cursor, depth, cell.Visuals)
+			dst_canvas.DrawVisuals(dst_cursor, depth, cell.Visuals)
 		}
 		cell.Dirty = false
 	}

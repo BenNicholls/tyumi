@@ -7,7 +7,7 @@ import (
 // A single tile in a canvas.
 type Cell struct {
 	Visuals
-	Dirty bool //this will be true if the cell has been changed since the last copy/render operation
+	Dirty bool //this will be true if the cell has been changed since the last time its canvas has been drawn out
 }
 
 // Sets the properties of a cell all at once for Glyph Mode.

@@ -5,11 +5,6 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// Defines anything with the ability to be drawn to a canvas
-type Drawable interface {
-	Draw(dst_canvas *Canvas, offset vec.Coord, depth int)
-}
-
 // The basic visual definition of a single-tile object that can be drawn to the screen.
 // Visuals can be one of 3 Modes: Glyph drawing, or Text drawing, or disabled.
 // Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
@@ -58,13 +53,7 @@ func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
 	dst_canvas.DrawVisuals(offset, depth, v)
 }
 
-type DrawMode int
 
-const (
-	DRAW_GLYPH DrawMode = iota // draws cell in glyph mode (square font)
-	DRAW_TEXT                  // draws cell in text mode (half-width font)
-	DRAW_NONE                  //do not draw this cell
-)
 
 // code page 437 glyphs
 const (

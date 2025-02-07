@@ -6,10 +6,6 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-const (
-	COL_DEFAULT uint32 = 0x00000001 //pass this in cases where you want the canvas to use the default colours
-)
-
 // Canvas is a Z-depthed grid of Cell objects.
 // All canvas drawing options are z-depth sensitive. They will never draw a lower z value cell over a higher one.
 // The clear function can be used to set a region of a canvas back to -1 z level so you can redraw over it.
@@ -23,14 +19,6 @@ type Canvas struct {
 	defaultVisuals Visuals // Visuals drawn when the canvas is cleared. 
 }
 
-func (c *Canvas) Size() vec.Dims {
-	return vec.Dims{c.width, c.height}
-}
-
-func (c Canvas) Bounds() vec.Rect {
-	return vec.Rect{vec.ZERO_COORD, vec.Dims{c.width, c.height}}
-}
-
 // Initializes the canvas, setting all cells to a nice black and white default drawing mode.
 func (c *Canvas) Init(w, h int) {
 	c.defaultVisuals = Visuals{
@@ -38,26 +26,6 @@ func (c *Canvas) Init(w, h int) {
 		Colours: col.Pair{col.WHITE, col.BLACK},
 	}
 	c.Resize(w, h)
-}
-
-// Resizes the canvas. This also clears the canvas!
-func (c *Canvas) Resize(w, h int) {
-	c.width, c.height = util.Abs(w), util.Abs(h)
-	c.cells = make([]Cell, c.Size().Area())
-	c.depthmap = make([]int, c.Size().Area())
-	c.Clear()
-}
-
-func (c *Canvas) InBounds(pos vec.Coord) bool {
-	return pos.X < c.width && pos.Y < c.height && pos.X >= 0 && pos.Y >= 0
-}
-
-// Clean sets all cells in the canvas as clean (dirty = false).
-func (c *Canvas) Clean() {
-	for i := range c.cells {
-		c.cells[i].Dirty = false
-	}
-	c.dirty = false
 }
 
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.
@@ -75,8 +43,37 @@ func (c *Canvas) SetDefaultVisuals(vis Visuals) {
 	if c.defaultVisuals == vis {
 		return
 	}
+
 	c.defaultVisuals = vis
 	c.Clear()
+}
+
+func (c *Canvas) Size() vec.Dims {
+	return vec.Dims{c.width, c.height}
+}
+
+// Resizes the canvas. This also clears the canvas!
+func (c *Canvas) Resize(w, h int) {
+	c.width, c.height = util.Abs(w), util.Abs(h)
+	c.cells = make([]Cell, c.Size().Area())
+	c.depthmap = make([]int, c.Size().Area())
+	c.Clear()
+}
+
+func (c Canvas) Bounds() vec.Rect {
+	return vec.Rect{vec.ZERO_COORD, c.Size()}
+}
+
+func (c *Canvas) InBounds(pos vec.Coord) bool {
+	return pos.X < c.width && pos.Y < c.height && pos.X >= 0 && pos.Y >= 0
+}
+
+// Clean sets all cells in the canvas as clean (dirty = false).
+func (c *Canvas) Clean() {
+	for i := range c.cells {
+		c.cells[i].Dirty = false
+	}
+	c.dirty = false
 }
 
 // GetCell returns the cell at pos. Returns an empty cell if pos is out of bounds.

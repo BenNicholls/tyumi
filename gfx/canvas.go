@@ -243,10 +243,13 @@ func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 		depth := c.getDepth(cursor)
 		copy_cursor := cursor.Subtract(area.Coord)
 		copy.setColours(copy_cursor, depth, cell.Colours)
-		if cell.Mode == DRAW_GLYPH {
+		switch cell.Mode {
+		case DRAW_GLYPH:
 			copy.setGlyph(copy_cursor, depth, cell.Glyph)
-		} else {
+		case DRAW_TEXT:
 			copy.setText(copy_cursor, depth, cell.Chars[0], cell.Chars[1])
+		case DRAW_NONE:
+			copy.setBlank(copy_cursor)
 		}
 	}
 

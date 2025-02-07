@@ -24,8 +24,9 @@ func (r Rect) String() string {
 	return "{" + r.Coord.String() + " " + r.Dims.String() + "}"
 }
 
-// Returns an iterator producing a sequence of all Coords within the Rect r.
-func EachCoord(b Bounded) iter.Seq[Coord] {
+// Returns an iterator producing a sequence of all Coords within the Rect r, starting in the top-left corner and
+// proceeding to the right, going line by line (like how you'd read)
+func EachCoordInArea(b Bounded) iter.Seq[Coord] {
 	return func(yield func(Coord) bool) {
 		r := b.Bounds()
 		for i := range r.Area() {

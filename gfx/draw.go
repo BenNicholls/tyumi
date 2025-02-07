@@ -27,7 +27,7 @@ type Drawable interface {
 // TODO: this function should take in flags to determine how the canvas is copied
 func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
 	draw_area := vec.FindIntersectionRect(dst_canvas, vec.Rect{offset, c.Size()})
-	for dst_cursor := range vec.EachCoord(draw_area) {
+	for dst_cursor := range vec.EachCoordInArea(draw_area) {
 		if dst_canvas.getDepth(dst_cursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
 			continue
 		}

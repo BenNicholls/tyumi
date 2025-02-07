@@ -189,7 +189,7 @@ func (sdlr *SDLRenderer) Render() {
 	t := sdlr.renderer.GetRenderTarget()             //store window texture, we'll switch back to it once we're done with the buffer.
 	sdlr.renderer.SetRenderTarget(sdlr.canvasBuffer) //point renderer at buffer texture, we'll draw there
 
-	for cursor := range vec.EachCoord(sdlr.console) {
+	for cursor := range vec.EachCoordInArea(sdlr.console) {
 		cell := sdlr.console.GetCell(cursor)
 		if cell.Dirty || sdlr.forceRedraw {
 			if cell.Mode == gfx.DRAW_TEXT {

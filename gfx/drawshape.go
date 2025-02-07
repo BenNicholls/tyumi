@@ -4,7 +4,7 @@ import "github.com/bennicholls/tyumi/vec"
 
 // Draws the provided visuals to the rectangular area
 func (c *Canvas) DrawRect(area vec.Rect, depth int, v Visuals) {
-	for cursor := range vec.EachCoord(area) {
+	for cursor := range vec.EachCoordInArea(area) {
 		c.DrawVisuals(cursor, depth, v)
 	}
 }

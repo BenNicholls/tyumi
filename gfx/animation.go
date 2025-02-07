@@ -161,7 +161,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 
 	if ba.dirty || c.dirty {
 		if ba.blinking {
-			for cursor := range vec.EachCoord(ba.area) {
+			for cursor := range vec.EachCoordInArea(ba.area) {
 				c.DrawVisuals(cursor, ba.depth, ba.Vis)
 			}
 		} else {
@@ -208,14 +208,14 @@ func (fa *FlashAnimation) Render(c *Canvas) {
 	if fa.originalColours == nil {
 		//populate original colours to lerp to
 		fa.originalColours = make([]col.Pair, fa.area.Area())
-		for cursor := range vec.EachCoord(fa.area) {
+		for cursor := range vec.EachCoordInArea(fa.area) {
 			cell := c.getCell(cursor)
 			col_index := cursor.Subtract(fa.area.Coord).ToIndex(fa.area.W)
 			fa.originalColours[col_index] = cell.Colours
 		}
 	}
 
-	for cursor := range vec.EachCoord(fa.area) {
+	for cursor := range vec.EachCoordInArea(fa.area) {
 		col_index := cursor.Subtract(fa.area.Coord).ToIndex(fa.area.W)
 		c.DrawColours(cursor, fa.depth, fa.flashColours.Lerp(fa.originalColours[col_index], fa.ticks, fa.duration-1))
 	}

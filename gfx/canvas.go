@@ -196,7 +196,7 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	}
 
 	for _, area := range areas {
-		for cursor := range vec.EachCoord(area) {
+		for cursor := range vec.EachCoordInArea(area) {
 			if !c.InBounds(cursor) { //need to check to make sure user-provided areas are in bounds.
 				continue
 			}
@@ -231,7 +231,7 @@ func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 		return
 	}
 
-	for cursor := range vec.EachCoord(area) {
+	for cursor := range vec.EachCoordInArea(area) {
 		if !c.InBounds(cursor) {
 			continue
 		}

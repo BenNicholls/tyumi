@@ -72,12 +72,12 @@ func (b *Border) Render() {
 	b.left.SetDefaultColours(colours)
 	b.right.SetDefaultColours(colours)
 
-	for cursor := range vec.EachCoord(b.top.Bounds()) { //top and bottom
+	for cursor := range vec.EachCoordInArea(b.top.Bounds()) { //top and bottom
 		b.top.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
 		b.bottom.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
 	}
 
-	for cursor := range vec.EachCoord(b.left.Bounds()) { //left and right
+	for cursor := range vec.EachCoordInArea(b.left.Bounds()) { //left and right
 		b.left.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
 		b.right.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
 	}
@@ -149,7 +149,7 @@ func (b *Border) DrawToCanvas(dst_canvas *gfx.Canvas, offset vec.Coord, depth in
 }
 
 func (b *Border) linkBorderSegment(border_segment, dst_canvas *gfx.Canvas, dst_offset vec.Coord, inner_dir vec.Direction, depth int) {
-	for src_cursor := range vec.EachCoord(border_segment) {
+	for src_cursor := range vec.EachCoordInArea(border_segment) {
 		src_cell := border_segment.GetCell(src_cursor)
 		if src_cell.Mode == gfx.DRAW_TEXT {
 			continue

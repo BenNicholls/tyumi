@@ -61,8 +61,5 @@ func (c *Canvas) DrawCircle(center vec.Coord, depth, r int, v Visuals, fill bool
 	}
 }
 
-func (c *Canvas) DrawLine(line vec.Line, depth int, vis Visuals) {
-	for cursor := range line.EachCoord() {
-		c.DrawVisuals(cursor, depth, vis)
 	}
 }

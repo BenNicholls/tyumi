@@ -128,7 +128,7 @@ func (e *ElementPrototype) SetupBorder(title, hint string) {
 	e.border.title = title
 	e.border.hint = hint
 	e.border.setColours(e.DefaultColours())
-	e.border.style = &DefaultBorderStyle
+	e.border.style = &defaultBorderStyle
 	e.EnableBorder()
 }
 
@@ -142,7 +142,7 @@ func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle
 
 	switch styleFlag {
 	case BORDER_STYLE_DEFAULT:
-		e.border.style = &DefaultBorderStyle
+		e.border.style = &defaultBorderStyle
 	case BORDER_STYLE_INHERIT:
 		if parent := e.GetParent(); parent != nil {
 			if parent_border := parent.getBorder(); parent_border != nil {

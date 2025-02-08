@@ -73,20 +73,20 @@ func (b *Border) Render() {
 	b.right.SetDefaultColours(colours)
 
 	for cursor := range vec.EachCoordInArea(b.top.Bounds()) { //top and bottom
-		b.top.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
-		b.bottom.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_LR])
+		b.top.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_LR))
+		b.bottom.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_LR))
 	}
 
 	for cursor := range vec.EachCoordInArea(b.left.Bounds()) { //left and right
-		b.left.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
-		b.right.DrawGlyph(cursor, 0, b.style.Glyphs[BORDER_UD])
+		b.left.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_UD))
+		b.right.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_UD))
 	}
 
 	w, h := b.top.Size().W, b.left.Size().H
-	b.top.DrawGlyph(vec.Coord{0, 0}, 0, b.style.Glyphs[BORDER_DR])        //upper left corner
-	b.right.DrawGlyph(vec.Coord{0, 0}, 0, b.style.Glyphs[BORDER_DL])      //upper right corner
-	b.bottom.DrawGlyph(vec.Coord{w - 1, 0}, 0, b.style.Glyphs[BORDER_UL]) //bottom right corner
-	b.left.DrawGlyph(vec.Coord{0, h - 1}, 0, b.style.Glyphs[BORDER_UR])   //bottom left corner
+	b.top.DrawGlyph(vec.Coord{0, 0}, 0, b.style.GetGlyph(gfx.LINK_DR))        //upper left corner
+	b.right.DrawGlyph(vec.Coord{0, 0}, 0, b.style.GetGlyph(gfx.LINK_DL))      //upper right corner
+	b.bottom.DrawGlyph(vec.Coord{w - 1, 0}, 0, b.style.GetGlyph(gfx.LINK_UL)) //bottom right corner
+	b.left.DrawGlyph(vec.Coord{0, h - 1}, 0, b.style.GetGlyph(gfx.LINK_UR))   //bottom left corner
 
 	//decorate and draw title
 	if b.title != "" {
@@ -176,24 +176,24 @@ func (b *Border) getLinkedGlyph(src_glyph int, glyph_dst_pos vec.Coord, link_dir
 		if neighbour_cell.Mode == gfx.DRAW_GLYPH {
 			if b.style.glyphIsLinkable(neighbour_cell.Glyph) {
 				neighbour_cell_flags := b.style.getBorderFlags(neighbour_cell.Glyph)
-				if neighbour_cell_flags&getBorderFlagByDirection(link_dir.Inverted()) != 0 {
-					glyph_flags |= getBorderFlagByDirection(link_dir)
+				if neighbour_cell_flags&gfx.GetLinkFlagByDirection(link_dir.Inverted()) != 0 {
+					glyph_flags |= gfx.GetLinkFlagByDirection(link_dir)
 				}
 			}
 		} else { // special cases for connecting with title/hint decorations
 			if link_dir == vec.DIR_RIGHT {
 				if neighbour_cell.Chars[0] == b.style.TextDecorationL || neighbour_cell.Chars[0] == b.style.TextDecorationPad {
-					glyph_flags |= BORDER_R
+					glyph_flags |= gfx.LINK_R
 				}
 			} else if link_dir == vec.DIR_LEFT {
 				if neighbour_cell.Chars[1] == b.style.TextDecorationR || neighbour_cell.Chars[1] == b.style.TextDecorationPad {
-					glyph_flags |= BORDER_L
+					glyph_flags |= gfx.LINK_L
 				}
 			}
 		}
 	}
 
-	return b.style.Glyphs[glyph_flags]
+	return b.style.GetGlyph(glyph_flags)
 }
 
 func (b *Border) EnableScrollbar(height, pos int) {

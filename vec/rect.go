@@ -24,6 +24,16 @@ func (r Rect) String() string {
 	return "{" + r.Coord.String() + " " + r.Dims.String() + "}"
 }
 
+// Returns the coordinates of the 4 corners of the rect, starting in the top left and going clockwise.
+func (r Rect) Corners() (corners [4]Coord) {
+	corners[0] = r.Coord                             //TOPLEFT
+	corners[1] = Coord{r.X + r.W - 1, r.Y}           //TOPRIGHT
+	corners[2] = Coord{r.X + r.W - 1, r.Y + r.H - 1} //BOTTOMRIGHT
+	corners[3] = Coord{r.X, r.Y + r.H - 1}           //BOTTOMLEFT
+
+	return
+}
+
 // Returns an iterator producing a sequence of all Coords within the Rect r, starting in the top-left corner and
 // proceeding to the right, going line by line (like how you'd read)
 func EachCoordInArea(b Bounded) iter.Seq[Coord] {
@@ -49,9 +59,8 @@ func FindIntersectionRect(r1, r2 Bounded) (r Rect) {
 	if !Intersects(r1, r2) {
 		return
 	}
-	
-	b1, b2 := r1.Bounds(), r2.Bounds()
 
+	b1, b2 := r1.Bounds(), r2.Bounds()
 	r.X, r.Y = max(b1.X, b2.X), max(b1.Y, b2.Y)
 	r.W, r.H = min(b1.X+b1.W, b2.X+b2.W)-r.X, min(b1.Y+b1.H, b2.Y+b2.H)-r.Y
 

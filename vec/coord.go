@@ -111,3 +111,7 @@ func (d Dims) Area() int {
 func (d Dims) String() string {
 	return fmt.Sprintf("(W: %d, H: %d)", d.W, d.H)
 }
+
+func (d Dims) Grow(dw, dh int) Dims {
+	return Dims{d.W + dw, d.H + dh}
+}

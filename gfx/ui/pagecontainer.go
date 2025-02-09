@@ -69,7 +69,7 @@ func (pc *PageContainer) addPage(page *Page) {
 	//find position for next tab
 	x := 1
 	for _, tab := range pc.tabRow.GetChildren() {
-		x += tab.Bounds().W + 1
+		x += tab.Size().W + 1
 	}
 	page.tab.MoveTo(vec.Coord{x, 1})
 	pc.tabRow.AddChild(page.tab)
@@ -112,11 +112,11 @@ func (pc *PageContainer) Render() {
 	selected_tab := pc.getSelectedPage().tab
 	tab_bounds := selected_tab.Bounds()
 	cursor := tab_bounds.Coord
-	cursor.Move(-1, 1)
 	brush := gfx.NewGlyphVisuals(selected_tab.border.style.GetGlyph(gfx.LINK_UL), selected_tab.border.colours)
+	cursor.Move(0, 2)
 	pc.DrawVisuals(cursor, pc.depth, brush)
 	brush.Glyph = gfx.GLYPH_NONE
-	for range tab_bounds.W {
+	for range selected_tab.Size().W {
 		cursor.Move(1, 0)
 		pc.DrawVisuals(cursor, pc.depth, brush)
 	}

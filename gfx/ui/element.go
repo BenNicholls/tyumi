@@ -38,6 +38,7 @@ type Element interface {
 	IsUpdated() bool
 	IsBordered() bool
 	getBorder() *Border
+	Size() vec.Dims
 	getCanvas() *gfx.Canvas
 	getWindow() *Window
 }
@@ -180,6 +181,9 @@ func (e *ElementPrototype) getWindow() *Window {
 }
 
 func (e *ElementPrototype) Bounds() vec.Rect {
+	if e.border.enabled {
+		return vec.Rect{e.position.Add(vec.Coord{-1, -1}), e.Size().Grow(2, 2)}
+	}
 	return vec.Rect{e.position, e.Size()}
 }
 
@@ -351,12 +355,7 @@ func (e *ElementPrototype) IsVisible() bool {
 	}
 
 	if parent := e.GetParent(); parent != nil {
-		bounds := e.Bounds()
-		if e.bordered {
-			bounds.X, bounds.Y = bounds.X-1, bounds.Y-1
-			bounds.W, bounds.H = bounds.W+2, bounds.H+2
-		}
-		if !vec.Intersects(bounds, parent.getCanvas()){
+		if !vec.Intersects(e.Bounds(), parent.getCanvas()) {
 			return false
 		}
 	}

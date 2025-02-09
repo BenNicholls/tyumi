@@ -68,8 +68,8 @@ func (l *List) calibrate() {
 			sy := l.GetChildren()[l.selected].Bounds().Y
 			if sy < 0 {
 				scrollDelta = sy
-			} else if sy >= l.Bounds().H {
-				scrollDelta = sy - l.Bounds().H + sh
+			} else if sy >= l.Size().H { // element below the list's draw area
+				scrollDelta = sy - l.Size().H + sh
 			} else { // element is in list, but not fully visible
 				scrollDelta = sh - intersect.H
 			}
@@ -96,7 +96,7 @@ func (l *List) ToggleHighlight() {
 }
 
 func (l *List) Select(selection int) {
-	if l.selected == util.Clamp(selection, 0, len(l.GetChildren())-1) {
+	if l.selected == util.Clamp(selection, 0, l.ChildCount()-1) {
 		return
 	}
 

@@ -112,8 +112,8 @@ func (pc *PageContainer) Render() {
 	selected_tab := pc.getSelectedPage().tab
 	tab_bounds := selected_tab.Bounds()
 	cursor := tab_bounds.Coord
-	brush := gfx.NewGlyphVisuals(selected_tab.border.style.GetGlyph(gfx.LINK_UL), selected_tab.border.colours)
 	cursor.Move(0, 2)
+	brush := gfx.NewGlyphVisuals(selected_tab.border.getStyle().GetGlyph(gfx.LINK_UL), selected_tab.border.colours)
 	pc.DrawVisuals(cursor, pc.depth, brush)
 	brush.Glyph = gfx.GLYPH_NONE
 	for range selected_tab.Size().W {
@@ -121,7 +121,7 @@ func (pc *PageContainer) Render() {
 		pc.DrawVisuals(cursor, pc.depth, brush)
 	}
 	cursor.Move(1, 0)
-	brush.Glyph = selected_tab.border.style.GetGlyph(gfx.LINK_UR)
+	brush.Glyph = selected_tab.border.getStyle().GetGlyph(gfx.LINK_UR)
 	pc.DrawVisuals(cursor, pc.depth, brush)
 }
 

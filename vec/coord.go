@@ -67,6 +67,8 @@ var (
 	DIR_RIGHT Direction = Direction{1, 0}
 )
 
+var CardinalDirections [4]Direction = [4]Direction{DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT}
+
 func (d Direction) Inverted() Direction {
 	return Direction{-d.X, -d.Y}
 }

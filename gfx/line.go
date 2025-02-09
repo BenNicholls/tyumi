@@ -1,11 +1,79 @@
 package gfx
 
-import "github.com/bennicholls/tyumi/vec"
+import (
+	"github.com/bennicholls/tyumi/vec"
+)
 
+// DrawLine draws a line! How extraordinary.
 func (c *Canvas) DrawLine(line vec.Line, depth int, brush Visuals) {
 	for cursor := range line.EachCoord() {
 		c.DrawVisuals(cursor, depth, brush)
 	}
+}
+
+// Draws a glyph to the canvas, linking it to neighbouring cells at the same depth if possible
+func (c *Canvas) DrawLinkedGlyph(pos vec.Coord, depth int, glyph int) {
+	c.DrawGlyph(pos, depth, c.CalcLinkedGlyph(glyph, pos, depth))
+}
+
+// CalcLinkedGlyph returns the src_glyph modified to link to linkable cells neighbouring dst_pos, respecting depth.
+// No effect if src_glyph is not a linkable glyph.
+// NOTE: this will NOT link a thin glyph to a thick glyph or vice versa. Someday though. Maybe not t'dae, maybe not
+// t'marrah, but someday.
+func (c *Canvas) CalcLinkedGlyph(src_glyph int, dst_pos vec.Coord, depth int) (glyph int) {
+	glyph = src_glyph
+	if !c.InBounds(dst_pos) {
+		return
+	}
+
+	line := getLineType(src_glyph)
+	if line == LINETYPE_NONE { // glyph not linkable
+		return
+	}
+
+	linkFlags := LineStyles[line].GetBorderFlags(src_glyph)
+	if linkFlags == LINK_ALL { // glyph already maximally linked.
+		return
+	}
+
+	//determine possible linking directions. we skip directions that the src-glyph is already linking towards
+	neighbour_dirs := make([]vec.Direction, 0, 3)
+	for _, dir := range vec.CardinalDirections {
+		if linkFlags&GetLinkFlagByDirection(dir) == 0 {
+			neighbour_dirs = append(neighbour_dirs, dir)
+		}
+	}
+
+	for _, dir := range neighbour_dirs {
+		neighbour_pos := dst_pos.Step(dir)
+		if !c.InBounds(neighbour_pos) || c.getDepth(neighbour_pos) != depth {
+			continue
+		}
+
+		neighbour_cell := c.getCell(neighbour_pos)
+		switch neighbour_cell.Mode {
+		case DRAW_GLYPH:
+			if style := LineStyles[line]; style.glyphIsLinkable(neighbour_cell.Glyph) {
+				neighbour_cell_flags := style.GetBorderFlags(neighbour_cell.Glyph)
+				if neighbour_cell_flags&GetLinkFlagByDirection(dir.Inverted()) != 0 {
+					linkFlags |= GetLinkFlagByDirection(dir)
+				}
+			}
+		case DRAW_TEXT:
+			//some special cases for linking with titles/hints of ui borders
+			if dir == vec.DIR_RIGHT {
+				if neighbour_cell.Chars[0] == TEXT_BORDER_DECO_LEFT || neighbour_cell.Chars[0] == TEXT_BORDER_LR {
+					linkFlags |= LINK_R
+				}
+			} else if dir == vec.DIR_LEFT {
+				if neighbour_cell.Chars[1] == TEXT_BORDER_DECO_RIGHT || neighbour_cell.Chars[1] == TEXT_BORDER_LR {
+					linkFlags |= LINK_L
+				}
+			}
+		}
+	}
+
+	return LineStyles[line].Glyphs[linkFlags]
 }
 
 type LineType int
@@ -16,8 +84,19 @@ const (
 
 	linetype_max
 
-	LINETYPE_NONE LineType = -1 
+	LINETYPE_NONE LineType = -1
 )
+
+// returns the linetype for a glyph. if not a linkable glyph, returns LINETYPE_NONE
+func getLineType(glyph int) LineType {
+	if LineStyles[LINETYPE_THIN].glyphIsLinkable(glyph) {
+		return LINETYPE_THIN
+	} else if LineStyles[LINETYPE_THICK].glyphIsLinkable(glyph) {
+		return LINETYPE_THICK
+	}
+
+	return LINETYPE_NONE
+}
 
 // neighbour linking flags for linked lines
 const (

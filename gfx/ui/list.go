@@ -42,31 +42,27 @@ func (l *List) RemoveChild(e Element) {
 	l.calibrate()
 }
 
-func (l *List) ToggleScrollbar() {
-	if l.border.scrollbar {
-		l.border.scrollbar = false
-		l.border.dirty = true
-	} else {
-		l.border.EnableScrollbar(l.contentHeight, l.scrollOffset)
-	}
-}
-
 // positions all the children elements so they are top to bottom, and the selected item is visible
 func (l *List) calibrate() {
 	l.contentHeight = 0
 	for _, child := range l.GetChildren() {
 		child.MoveTo(vec.Coord{0, l.contentHeight - l.scrollOffset})
+		if child.IsBordered() {
+			child.Move(0, 1)
+		}
 		l.contentHeight += child.Bounds().H
 	}
 
 	//if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
-	if l.contentHeight > l.Bounds().H {
-		intersect := vec.FindIntersectionRect(l.GetChildren()[l.selected], l.Canvas)
-		if sh := l.GetChildren()[l.selected].Bounds().H; intersect.H != sh {
+	if l.contentHeight > l.Size().H {
+		selected := l.GetChildren()[l.selected]
+		intersect := vec.FindIntersectionRect(selected, l.Canvas)
+		sh := selected.Bounds().H
+		if intersect.H != sh {
 			scrollDelta := 0
+			sy := selected.Bounds().Y
 
-			sy := l.GetChildren()[l.selected].Bounds().Y
-			if sy < 0 {
+			if sy < 0 { // element above the list's draw area
 				scrollDelta = sy
 			} else if sy >= l.Size().H { // element below the list's draw area
 				scrollDelta = sy - l.Size().H + sh
@@ -79,14 +75,11 @@ func (l *List) calibrate() {
 			}
 
 			l.scrollOffset += scrollDelta
-
 		}
+		l.border.EnableScrollbar(l.contentHeight, l.scrollOffset)
 	} else { //if content fits in the list, no need to remember some old scroll offset
 		l.scrollOffset = 0
-	}
-
-	if l.border != nil {
-		l.border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
+		l.border.DisableScrollbar()
 	}
 }
 

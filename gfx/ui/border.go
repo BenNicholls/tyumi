@@ -8,11 +8,7 @@ import (
 )
 
 type Border struct {
-	top    gfx.Canvas //top, including upper left corner
-	bottom gfx.Canvas //bottom, including bottom right corner
-	left   gfx.Canvas //left, including bottom left corner
-	right  gfx.Canvas //right, including top right corner
-
+	enabled bool
 	title   string
 	hint    string
 	colours col.Pair
@@ -25,23 +21,7 @@ type Border struct {
 	scrollbarContentHeight    int  //total height of scrolling content
 	scrollbarViewportPosition int  //position of the viewed content
 
-	dirty bool //flag indicates when border needs to be re-rendered.
-}
-
-func NewBorder(element_size vec.Dims) (b *Border) {
-	b = new(Border)
-	b.resize(element_size)
-
-	return
-}
-
-func (b *Border) resize(size vec.Dims) {
-	b.top.Resize(size.W+1, 1)
-	b.bottom.Resize(size.W+1, 1)
-	b.left.Resize(1, size.H+1)
-	b.right.Resize(1, size.H+1)
-
-	b.dirty = true
+	dirty bool
 }
 
 func (b *Border) setColours(col col.Pair) {
@@ -53,153 +33,109 @@ func (b *Border) setColours(col col.Pair) {
 	b.dirty = true
 }
 
-// renders the border to the internal canvas
-func (b *Border) Render() {
-	if !b.dirty {
-		return
+func (b Border) getStyle() (style *BorderStyle) {
+	if b.style != nil {
+		style = b.style
+	} else {
+		style = &defaultBorderStyle
 	}
 
-	//determine colours and update internal canavases if necessary.
-	colours := b.style.Colours
+	return
+}
+
+func (b *Border) Draw(canvas *gfx.Canvas, area vec.Rect) {
+	style := b.getStyle()
+
+	//determine colours
+	colours := style.Colours
 	if colours.Fore == gfx.COL_DEFAULT {
-		colours.Fore = b.colours.Fore
+		if b.colours.Fore == gfx.COL_DEFAULT {
+			colours.Fore = canvas.DefaultColours().Fore
+		} else {
+			colours.Fore = b.colours.Fore
+		}
 	}
+
 	if colours.Back == gfx.COL_DEFAULT {
-		colours.Back = b.colours.Back
-	}
-	b.top.SetDefaultColours(colours)
-	b.bottom.SetDefaultColours(colours)
-	b.left.SetDefaultColours(colours)
-	b.right.SetDefaultColours(colours)
-
-	for cursor := range vec.EachCoordInArea(b.top.Bounds()) { //top and bottom
-		b.top.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_LR))
-		b.bottom.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_LR))
+		if b.colours.Back == gfx.COL_DEFAULT {
+			colours.Back = canvas.DefaultColours().Back
+		} else {
+			colours.Back = b.colours.Back
+		}
 	}
 
-	for cursor := range vec.EachCoordInArea(b.left.Bounds()) { //left and right
-		b.left.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_UD))
-		b.right.DrawGlyph(cursor, 0, b.style.GetGlyph(gfx.LINK_UD))
-	}
-
-	w, h := b.top.Size().W, b.left.Size().H
-	b.top.DrawGlyph(vec.Coord{0, 0}, 0, b.style.GetGlyph(gfx.LINK_DR))        //upper left corner
-	b.right.DrawGlyph(vec.Coord{0, 0}, 0, b.style.GetGlyph(gfx.LINK_DL))      //upper right corner
-	b.bottom.DrawGlyph(vec.Coord{w - 1, 0}, 0, b.style.GetGlyph(gfx.LINK_UL)) //bottom right corner
-	b.left.DrawGlyph(vec.Coord{0, h - 1}, 0, b.style.GetGlyph(gfx.LINK_UR))   //bottom left corner
+	// draw box
+	canvas.DrawBox(area, 0, style.lineType, colours)
 
 	//decorate and draw title
 	if b.title != "" {
-		decoratedTitle := b.style.DecorateText(b.title)
+		decoratedTitle := style.DecorateText(b.title)
 		if len([]rune(decoratedTitle))%2 == 1 {
-			decoratedTitle += string(b.style.TextDecorationPad)
+			decoratedTitle += string(style.TextDecorationPad)
 		}
-		b.top.DrawText(vec.Coord{1, 0}, 0, decoratedTitle, colours, gfx.DRAW_TEXT_LEFT)
+		canvas.DrawText(vec.Coord{1, 0}.Add(area.Coord), 0, decoratedTitle, colours, gfx.DRAW_TEXT_LEFT)
 	}
 
 	//decorate and draw hint
 	if b.hint != "" {
-		decoratedHint := b.style.DecorateText(b.hint)
+		decoratedHint := style.DecorateText(b.hint)
 		if len([]rune(decoratedHint))%2 == 1 {
-			decoratedHint = string(b.style.TextDecorationPad) + decoratedHint
+			decoratedHint = string(style.TextDecorationPad) + decoratedHint
 		}
-		hintOffset := w - len([]rune(decoratedHint))/2 - 1
-		b.bottom.DrawText(vec.Coord{hintOffset, 0}, 0, decoratedHint, colours, 0)
+		hintOffset := area.W - len([]rune(decoratedHint))/2 - 1
+		canvas.DrawText(area.Coord.Add(vec.Coord{hintOffset, area.H - 1}), 0, decoratedHint, colours, 0)
 	}
 
 	//draw scrollbar if necessary
-	if b.scrollbar && b.scrollbarContentHeight > h-1 {
-		b.right.DrawGlyph(vec.Coord{0, 1}, 0, gfx.GLYPH_TRIANGLE_UP)
-		b.right.DrawGlyph(vec.Coord{0, h - 1}, 0, gfx.GLYPH_TRIANGLE_DOWN)
+	if b.scrollbar {
+		h := area.H - 2
+		right := area.X + area.W - 1
+		canvas.DrawGlyph(vec.Coord{right, area.Y + 1}, 0, gfx.GLYPH_TRIANGLE_UP)
+		canvas.DrawGlyph(vec.Coord{right, area.Y + h}, 0, gfx.GLYPH_TRIANGLE_DOWN)
 
-		barSize := util.Clamp(util.RoundFloatToInt(float64(h-1)/float64(b.scrollbarContentHeight)*float64(h-3)), 1, h-4)
+		barSize := util.Clamp(util.RoundFloatToInt(float64(h)/float64(b.scrollbarContentHeight)*float64(h-2)), 1, h-3)
 
 		var barPos int
-		if b.scrollbarViewportPosition+h-1 >= b.scrollbarContentHeight {
-			barPos = h - 3 - barSize
+		if b.scrollbarViewportPosition+h >= b.scrollbarContentHeight {
+			barPos = h - 2 - barSize
 		} else {
-			barPos = util.Clamp(util.RoundFloatToInt(float64(b.scrollbarViewportPosition)/float64(b.scrollbarContentHeight)*float64(h-3)), 0, h-4-barSize)
+			barPos = util.Clamp(util.RoundFloatToInt(float64(b.scrollbarViewportPosition)/float64(b.scrollbarContentHeight)*float64(h-2)), 0, h-3-barSize)
 		}
 
 		for i := range barSize {
-			b.right.DrawGlyph(vec.Coord{0, i + barPos + 2}, 0, gfx.GLYPH_FILL)
+			canvas.DrawGlyph(vec.Coord{right, area.Y + i + barPos + 2}, 0, gfx.GLYPH_FILL)
 		}
 	}
-}
 
-func (b *Border) DrawToCanvas(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
-	w, h := b.top.Size().W, b.left.Size().H
-	offset_top := offset.Add(vec.Coord{-1, -1})
-	offset_bottom := offset.Add(vec.Coord{0, h - 1})
-	offset_left := offset.Add(vec.Coord{-1, 0})
-	offset_right := offset.Add(vec.Coord{w - 1, -1})
-
-	if b.dirty && !b.style.DisableLink {
-		b.linkBorderSegment(&b.top, dst_canvas, offset_top, vec.DIR_DOWN, depth)
-		b.linkBorderSegment(&b.bottom, dst_canvas, offset_bottom, vec.DIR_UP, depth)
-		b.linkBorderSegment(&b.left, dst_canvas, offset_left, vec.DIR_RIGHT, depth)
-		b.linkBorderSegment(&b.right, dst_canvas, offset_right, vec.DIR_LEFT, depth)
-		b.dirty = false
-	}
-
-	b.top.Draw(dst_canvas, offset_top, depth)
-	b.bottom.Draw(dst_canvas, offset_bottom, depth)
-	b.left.Draw(dst_canvas, offset_left, depth)
-	b.right.Draw(dst_canvas, offset_right, depth)
-}
-
-func (b *Border) linkBorderSegment(border_segment, dst_canvas *gfx.Canvas, dst_offset vec.Coord, inner_dir vec.Direction, depth int) {
-	for src_cursor := range vec.EachCoordInArea(border_segment) {
-		src_cell := border_segment.GetCell(src_cursor)
-		if src_cell.Mode == gfx.DRAW_TEXT {
-			continue
-		}
-		src_glyph := src_cell.Glyph
-		if !b.style.glyphIsLinkable(src_glyph) {
+	for cursor := range vec.EachCoordInPerimeter(area) {
+		if !canvas.InBounds(cursor) {
 			continue
 		}
 
-		linkedGlyph := b.getLinkedGlyph(src_glyph, src_cursor.Add(dst_offset), inner_dir, dst_canvas, depth)
-		linkedGlyph = b.getLinkedGlyph(linkedGlyph, src_cursor.Add(dst_offset), inner_dir.Inverted(), dst_canvas, depth)
-		if src_cursor == vec.ZERO_COORD {
-			linkedGlyph = b.getLinkedGlyph(linkedGlyph, src_cursor.Add(dst_offset), inner_dir.RotateCW(), dst_canvas, depth)
+		cell := canvas.GetCell(cursor)
+		if cell.Mode == gfx.DRAW_GLYPH {
+			linkedGlyph := canvas.CalcLinkedGlyph(canvas.GetCell(cursor).Glyph, cursor, 0)
+			canvas.DrawGlyph(cursor, 0, linkedGlyph)
+			canvas.DrawColours(cursor, 0, col.Pair{col.ORANGE, col.OLIVE})
 		}
-		border_segment.DrawGlyph(src_cursor, 0, linkedGlyph)
 	}
 }
 
-func (b *Border) getLinkedGlyph(src_glyph int, glyph_dst_pos vec.Coord, link_dir vec.Direction, dst_canvas *gfx.Canvas, depth int) int {
-	glyph_flags := b.style.getBorderFlags(src_glyph)
-	neighbour_pos := glyph_dst_pos.Step(link_dir)
-	if dst_canvas.InBounds(neighbour_pos) && dst_canvas.GetDepth(neighbour_pos) == depth {
-		neighbour_cell := dst_canvas.GetCell(neighbour_pos)
-		if neighbour_cell.Mode == gfx.DRAW_GLYPH {
-			if b.style.glyphIsLinkable(neighbour_cell.Glyph) {
-				neighbour_cell_flags := b.style.getBorderFlags(neighbour_cell.Glyph)
-				if neighbour_cell_flags&gfx.GetLinkFlagByDirection(link_dir.Inverted()) != 0 {
-					glyph_flags |= gfx.GetLinkFlagByDirection(link_dir)
-				}
-			}
-		} else { // special cases for connecting with title/hint decorations
-			if link_dir == vec.DIR_RIGHT {
-				if neighbour_cell.Chars[0] == b.style.TextDecorationL || neighbour_cell.Chars[0] == b.style.TextDecorationPad {
-					glyph_flags |= gfx.LINK_R
-				}
-			} else if link_dir == vec.DIR_LEFT {
-				if neighbour_cell.Chars[1] == b.style.TextDecorationR || neighbour_cell.Chars[1] == b.style.TextDecorationPad {
-					glyph_flags |= gfx.LINK_L
-				}
-			}
-		}
+func (b *Border) EnableScrollbar(content_height, pos int) {
+	if !b.scrollbar {
+		b.dirty = true
 	}
 
-	return b.style.GetGlyph(glyph_flags)
-}
-
-func (b *Border) EnableScrollbar(height, pos int) {
 	b.scrollbar = true
-	b.scrollbarContentHeight = height
-	b.scrollbarViewportPosition = pos
+	b.UpdateScrollbar(content_height, pos)
+}
+
+func (b *Border) DisableScrollbar() {
+	if !b.scrollbar {
+		return
+	}
+
+	b.scrollbar = false
 	b.dirty = true
 }
 
@@ -212,5 +148,8 @@ func (b *Border) UpdateScrollbar(height, pos int) {
 
 	b.scrollbarContentHeight = height
 	b.scrollbarViewportPosition = pos
-	b.dirty = true
+
+	if b.scrollbar {
+		b.dirty = true
+	}
 }

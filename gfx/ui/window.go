@@ -48,9 +48,6 @@ func (wnd *Window) Render() {
 				element.Render()
 			}
 			element.renderAnimations()
-			if element.IsBordered() {
-				element.getBorder().Render()
-			}
 			element.finalizeRender() // does this need to go in a seperate walk??
 		}
 	})

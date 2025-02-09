@@ -37,8 +37,8 @@ type Element interface {
 	IsVisible() bool
 	IsUpdated() bool
 	IsBordered() bool
-	getBorder() *Border
 	Size() vec.Dims
+	getBorder() *Border
 	getCanvas() *gfx.Canvas
 	getWindow() *Window
 }
@@ -51,10 +51,9 @@ type ElementPrototype struct {
 	position    vec.Coord
 	depth       int //depth for the UI system, relative to the element's parent. if no parent, relative to the console
 	visible     bool
-	bordered    bool
 	forceRedraw bool   //indicates this object needs to clear and render everything from zero
 	label       string // an optional identifier for the element
-	border      *Border
+	border      Border
 	animations  []gfx.Animator //animations on this element. these are updated once per frame.
 }
 
@@ -76,10 +75,6 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 
 	e.Canvas.Resize(size.W, size.H)
 
-	if e.border != nil {
-		e.border.resize(size)
-	}
-
 	e.Updated = true
 	e.forceRedraw = true
 	e.forceParentRedraw()
@@ -87,9 +82,7 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 
 func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
-	if e.border != nil {
-		e.border.setColours(colours)
-	}
+	e.border.setColours(colours)
 	e.Updated = true
 }
 
@@ -104,50 +97,42 @@ func (e *ElementPrototype) DisableBorder() {
 }
 
 func (e *ElementPrototype) setBorder(bordered bool) {
-	if bordered == e.bordered {
+	if e.border.enabled == bordered {
 		return
 	}
 
-	e.bordered = bordered
-	if e.bordered == true && e.border == nil {
-		//setup default border if none has been setup
-		e.SetupBorder("", "")
+	e.border.enabled = bordered
+	if bordered {
+		e.border.dirty = true
 	}
-
 	e.forceParentRedraw()
 }
 
 func (e *ElementPrototype) IsBordered() bool {
-	return e.bordered
+	return e.border.enabled
 }
 
 // Creates and enables a border for the element. Title will be shown in the top left, and hint will be shown in the
 // bottom right.
 // TODO: centered titles? setting borderstyle at the same time?
 func (e *ElementPrototype) SetupBorder(title, hint string) {
-	e.border = NewBorder(e.Size())
 	e.border.title = title
 	e.border.hint = hint
 	e.border.setColours(e.DefaultColours())
-	e.border.style = &defaultBorderStyle
 	e.EnableBorder()
 }
 
 // Sets the border style flag and, if possible, updates the used style. Sometimes you can't though...
 // for example, setting the flag to BORDER_INHERIT while the element does not have a parent.
 func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle ...BorderStyle) {
-	if e.border == nil {
-		log.Error("UI: Could not apply borderstyle, element has no border to style.")
-		return
-	}
-
+	old_style := e.border.getStyle()
 	switch styleFlag {
 	case BORDER_STYLE_DEFAULT:
-		e.border.style = &defaultBorderStyle
+		e.border.style = nil
 	case BORDER_STYLE_INHERIT:
 		if parent := e.GetParent(); parent != nil {
 			if parent_border := parent.getBorder(); parent_border != nil {
-				e.border.style = parent_border.style
+				e.border.style = parent_border.getStyle()
 			}
 		}
 	case BORDER_STYLE_CUSTOM:
@@ -160,10 +145,20 @@ func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle
 	}
 
 	e.border.styleFlag = styleFlag
+
+	if e.border.getStyle() != old_style {
+		//change in border style. inform children so any inheriting ones can update
+		//TODO: this should propogate down properly...
+		for _, child := range e.GetChildren() {
+			if child_border := child.getBorder(); child_border.styleFlag == BORDER_STYLE_INHERIT {
+				child_border.style = e.border.getStyle()
+			}
+		}
+	}
 }
 
 func (e *ElementPrototype) getBorder() *Border {
-	return e.border
+	return &e.border
 }
 
 func (e *ElementPrototype) getWindow() *Window {
@@ -202,7 +197,7 @@ func (e *ElementPrototype) Move(dx, dy int) {
 }
 
 func (e *ElementPrototype) AddChild(child Element) {
-	if child_border := child.getBorder(); child_border != nil && child_border.styleFlag == BORDER_STYLE_INHERIT {
+	if child_border := child.getBorder(); child_border.styleFlag == BORDER_STYLE_INHERIT {
 		child_border.style = e.border.style
 	}
 
@@ -272,16 +267,6 @@ func (e *ElementPrototype) prepareRender() {
 	}
 
 	if e.forceRedraw {
-		if e.bordered {
-			e.border.dirty = true
-		}
-
-		for _, child := range e.GetChildren() { //make sure siblings recompute border links
-			if child.IsBordered() {
-				child.getBorder().dirty = true
-			}
-		}
-
 		e.Clear()
 	}
 }
@@ -314,9 +299,6 @@ func (e *ElementPrototype) drawToParent() {
 	}
 
 	e.Draw(parent.getCanvas(), e.position, e.depth)
-	if e.bordered {
-		e.border.DrawToCanvas(parent.getCanvas(), e.position, e.depth)
-	}
 }
 
 func (e *ElementPrototype) drawChildren() {
@@ -324,6 +306,13 @@ func (e *ElementPrototype) drawChildren() {
 		if child.IsVisible() {
 			if child.getCanvas().Dirty() || e.forceRedraw {
 				child.drawToParent()
+			}
+
+			if child.IsBordered() {
+				if border := child.getBorder(); border.dirty || e.forceRedraw {
+					border.Draw(&e.Canvas, child.Bounds())
+					border.dirty = false
+				}
 			}
 		}
 	}

@@ -31,7 +31,7 @@ type BorderStyle struct {
 }
 
 // GetGlyph returns the appropriate border glyph to link to neighbours as described in the naighbour_flags.
-func (bs *BorderStyle) GetGlyph(neighbour_flags int) int {
+func (bs BorderStyle) GetGlyph(neighbour_flags int) int {
 	if bs.lineType == gfx.LINETYPE_NONE {
 		return bs.DefaultGlyph
 	}
@@ -65,8 +65,8 @@ func (bs *BorderStyle) glyphIsLinkable(glyph int) bool {
 	return bs.getBorderFlags(glyph) != gfx.LINK_NONE
 }
 
-// setup predefined border styles and set simple default
-func init() {
+// setup predefined border styles and set simple default. called by the init() in ui.go.
+func createBorderStyles() {
 	BorderStyles = make(map[string]BorderStyle)
 
 	var blockStyle BorderStyle

@@ -8,10 +8,7 @@ import (
 )
 
 // default visuals used by all ui elements
-var defaultCanvasVisuals gfx.Visuals = gfx.Visuals{
-	Mode: gfx.DRAW_GLYPH,
-	Colours: col.Pair{col.WHITE, col.BLACK},
-}
+var defaultCanvasVisuals gfx.Visuals
 
 // SetDefaultElementVisuals sets the default visuals for all UI elements. These are the visuals that an element will 
 // draw when cleared.
@@ -29,6 +26,17 @@ var defaultBorderStyle BorderStyle
 // NOTE: this does not apply retroactively to elements already created.
 func SetDefaultBorderStyle(style BorderStyle) {
 	defaultBorderStyle = style
+}
+
+func init() {
+	createBorderStyles()
+
+	//define some defaults
+	defaultBorderStyle = BorderStyles["Thin"]
+	defaultCanvasVisuals = gfx.Visuals{
+		Mode: gfx.DRAW_GLYPH,
+		Colours: col.Pair{col.WHITE, col.BLACK},
+	}
 }
 
 // Retrieves a reference to the element in window with the supplied label. If the element is not found, or is not

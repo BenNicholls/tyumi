@@ -51,6 +51,45 @@ func EachCoordInArea(b Bounded) iter.Seq[Coord] {
 	}
 }
 
+func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
+	return func(yield func(Coord) bool) {
+		r := b.Bounds()
+		if r.Area() == 0 { //0x0 box, aka a nothing
+			return
+		}
+
+		if r.Area() == 1 { //1x1 box, aka 1 cell
+			yield(r.Coord)
+			return
+		}
+
+		corners := r.Corners()
+
+		if r.W == 1 || r.H == 1 { // 1D box, aka a line. 
+			line := Line{corners[0], corners[2]}
+			for coord := range line.EachCoord() {
+				if !yield(coord) {
+					return
+				}
+			}
+			return
+		}	
+
+		var sides [4]Line
+		sides[0] = Line{r.Coord, corners[1].Step(DIR_LEFT)}  // top
+		sides[1] = Line{corners[1], corners[2].Step(DIR_UP)}    // right
+		sides[2] = Line{corners[2], corners[3].Step(DIR_RIGHT)} // bottom
+		sides[3] = Line{corners[3], r.Coord.Step(DIR_DOWN)}
+		for _, side := range sides {
+			for coord := range side.EachCoord() {
+				if !yield(coord) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // IsInside checks if the point (x, y) is within the bounds of object b.
 func IsInside(x, y int, b Bounded) bool {
 	r := b.Bounds()

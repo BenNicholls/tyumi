@@ -24,6 +24,10 @@ func (r Rect) String() string {
 	return "{" + r.Coord.String() + " " + r.Dims.String() + "}"
 }
 
+func (r Rect) Translated(c Coord) Rect {
+	return Rect{r.Coord.Add(c), r.Dims}
+}
+
 // Returns the coordinates of the 4 corners of the rect, starting in the top left and going clockwise.
 func (r Rect) Corners() (corners [4]Coord) {
 	corners[0] = r.Coord                             //TOPLEFT

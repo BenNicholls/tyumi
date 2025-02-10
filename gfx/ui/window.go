@@ -37,7 +37,9 @@ func (wnd *Window) Update() {
 func (wnd *Window) Render() {
 	//prepare_render
 	util.WalkTree[Element](wnd, func(element Element) {
-		element.prepareRender()
+		if element.IsVisible() {
+			element.prepareRender()
+		}
 	})
 
 	//render all subnodes

@@ -62,7 +62,7 @@ func (tb *Textbox) Render() {
 	for i, line := range tb.lines {
 		x_offset := 0
 		if tb.center {
-			x_offset = (tb.Size().W*2 - len(line)) / 2
+			x_offset = (tb.size.W*2 - len(line)) / 2
 		}
 		pos := vec.Coord{x_offset / 2, i}
 		tb.DrawText(pos, 0, line, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}, gfx.TextCellPosition(x_offset%2))

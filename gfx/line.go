@@ -76,6 +76,17 @@ func (c *Canvas) CalcLinkedGlyph(src_glyph int, dst_pos vec.Coord, depth int) (g
 	return LineStyles[line].Glyphs[linkFlags]
 }
 
+func (c *Canvas) LinkCell(pos vec.Coord) {
+	if !c.InBounds(pos) {
+		return
+	}
+
+	cell := c.getCell(pos)
+	if cell.Mode == DRAW_GLYPH {
+		c.DrawLinkedGlyph(pos, c.getDepth(pos), cell.Glyph)
+	}
+}
+
 type LineType int
 
 const (

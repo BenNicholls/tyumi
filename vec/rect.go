@@ -90,10 +90,10 @@ func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 	}
 }
 
-// IsInside checks if the point (x, y) is within the bounds of object b.
-func IsInside(x, y int, b Bounded) bool {
+// IsInside checks if the position is within the bounds of object b.
+func IsInside(pos Coord, b Bounded) bool {
 	r := b.Bounds()
-	return x >= r.X && x < r.X+r.W && y >= r.Y && y < r.Y+r.H
+	return pos.X >= r.X && pos.X < r.X+r.W && pos.Y >= r.Y && pos.Y < r.Y+r.H
 }
 
 // FindIntersectionRect calculates the intersection of two rectangularly-bound objects. if no intersection

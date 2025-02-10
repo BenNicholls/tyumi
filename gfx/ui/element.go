@@ -6,7 +6,6 @@ import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
-	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -24,7 +23,6 @@ type Element interface {
 	Render()
 	renderAnimations()
 	finalizeRender()
-	drawToParent()
 	drawChildren()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
 	isRedrawing() bool
@@ -38,9 +36,11 @@ type Element interface {
 	IsUpdated() bool
 	IsBordered() bool
 	Size() vec.Dims
-	getBorder() *Border
 	getCanvas() *gfx.Canvas
 	getWindow() *Window
+	getBorderStyle() BorderStyle
+	getDepth() int
+	getPosition() vec.Coord
 }
 
 type ElementPrototype struct {
@@ -49,6 +49,7 @@ type ElementPrototype struct {
 	Updated bool //indicates this object's state has changed and needs to be re-rendered.
 
 	position    vec.Coord
+	size        vec.Dims
 	depth       int //depth for the UI system, relative to the element's parent. if no parent, relative to the console
 	visible     bool
 	forceRedraw bool   //indicates this object needs to clear and render everything from zero
@@ -61,20 +62,30 @@ func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
 	e.Canvas.Init(w, h)
 	e.SetDefaultVisuals(defaultCanvasVisuals)
 	e.position = pos
+	e.size = vec.Dims{w, h}
 	e.depth = depth
 	e.visible = true
 	e.Updated = true
 	e.TreeNode.Init(e)
 }
 
+func (e *ElementPrototype) Size() vec.Dims {
+	return e.size
+}
+
 // Resizes the element. This clears the internal canvas and forces redraws of everything.
 func (e *ElementPrototype) Resize(size vec.Dims) {
-	if size == e.Size() {
+	if size == e.size {
 		return
 	}
 
-	e.Canvas.Resize(size.W, size.H)
+	if e.border.enabled {
+		e.Canvas.Resize(size.W+2, size.H+2)
+	} else {
+		e.Canvas.Resize(size.W, size.H)
+	}
 
+	e.size = size
 	e.Updated = true
 	e.forceRedraw = true
 	e.forceParentRedraw()
@@ -82,104 +93,20 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 
 func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
-	e.border.setColours(colours)
 	e.Updated = true
 }
 
-// Enable the border. Defaults to ui.DefaultBorderStyle. Use SetBorderStyle to use something else. If no border
-// has been setup via SetupBorder(), a default one will be created.
-func (e *ElementPrototype) EnableBorder() {
-	e.setBorder(true)
-}
-
-func (e *ElementPrototype) DisableBorder() {
-	e.setBorder(false)
-}
-
-func (e *ElementPrototype) setBorder(bordered bool) {
-	if e.border.enabled == bordered {
-		return
-	}
-
-	e.border.enabled = bordered
-	if bordered {
-		e.border.dirty = true
-	}
-	e.forceParentRedraw()
-}
-
-func (e *ElementPrototype) IsBordered() bool {
-	return e.border.enabled
-}
-
-// Creates and enables a border for the element. Title will be shown in the top left, and hint will be shown in the
-// bottom right.
-// TODO: centered titles? setting borderstyle at the same time?
-func (e *ElementPrototype) SetupBorder(title, hint string) {
-	e.border.title = title
-	e.border.hint = hint
-	e.border.setColours(e.DefaultColours())
-	e.EnableBorder()
-}
-
-// Sets the border style flag and, if possible, updates the used style. Sometimes you can't though...
-// for example, setting the flag to BORDER_INHERIT while the element does not have a parent.
-func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle ...BorderStyle) {
-	old_style := e.border.getStyle()
-	switch styleFlag {
-	case BORDER_STYLE_DEFAULT:
-		e.border.style = nil
-	case BORDER_STYLE_INHERIT:
-		if parent := e.GetParent(); parent != nil {
-			if parent_border := parent.getBorder(); parent_border != nil {
-				e.border.style = parent_border.getStyle()
-			}
-		}
-	case BORDER_STYLE_CUSTOM:
-		if borderStyle == nil {
-			log.Error("Custom border style application failed: no borderstyle provided.")
-			return
-		}
-
-		e.border.style = &borderStyle[0]
-	}
-
-	e.border.styleFlag = styleFlag
-
-	if e.border.getStyle() != old_style {
-		//change in border style. inform children so any inheriting ones can update
-		//TODO: this should propogate down properly...
-		for _, child := range e.GetChildren() {
-			if child_border := child.getBorder(); child_border.styleFlag == BORDER_STYLE_INHERIT {
-				child_border.style = e.border.getStyle()
-			}
-		}
-	}
-}
-
-func (e *ElementPrototype) getBorder() *Border {
-	return &e.border
-}
-
-func (e *ElementPrototype) getWindow() *Window {
-	parent := e.GetParent()
-	if parent == nil {
-		//if this element *is* a window, we can find out by grabbing the self pointer from the internal
-		//treenode and try casting it.
-		if wnd, ok := e.GetSelf().(*Window); ok {
-			return wnd
-		}
-		return nil
-	}
-
-	return parent.getWindow()
-}
-
+// Returns the bounding box of the element wrt its parent.
+// Use Canvas.Bounds() to get the bounds of the underlying canvas for drawing to
 func (e *ElementPrototype) Bounds() vec.Rect {
 	if e.border.enabled {
-		return vec.Rect{e.position.Add(vec.Coord{-1, -1}), e.Size().Grow(2, 2)}
+		return e.Canvas.Bounds().Translated(e.position)
 	}
-	return vec.Rect{e.position, e.Size()}
+	return vec.Rect{e.position, e.size}
+}
+
+func (e *ElementPrototype) DrawableArea() vec.Rect {
+	return vec.Rect{vec.ZERO_COORD, e.size}
 }
 
 func (e *ElementPrototype) MoveTo(pos vec.Coord) {
@@ -197,10 +124,6 @@ func (e *ElementPrototype) Move(dx, dy int) {
 }
 
 func (e *ElementPrototype) AddChild(child Element) {
-	if child_border := child.getBorder(); child_border.styleFlag == BORDER_STYLE_INHERIT {
-		child_border.style = e.border.style
-	}
-
 	e.TreeNode.AddChild(child)
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeAdded(child)
@@ -222,11 +145,28 @@ func (e *ElementPrototype) RemoveChild(child Element) {
 	e.ForceRedraw()
 }
 
+// OVERRIDABLE FUNCTIONS!
+// -----------------
+
 // Update() can be overriden to update the state of the UI Element. Note that the element's animations are updated
 // separately and do not need to be managed here.
 func (e *ElementPrototype) Update() {
 	return
 }
+
+// Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour.
+// Note that this is called *after* any subelements are drawn to the canvas, and *before* any running animations
+// are rendered.
+func (e *ElementPrototype) Render() {
+	return
+}
+
+// Handles keypresses. Override this to implement key input handling.
+func (e *ElementPrototype) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+	return
+}
+
+// -------------------
 
 func (e *ElementPrototype) IsUpdated() bool {
 	return e.Updated
@@ -260,28 +200,26 @@ func (e *ElementPrototype) forceParentRedraw() {
 	}
 }
 
-// performs some pre-render checks. done for the whole tree before any rendering is done.
+// performs some pre-render operations. done for the whole tree before any rendering is done.
 func (e *ElementPrototype) prepareRender() {
-	if !e.visible {
-		return
-	}
-
 	if e.forceRedraw {
 		e.Clear()
 	}
-}
 
-// Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour.
-// Note that this is called *after* any subelements are drawn to the canvas, and *before* any running animations
-// are rendered.
-func (e *ElementPrototype) Render() {
-	return
+	if e.border.enabled && (e.border.dirty || e.forceRedraw) {
+		e.DrawBorder()
+	}
 }
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
 func (e *ElementPrototype) finalizeRender() {
+	if e.border.enabled && (e.border.dirty || e.forceRedraw) {
+		e.linkBorder()
+	}
+
 	e.Updated = false
 	e.forceRedraw = false
+	e.border.dirty = false
 }
 
 func (e *ElementPrototype) renderAnimations() {
@@ -292,34 +230,102 @@ func (e *ElementPrototype) renderAnimations() {
 	}
 }
 
-func (e *ElementPrototype) drawToParent() {
-	parent := e.GetParent()
-	if parent == nil {
-		return
-	}
-
-	e.Draw(parent.getCanvas(), e.position, e.depth)
-}
-
 func (e *ElementPrototype) drawChildren() {
-	for _, child := range e.GetChildren() {
-		if child.IsVisible() {
-			if child.getCanvas().Dirty() || e.forceRedraw {
-				child.drawToParent()
-			}
+	for i, child := range e.GetChildren() {
+		if !child.IsVisible() {
+			continue
+		}
 
+		if child.getCanvas().Dirty() || e.forceRedraw {
+			child.getCanvas().Draw(&e.Canvas, child.getPosition(), child.getDepth())
 			if child.IsBordered() {
-				if border := child.getBorder(); border.dirty || e.forceRedraw {
-					border.Draw(&e.Canvas, child.Bounds())
-					border.dirty = false
+				// attempt to link to siblings' borders
+				for sib_i, sibling := range e.GetChildren() {
+					// if we're doing a forced redraw of all children then we only need to link to siblings that have
+					// already been drawn. subsequently drawn elements will then link to this one. so we can break
+					// when we get to this element
+					if e.forceRedraw && sib_i == i {
+						break
+					}
+
+					//figure out if we should be linking to this sibling whatsoever. lots of things to consider
+					if child == sibling || !sibling.IsBordered() || sibling.getDepth() != child.getDepth() || !sibling.IsVisible() {
+						continue
+					}
+
+					intersection := vec.FindIntersectionRect(child, sibling)
+					if intersection.Area() == 0 {
+						continue
+					}
+
+					//THERE ARE LIKE 20 WAYS RECTANGLES CAN OVERLAP. LET'S CHECK THEM ALL!
+					// Dear future Ben: i know what you're thinking. there must be a pattern here that we can use to
+					// simplify this monstrosity. trust me, you looked and couldn't see one that covered all 20+
+					// cases cleanly. maybe one exists, hell it probably does, but this appears to work and is fast.
+					// it just looks awful. so leave it alone and go make a game or something.
+					// - forever yours, Past Ben
+					switch {
+					case intersection.Area() == 1:
+						e.LinkCell(intersection.Coord)
+					case intersection.W == 1 || intersection.H == 1:
+						corners := intersection.Corners()
+						e.LinkCell(corners[0])
+						e.LinkCell(corners[2])
+					default:
+						corners := intersection.Corners()
+						c := child.Bounds()
+						s := sibling.Bounds()
+						switch {
+						case intersection.W == s.W || intersection.H == s.H:
+							for _, corner := range corners {
+								e.LinkCell(corner)
+							}
+						case c.X < s.X && c.Y < s.Y:
+							if c.X+c.W > s.X+s.W {
+								e.LinkCell(corners[2])
+								e.LinkCell(corners[3])
+							} else if c.Y+c.H > s.Y+s.H {
+								e.LinkCell(corners[1])
+								e.LinkCell(corners[2])
+							} else {
+								e.LinkCell(corners[1])
+								e.LinkCell(corners[3])
+							}
+						case c.X < s.X && c.Y > s.Y:
+							if c.X+c.W > s.X+s.W {
+								e.LinkCell(corners[0])
+								e.LinkCell(corners[1])
+							} else if c.Y+c.H > s.Y+s.H {
+								e.LinkCell(corners[0])
+								e.LinkCell(corners[2])
+							} else {
+								e.LinkCell(corners[0])
+								e.LinkCell(corners[3])
+							}
+						case c.X > s.X && c.Y < s.Y:
+							e.LinkCell(corners[0])
+							if c.Y+c.H > s.Y+s.H {
+								e.LinkCell(corners[3])
+							} else if c.X+c.W > s.X+s.W {
+								e.LinkCell(corners[2])
+							} else {
+								e.LinkCell(corners[1])
+							}
+						case c.X > s.X && c.Y > s.Y:
+							e.LinkCell(corners[2])
+							if c.X+c.H < s.X+s.W {
+								e.LinkCell(corners[3])
+							} else if c.Y+c.H < s.Y+s.H {
+								e.LinkCell(corners[1])
+							} else {
+								e.LinkCell(corners[1])
+							}
+						}
+					}
 				}
 			}
 		}
 	}
-}
-
-func (e *ElementPrototype) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
-	return
 }
 
 // Adds an animation to the ui element.
@@ -371,10 +377,6 @@ func (e *ElementPrototype) SetVisible(v bool) {
 	e.forceParentRedraw()
 }
 
-func (e *ElementPrototype) getCanvas() *gfx.Canvas {
-	return &e.Canvas
-}
-
 func (e *ElementPrototype) SetLabel(label string) {
 	if e.label != "" {
 		//changing labels. if we're in a window, remove the old label from the map
@@ -397,4 +399,30 @@ func (e *ElementPrototype) GetLabel() string {
 
 func (e *ElementPrototype) IsLabelled() bool {
 	return e.label != ""
+}
+
+func (e *ElementPrototype) getPosition() vec.Coord {
+	return e.position
+}
+
+func (e *ElementPrototype) getDepth() int {
+	return e.depth
+}
+
+func (e *ElementPrototype) getCanvas() *gfx.Canvas {
+	return &e.Canvas
+}
+
+func (e *ElementPrototype) getWindow() *Window {
+	parent := e.GetParent()
+	if parent == nil {
+		//if this element *is* a window, we can find out by grabbing the self pointer from the internal
+		//treenode and try casting it.
+		if wnd, ok := e.GetSelf().(*Window); ok {
+			return wnd
+		}
+		return nil
+	}
+
+	return parent.getWindow()
 }

@@ -30,8 +30,14 @@ func (c1 Coord) Subtract(c2 Coord) Coord {
 	return Coord{c1.X - c2.X, c1.Y - c2.Y}
 }
 
+// returns the coordinate stepped once in the direction d
 func (c Coord) Step(d Direction) Coord {
 	return c.Add(Coord(d))
+}
+
+// Returns the coordinate stepped N times in the direction d
+func (c Coord) StepN(d Direction, n int) Coord {
+	return c.Add(Coord(d).Scale(n))
 }
 
 func (c Coord) Scale(scale int) Coord {

@@ -22,6 +22,7 @@ type List struct {
 func NewList(w, h int, pos vec.Coord, depth int) (l *List) {
 	l = new(List)
 	l.ElementPrototype.Init(w, h, pos, depth)
+	l.border.EnableScrollbar(0, 0)
 	return
 }
 
@@ -42,6 +43,37 @@ func (l *List) RemoveChild(e Element) {
 	l.calibrate()
 }
 
+//if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
+func (l *List) updateScrollPosition() {
+	if l.contentHeight > l.size.H {
+		selected := l.getSelected()
+		intersect := vec.FindIntersectionRect(selected, l.DrawableArea())
+		sh := selected.Bounds().H
+		if intersect.H != sh {
+			scrollDelta := 0
+			sy := selected.Bounds().Y
+
+			if sy < 0 { // element above the list's draw area
+				scrollDelta = sy
+			} else if sy >= l.size.H { // element below the list's draw area
+				scrollDelta = sy - l.size.H + sh
+			} else { // element is in list, but not fully visible
+				scrollDelta = sh - intersect.H
+			}
+
+			for _, child := range l.GetChildren() {
+				child.Move(0, -scrollDelta)
+			}
+
+			l.scrollOffset += scrollDelta
+		}
+	} else { //if content fits in the list, no need to remember some old scroll offset
+		l.scrollOffset = 0
+	}
+
+	l.border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
+}
+
 // positions all the children elements so they are top to bottom, and the selected item is visible
 func (l *List) calibrate() {
 	l.contentHeight = 0
@@ -53,34 +85,7 @@ func (l *List) calibrate() {
 		l.contentHeight += child.Bounds().H
 	}
 
-	//if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
-	if l.contentHeight > l.Size().H {
-		selected := l.GetChildren()[l.selected]
-		intersect := vec.FindIntersectionRect(selected, l.Canvas)
-		sh := selected.Bounds().H
-		if intersect.H != sh {
-			scrollDelta := 0
-			sy := selected.Bounds().Y
-
-			if sy < 0 { // element above the list's draw area
-				scrollDelta = sy
-			} else if sy >= l.Size().H { // element below the list's draw area
-				scrollDelta = sy - l.Size().H + sh
-			} else { // element is in list, but not fully visible
-				scrollDelta = sh - intersect.H
-			}
-
-			for _, child := range l.GetChildren() {
-				child.Move(0, -scrollDelta)
-			}
-
-			l.scrollOffset += scrollDelta
-		}
-		l.border.EnableScrollbar(l.contentHeight, l.scrollOffset)
-	} else { //if content fits in the list, no need to remember some old scroll offset
-		l.scrollOffset = 0
-		l.border.DisableScrollbar()
-	}
+	l.updateScrollPosition()
 }
 
 // Toggles highlighting of currently selected item.
@@ -94,7 +99,11 @@ func (l *List) Select(selection int) {
 	}
 
 	l.selected = util.Clamp(selection, 0, l.ChildCount()-1)
-	l.calibrate()
+	l.updateScrollPosition()
+}
+
+func (l *List) getSelected() Element {
+	return l.GetChildren()[l.selected]
 }
 
 // Selects the next item
@@ -104,7 +113,7 @@ func (l *List) Next() {
 	}
 
 	l.selected = util.CycleClamp(l.selected+1, 0, l.ChildCount()-1)
-	l.calibrate()
+	l.updateScrollPosition()
 	l.Updated = true
 }
 
@@ -115,7 +124,7 @@ func (l *List) Prev() {
 	}
 
 	l.selected = util.CycleClamp(l.selected-1, 0, l.ChildCount()-1)
-	l.calibrate()
+	l.updateScrollPosition()
 	l.Updated = true
 }
 
@@ -131,8 +140,9 @@ func (l *List) Render() {
 	//render highlight for selected item.
 	//TODO: different options for how the selected item is highlighted. currently just inverts the colours
 	if l.highlight {
-		area := l.GetChildren()[l.selected].Bounds()
-		l.Canvas.DrawEffect(gfx.InvertEffect, area)
+		selected_area := l.getSelected().Bounds()
+		highlight_area := vec.FindIntersectionRect(selected_area, l.DrawableArea())
+		l.Canvas.DrawEffect(gfx.InvertEffect, highlight_area)
 	}
 }
 

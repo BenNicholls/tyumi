@@ -26,8 +26,9 @@ func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc *PageContainer) {
 	pc.ElementPrototype.Init(w, h, pos, depth)
 
 	pc.tabRow = new(ElementPrototype)
-	pc.tabRow.Init(w, 2, vec.Coord{0, 0}, 0)
+	pc.tabRow.Init(w, 2, vec.Coord{0, 0}, BorderDepth)
 	pc.tabRow.SetupBorder("", "")
+	pc.tabRow.SetBorderStyle(BORDER_STYLE_INHERIT)
 	pc.AddChild(pc.tabRow)
 
 	pc.pages = make([]*Page, 0)
@@ -39,7 +40,7 @@ func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc *PageContainer) {
 // creates and adds a new page to the pagecontainer, and returns a reference to the new page for the user to populate
 // with other ui stuff
 func (pc *PageContainer) CreatePage(title string) *Page {
-	newpage := newPage(pc.Bounds().W, pc.Bounds().H, title)
+	newpage := newPage(pc.size.W, pc.size.H-3, title)
 	pc.addPage(newpage)
 
 	return newpage
@@ -113,16 +114,16 @@ func (pc *PageContainer) Render() {
 	tab_bounds := selected_tab.Bounds()
 	cursor := tab_bounds.Coord
 	cursor.Move(0, 2)
-	brush := gfx.NewGlyphVisuals(selected_tab.border.getStyle().GetGlyph(gfx.LINK_UL), selected_tab.border.colours)
-	pc.DrawVisuals(cursor, pc.depth, brush)
+	brush := gfx.NewGlyphVisuals(selected_tab.getBorderStyle().GetGlyph(gfx.LINK_UL), selected_tab.border.colours)
+	pc.DrawVisuals(cursor, BorderDepth, brush)
 	brush.Glyph = gfx.GLYPH_NONE
 	for range selected_tab.Size().W {
 		cursor.Move(1, 0)
-		pc.DrawVisuals(cursor, pc.depth, brush)
+		pc.DrawVisuals(cursor, BorderDepth, brush)
 	}
 	cursor.Move(1, 0)
-	brush.Glyph = selected_tab.border.getStyle().GetGlyph(gfx.LINK_UR)
-	pc.DrawVisuals(cursor, pc.depth, brush)
+	brush.Glyph = selected_tab.getBorderStyle().GetGlyph(gfx.LINK_UR)
+	pc.DrawVisuals(cursor, BorderDepth, brush)
 }
 
 func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
@@ -155,6 +156,7 @@ func newPage(width, height int, title string) (p *Page) {
 
 	p.tab = NewTextbox(FIT_TEXT, 1, vec.Coord{1, 1}, 5, title, false)
 	p.tab.EnableBorder()
+	p.tab.SetBorderStyle(BORDER_STYLE_INHERIT)
 
 	p.deactivate()
 

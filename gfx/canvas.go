@@ -15,14 +15,15 @@ type Canvas struct {
 	dirty    bool //true if any cells in the Canvas are dirty and need to be drawn out. TODO: replace this with a dirty bitset
 
 	width, height int
+	offset        vec.Coord //coordinate of the top-left corner. generally (0,0)
 
-	defaultVisuals Visuals // Visuals drawn when the canvas is cleared. 
+	defaultVisuals Visuals // Visuals drawn when the canvas is cleared.
 }
 
 // Initializes the canvas, setting all cells to a nice black and white default drawing mode.
 func (c *Canvas) Init(w, h int) {
 	c.defaultVisuals = Visuals{
-		Mode: DRAW_GLYPH,
+		Mode:    DRAW_GLYPH,
 		Colours: col.Pair{col.WHITE, col.BLACK},
 	}
 	c.Resize(w, h)
@@ -61,11 +62,21 @@ func (c *Canvas) Resize(w, h int) {
 }
 
 func (c Canvas) Bounds() vec.Rect {
-	return vec.Rect{vec.ZERO_COORD, c.Size()}
+	return vec.Rect{c.offset, c.Size()}
 }
 
 func (c *Canvas) InBounds(pos vec.Coord) bool {
-	return pos.X < c.width && pos.Y < c.height && pos.X >= 0 && pos.Y >= 0
+	return vec.IsInside(pos, c)
+}
+
+// SetOrigin sets the origin coord for the canvas. draw operations will be done relative to this point.
+// must be a point in the canvas, so {0 <= x < W, 0 <= y < H}
+func (c *Canvas) SetOrigin(pos vec.Coord) {
+	if !vec.IsInside(pos, vec.Rect{vec.ZERO_COORD, c.Size()}) {
+		return
+	}
+
+	c.offset.X, c.offset.Y = -pos.X, -pos.Y
 }
 
 // Clean sets all cells in the canvas as clean (dirty = false).
@@ -76,6 +87,14 @@ func (c *Canvas) Clean() {
 	c.dirty = false
 }
 
+func (c *Canvas) cellIndex(pos vec.Coord) int {
+	if c.offset == vec.ZERO_COORD {
+		return pos.ToIndex(c.width)
+	}
+
+	return pos.Subtract(c.offset).ToIndex(c.width)
+}
+
 // GetCell returns the cell at pos. Returns an empty cell if pos is out of bounds.
 // Note that this function just returns the value of the requested cell, not a reference,
 // so you can't change the cell this way. Use the Canvas.Draw* functions for that!
@@ -84,12 +103,12 @@ func (c *Canvas) GetCell(pos vec.Coord) (cell Cell) {
 		return
 	}
 
-	cell = c.cells[pos.ToIndex(c.width)]
+	cell = c.cells[c.cellIndex(pos)]
 	return
 }
 
 func (c *Canvas) getCell(pos vec.Coord) *Cell {
-	return &c.cells[pos.ToIndex(c.width)]
+	return &c.cells[c.cellIndex(pos)]
 }
 
 func (c *Canvas) GetDepth(pos vec.Coord) int {
@@ -101,11 +120,11 @@ func (c *Canvas) GetDepth(pos vec.Coord) int {
 }
 
 func (c *Canvas) getDepth(pos vec.Coord) int {
-	return c.depthmap[pos.ToIndex(c.width)]
+	return c.depthmap[c.cellIndex(pos)]
 }
 
 func (c *Canvas) setDepth(pos vec.Coord, depth int) {
-	c.depthmap[pos.ToIndex(c.width)] = depth
+	c.depthmap[c.cellIndex(pos)] = depth
 }
 
 func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
@@ -184,7 +203,7 @@ func (c *Canvas) setBlank(pos vec.Coord) {
 }
 
 // Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas. The appearance
-// of the reset cells can set using canvas.SetDefaultVisuals() 
+// of the reset cells can set using canvas.SetDefaultVisuals()
 func (c *Canvas) Clear(areas ...vec.Rect) {
 	c.ClearAtDepth(-1, areas...)
 }
@@ -201,12 +220,10 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 				continue
 			}
 			cell := c.getCell(cursor)
-			if depth != -1 && c.getDepth(cursor) > depth {
-				continue
+			if depth == -1 || c.getDepth(cursor) <= depth {
+				cell.SetVisuals(c.defaultVisuals)
+				c.setDepth(cursor, -1)
 			}
-
-			cell.SetVisuals(c.defaultVisuals)
-			c.setDepth(cursor, -1)
 		}
 	}
 

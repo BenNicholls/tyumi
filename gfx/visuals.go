@@ -13,7 +13,7 @@ type Visuals struct {
 	Mode    DrawMode
 	Glyph   Glyph
 	Colours col.Pair
-	Chars   [2]rune
+	Chars   [2]uint8
 }
 
 func NewGlyphVisuals(g Glyph, colours col.Pair) (vis Visuals) {
@@ -26,11 +26,11 @@ func NewGlyphVisuals(g Glyph, colours col.Pair) (vis Visuals) {
 	return
 }
 
-func NewTextVisuals(char1, char2 rune, colours col.Pair) (vis Visuals) {
+func NewTextVisuals(char1, char2 uint8, colours col.Pair) (vis Visuals) {
 	vis = Visuals{
 		Mode:    DRAW_TEXT,
 		Colours: colours,
-		Chars:   [2]rune{char1, char2},
+		Chars:   [2]uint8{char1, char2},
 	}
 
 	return
@@ -43,7 +43,7 @@ func (v *Visuals) ChangeGlyph(g Glyph) {
 }
 
 // Changes the characters. Also enables text drawmode.
-func (v *Visuals) ChangeChars(char1, char2 rune) {
+func (v *Visuals) ChangeChars(char1, char2 uint8) {
 	v.Chars[0] = char1
 	v.Chars[1] = char2
 	v.Mode = DRAW_TEXT
@@ -317,12 +317,12 @@ const (
 	GLYPH_BLANK
 )
 
-// Special text runes.
+// Special text characters.
 const (
-	TEXT_BORDER_LR         rune = rune(196)
-	TEXT_BORDER_UD         rune = rune(179)
-	TEXT_BORDER_DECO_LEFT  rune = rune(180)
-	TEXT_BORDER_DECO_RIGHT rune = rune(195)
-	TEXT_DEFAULT           rune = rune(255) //indicates that text character should preserve what was there previously
-	TEXT_NONE              rune = rune(32)  //just a space
+	TEXT_BORDER_LR         uint8 = 196
+	TEXT_BORDER_UD         uint8 = 179
+	TEXT_BORDER_DECO_LEFT  uint8 = 180
+	TEXT_BORDER_DECO_RIGHT uint8 = 195
+	TEXT_DEFAULT           uint8 = 255 //indicates that text character should preserve what was there previously
+	TEXT_NONE              uint8 = 32  //just a space
 )

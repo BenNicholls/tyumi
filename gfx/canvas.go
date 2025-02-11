@@ -176,7 +176,7 @@ func (c *Canvas) setGlyph(pos vec.Coord, depth int, glyph Glyph) {
 	c.setDepth(pos, depth)
 }
 
-func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
+func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 uint8) {
 	if c.getDepth(pos) > depth {
 		return
 	}
@@ -188,7 +188,7 @@ func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 rune) {
 }
 
 // Changes a single character on the canvas at position (x,y) in text mode.
-func (c *Canvas) setChar(pos vec.Coord, depth int, char rune, char_pos TextCellPosition) {
+func (c *Canvas) setChar(pos vec.Coord, depth int, char uint8, char_pos TextCellPosition) {
 	if c.getDepth(pos) > depth {
 		return
 	}

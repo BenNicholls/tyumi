@@ -17,7 +17,7 @@ func (c *Cell) SetGlyphCell(glyph Glyph, colours col.Pair) {
 }
 
 // Sets the properties of a cell all at once for Text Mode.
-func (c *Cell) SetTextCell(char1, char2 rune, colours col.Pair) {
+func (c *Cell) SetTextCell(char1, char2 uint8, colours col.Pair) {
 	c.SetText(char1, char2)
 	c.SetColours(colours)
 }
@@ -65,7 +65,7 @@ func (c *Cell) SetGlyph(glyph Glyph) {
 	c.Dirty = true
 }
 
-func (c *Cell) SetText(char1, char2 rune) {
+func (c *Cell) SetText(char1, char2 uint8) {
 	if char1 == c.Chars[0] && char2 == c.Chars[1] && c.Mode == DRAW_TEXT {
 		return
 	}
@@ -80,7 +80,7 @@ func (c *Cell) SetText(char1, char2 rune) {
 	c.Dirty = true
 }
 
-func (c *Cell) SetChar(char rune, char_pos TextCellPosition) {
+func (c *Cell) SetChar(char uint8, char_pos TextCellPosition) {
 	if c.Chars[int(char_pos)] == char && c.Mode == DRAW_TEXT {
 		return
 	}

@@ -18,11 +18,11 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, colours col.Pair
 	//build []rune version of txt string
 	var text_runes []rune = make([]rune, 0, len(txt))
 	if start_pos == DRAW_TEXT_RIGHT { //pad start with a space if we're starting on the right
-		text_runes = append(text_runes, TEXT_NONE)
+		text_runes = append(text_runes, rune(TEXT_NONE))
 	}
 	text_runes = append(text_runes, []rune(txt)...)
 	if len(text_runes)%2 != 0 { //pad end if we're ending on the left
-		text_runes = append(text_runes, TEXT_NONE)
+		text_runes = append(text_runes, rune(TEXT_NONE))
 	}
 
 	//iterate by pairs of runes, drawing 1 cell per loop
@@ -32,7 +32,7 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, colours col.Pair
 			continue
 		}
 
-		c.setText(cursor, depth, text_runes[i], text_runes[i+1])
+		c.setText(cursor, depth, uint8(text_runes[i]), uint8(text_runes[i+1]))
 		c.setColours(cursor, depth, colours)
 	}
 }

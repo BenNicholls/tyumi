@@ -20,9 +20,9 @@ type BorderStyle struct {
 	lineType     gfx.LineType
 	DefaultGlyph gfx.Glyph // default glyph to draw when not using linked line glyphs
 
-	TextDecorationL   rune //character to print on the left of titles/hints
-	TextDecorationR   rune //character to print on the right of titles/hints
-	TextDecorationPad rune //character to pad title/hint in case the decorated string isn't an even number of chars
+	TextDecorationL   uint8 //character to print on the left of titles/hints
+	TextDecorationR   uint8 //character to print on the right of titles/hints
+	TextDecorationPad uint8 //character to pad title/hint in case the decorated string isn't an even number of chars
 
 	Colours     col.Pair //colours for the border. use gfx.COL_DEFAULT to use the default colours of the ui element instead
 	DisableLink bool     //toggle this to disable linking.
@@ -40,11 +40,11 @@ func (bs BorderStyle) GetGlyph(neighbour_flags int) gfx.Glyph {
 }
 
 func (bs BorderStyle) DecorateText(text string) (decoratedText string) {
-	if bs.TextDecorationL != rune(0) {
+	if bs.TextDecorationL != 0 {
 		decoratedText += string(bs.TextDecorationL)
 	}
 	decoratedText += text
-	if bs.TextDecorationR != rune(0) {
+	if bs.TextDecorationR != 0 {
 		decoratedText += string(bs.TextDecorationR)
 	}
 

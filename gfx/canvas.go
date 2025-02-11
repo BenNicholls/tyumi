@@ -165,13 +165,13 @@ func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
 	c.setBackColour(pos, depth, colours.Back)
 }
 
-func (c *Canvas) setGlyph(pos vec.Coord, depth, gl int) {
+func (c *Canvas) setGlyph(pos vec.Coord, depth int, glyph Glyph) {
 	if c.getDepth(pos) > depth {
 		return
 	}
 
 	cell := c.getCell(pos)
-	cell.SetGlyph(gl)
+	cell.SetGlyph(glyph)
 	c.dirty = c.dirty || cell.Dirty
 	c.setDepth(pos, depth)
 }

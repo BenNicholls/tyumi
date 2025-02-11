@@ -9,7 +9,7 @@ const (
 	COL_DEFAULT uint32 = 0x00000001 //pass this in cases where you want a canvas to use the default colours
 )
 
-type DrawMode int
+type DrawMode uint8
 
 const (
 	DRAW_GLYPH DrawMode = iota // draws cell in glyph mode (square font)
@@ -80,7 +80,7 @@ func (c *Canvas) DrawColours(pos vec.Coord, depth int, colours col.Pair) {
 }
 
 // DrawGlyph draws a glyph to a cell at pos, respecting depth.
-func (c *Canvas) DrawGlyph(pos vec.Coord, depth int, glyph int) {
+func (c *Canvas) DrawGlyph(pos vec.Coord, depth int, glyph Glyph) {
 	if !c.InBounds(pos) {
 		return
 	}

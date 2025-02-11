@@ -18,7 +18,7 @@ var BorderStyles map[string]BorderStyle
 
 type BorderStyle struct {
 	lineType     gfx.LineType
-	DefaultGlyph int // default glyph to draw when not using linked line glyphs
+	DefaultGlyph gfx.Glyph // default glyph to draw when not using linked line glyphs
 
 	TextDecorationL   rune //character to print on the left of titles/hints
 	TextDecorationR   rune //character to print on the right of titles/hints
@@ -31,7 +31,7 @@ type BorderStyle struct {
 }
 
 // GetGlyph returns the appropriate border glyph to link to neighbours as described in the naighbour_flags.
-func (bs BorderStyle) GetGlyph(neighbour_flags int) int {
+func (bs BorderStyle) GetGlyph(neighbour_flags int) gfx.Glyph {
 	if bs.lineType == gfx.LINETYPE_NONE {
 		return bs.DefaultGlyph
 	}
@@ -51,9 +51,9 @@ func (bs BorderStyle) DecorateText(text string) (decoratedText string) {
 	return
 }
 
-// Returns the border neighbour flags for a particular glyph. If the glyph does not link with this border, 
+// Returns the border neighbour flags for a particular glyph. If the glyph does not link with this border,
 // returns 0 (LINK_NONE) :(
-func (bs *BorderStyle) getBorderFlags(glyph int) int {
+func (bs *BorderStyle) getBorderFlags(glyph gfx.Glyph) int {
 	if bs.lineType == gfx.LINETYPE_NONE {
 		return gfx.LINK_NONE
 	}
@@ -61,7 +61,7 @@ func (bs *BorderStyle) getBorderFlags(glyph int) int {
 	return gfx.LineStyles[bs.lineType].GetBorderFlags(glyph)
 }
 
-func (bs *BorderStyle) glyphIsLinkable(glyph int) bool {
+func (bs *BorderStyle) glyphIsLinkable(glyph gfx.Glyph) bool {
 	return bs.getBorderFlags(glyph) != gfx.LINK_NONE
 }
 

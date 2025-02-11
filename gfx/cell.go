@@ -11,8 +11,8 @@ type Cell struct {
 }
 
 // Sets the properties of a cell all at once for Glyph Mode.
-func (c *Cell) SetGlyphCell(gl int, colours col.Pair) {
-	c.SetGlyph(gl)
+func (c *Cell) SetGlyphCell(glyph Glyph, colours col.Pair) {
+	c.SetGlyph(glyph)
 	c.SetColours(colours)
 }
 
@@ -55,13 +55,13 @@ func (c *Cell) SetColours(colours col.Pair) {
 	}
 }
 
-func (c *Cell) SetGlyph(gl int) {
-	if gl == c.Glyph && c.Mode == DRAW_GLYPH {
+func (c *Cell) SetGlyph(glyph Glyph) {
+	if glyph == c.Glyph && c.Mode == DRAW_GLYPH {
 		return
 	}
 
 	c.Mode = DRAW_GLYPH
-	c.Glyph = gl
+	c.Glyph = glyph
 	c.Dirty = true
 }
 

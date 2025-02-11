@@ -27,7 +27,7 @@ func ImportXPData(path string) (c Canvas) {
 			c.DrawNone(cursor)
 		} else {
 			fore, back := cell_data.ARGB()
-			c.DrawVisuals(cursor, 0, NewGlyphVisuals(int(cell_data.Glyph), col.Pair{fore, back}))
+			c.DrawVisuals(cursor, 0, NewGlyphVisuals(Glyph(cell_data.Glyph), col.Pair{fore, back}))
 		}
 	}
 

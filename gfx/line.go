@@ -12,7 +12,7 @@ func (c *Canvas) DrawLine(line vec.Line, depth int, brush Visuals) {
 }
 
 // Draws a glyph to the canvas, linking it to neighbouring cells at the same depth if possible
-func (c *Canvas) DrawLinkedGlyph(pos vec.Coord, depth int, glyph int) {
+func (c *Canvas) DrawLinkedGlyph(pos vec.Coord, depth int, glyph Glyph) {
 	c.DrawGlyph(pos, depth, c.CalcLinkedGlyph(glyph, pos, depth))
 }
 
@@ -20,7 +20,7 @@ func (c *Canvas) DrawLinkedGlyph(pos vec.Coord, depth int, glyph int) {
 // No effect if src_glyph is not a linkable glyph.
 // NOTE: this will NOT link a thin glyph to a thick glyph or vice versa. Someday though. Maybe not t'dae, maybe not
 // t'marrah, but someday.
-func (c *Canvas) CalcLinkedGlyph(src_glyph int, dst_pos vec.Coord, depth int) (glyph int) {
+func (c *Canvas) CalcLinkedGlyph(src_glyph Glyph, dst_pos vec.Coord, depth int) (glyph Glyph) {
 	glyph = src_glyph
 	if !c.InBounds(dst_pos) {
 		return
@@ -99,7 +99,7 @@ const (
 )
 
 // returns the linetype for a glyph. if not a linkable glyph, returns LINETYPE_NONE
-func getLineType(glyph int) LineType {
+func getLineType(glyph Glyph) LineType {
 	if LineStyles[LINETYPE_THIN].glyphIsLinkable(glyph) {
 		return LINETYPE_THIN
 	} else if LineStyles[LINETYPE_THICK].glyphIsLinkable(glyph) {
@@ -149,12 +149,12 @@ func GetLinkFlagByDirection(dir vec.Direction) int {
 }
 
 type LineStyle struct {
-	Glyphs  [LINK_ALL + 1]int //glyphs for line drawing, indexed by the LINK_* constants above
-	flagMap map[int]int       //map of glyphs to linkflags
+	Glyphs  [LINK_ALL + 1]Glyph //glyphs for line drawing, indexed by the LINK_* constants above
+	flagMap map[Glyph]int       //map of glyphs to linkflags
 }
 
 // Returns the link flags for a particular glyph. If the glyph is invalid, returns 0 (LINK_NONE) :(
-func (ls *LineStyle) GetBorderFlags(glyph int) int {
+func (ls *LineStyle) GetBorderFlags(glyph Glyph) int {
 	if ls.flagMap == nil {
 		ls.buildFlagMap()
 	}
@@ -166,12 +166,12 @@ func (ls *LineStyle) GetBorderFlags(glyph int) int {
 	return LINK_NONE
 }
 
-func (ls *LineStyle) glyphIsLinkable(glyph int) bool {
+func (ls *LineStyle) glyphIsLinkable(glyph Glyph) bool {
 	return ls.GetBorderFlags(glyph) != LINK_NONE
 }
 
 func (ls *LineStyle) buildFlagMap() {
-	ls.flagMap = make(map[int]int)
+	ls.flagMap = make(map[Glyph]int)
 	for i, glyph := range ls.Glyphs {
 		if glyph != 0 {
 			ls.flagMap[glyph] = i

@@ -194,15 +194,16 @@ func (sdlr *SDLRenderer) Render() {
 		if cell.Dirty || sdlr.forceRedraw {
 			if cell.Mode == gfx.DRAW_TEXT {
 				for c_i, char := range cell.Chars {
+					char := int(char)
 					dst = makeRect(cursor.X*sdlr.tileSize+c_i*sdlr.tileSize/2, cursor.Y*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
-					src = makeRect((int(char)%32)*sdlr.tileSize/2, (int(char)/32)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
-					sdlr.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.Colours, int(char))
+					src = makeRect((char%32)*sdlr.tileSize/2, (char/32)*sdlr.tileSize, sdlr.tileSize/2, sdlr.tileSize)
+					sdlr.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.Colours, char)
 				}
 			} else {
-				g := cell.Glyph
+				glyph := int(cell.Glyph)
 				dst = makeRect(cursor.X*sdlr.tileSize, cursor.Y*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
-				src = makeRect((g%16)*sdlr.tileSize, (g/16)*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
-				sdlr.copyToRenderer(gfx.DRAW_GLYPH, src, dst, cell.Colours, g)
+				src = makeRect((glyph%16)*sdlr.tileSize, (glyph/16)*sdlr.tileSize, sdlr.tileSize, sdlr.tileSize)
+				sdlr.copyToRenderer(gfx.DRAW_GLYPH, src, dst, cell.Colours, glyph)
 			}
 		}
 	}
@@ -233,8 +234,10 @@ func (sdlr *SDLRenderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, co
 	sdlr.renderer.FillRect(&dst)
 
 	//if we're drawing a nothing character (space, whatever), skip next part.
-	if mode == gfx.DRAW_GLYPH && (g == gfx.GLYPH_NONE || g == gfx.GLYPH_SPACE) {
-		return
+	if mode == gfx.DRAW_GLYPH {
+		if glyph := gfx.Glyph(g); glyph == gfx.GLYPH_NONE || glyph == gfx.GLYPH_SPACE {
+			return
+		}
 	} else if mode == gfx.DRAW_TEXT && g == 32 {
 		return
 	} else if colours.Fore == sdlr.backDrawColour { //skip drawing foreground if it is the same as the background

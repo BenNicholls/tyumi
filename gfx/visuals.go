@@ -11,16 +11,16 @@ import (
 // hence the 2 Chars.
 type Visuals struct {
 	Mode    DrawMode
+	Glyph   Glyph
 	Colours col.Pair
-	Glyph   int
 	Chars   [2]rune
 }
 
-func NewGlyphVisuals(gl int, colours col.Pair) (vis Visuals) {
+func NewGlyphVisuals(g Glyph, colours col.Pair) (vis Visuals) {
 	vis = Visuals{
 		Mode:    DRAW_GLYPH,
+		Glyph:   g,
 		Colours: colours,
-		Glyph:   gl,
 	}
 
 	return
@@ -37,7 +37,7 @@ func NewTextVisuals(char1, char2 rune, colours col.Pair) (vis Visuals) {
 }
 
 // Changes the glyph. Also enables glyph drawmode.
-func (v *Visuals) ChangeGlyph(g int) {
+func (v *Visuals) ChangeGlyph(g Glyph) {
 	v.Glyph = g
 	v.Mode = DRAW_GLYPH
 }
@@ -53,11 +53,13 @@ func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
 	dst_canvas.DrawVisuals(offset, depth, v)
 }
 
-
+// A glyph to be displayed. tyumi fonts are based on the old codepage 437 fonts from ancient terminal applications,
+// which had a whopping 256 characters to choose from.
+type Glyph uint8
 
 // code page 437 glyphs
 const (
-	GLYPH_NONE int = iota
+	GLYPH_NONE Glyph = iota
 	GLYPH_FACE1
 	GLYPH_FACE2
 	GLYPH_HEART
@@ -313,7 +315,6 @@ const (
 	GLYPH_2_SUPERSCRIPT
 	GLYPH_CURSOR
 	GLYPH_BLANK
-	MAXGLYPHS
 )
 
 // Special text runes.

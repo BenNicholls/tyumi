@@ -29,6 +29,11 @@ func (c *Canvas) Init(w, h int) {
 	c.Resize(w, h)
 }
 
+// Returns true if the canvas has been initialized and is non-zero in size
+func (c Canvas) Ready() bool {
+	return c.cells != nil && len(c.cells) != 0
+}
+
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.
 func (c *Canvas) SetDefaultColours(colours col.Pair) {
 	if c.defaultVisuals.Colours == colours {

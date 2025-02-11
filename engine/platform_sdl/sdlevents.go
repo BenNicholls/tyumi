@@ -20,10 +20,16 @@ func (sdlp *SDLPlatform) processEvents() {
 			event.Fire(event.New(engine.EV_QUIT))
 			break //don't care about other input events if we're quitting
 		case *sdl.KeyboardEvent:
-			//only want keydown events for now.
-			if e.Type == sdl.KEYDOWN {
-				if key, ok := keycodemap[e.Keysym.Sym]; ok {
-					input.FireKeydownEvent(key)
+			if key, ok := keycodemap[e.Keysym.Sym]; ok {
+				switch e.State {
+				case sdl.PRESSED:
+					if e.Repeat == 0 {
+						input.FireKeyPressEvent(key)
+					} else {
+						input.FireKeyRepeatEvent(key)
+					}
+				case sdl.RELEASED:
+					input.FireKeyReleaseEvent(key)
 				}
 			}
 		case *sdl.MouseMotionEvent:

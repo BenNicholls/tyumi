@@ -7,26 +7,53 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+// KEY_PRESSED for key downs, KEY_RELEASED for key ups.
+type KeyPressType int
+
+const (
+	KEY_PRESSED KeyPressType = iota
+	KEY_RELEASED
+)
+
 type KeyboardEvent struct {
 	event.EventPrototype
 
-	Key Keycode
+	Key       Keycode
+	PressType KeyPressType
+	Repeat    bool //will be true if this is the key is being held down
 }
 
-func newKeyboardEvent(key Keycode) (kbe *KeyboardEvent) {
+func newKeyboardEvent(key Keycode, presstype KeyPressType, repeat bool) (kbe *KeyboardEvent) {
 	kbe = new(KeyboardEvent)
 	kbe.EventPrototype = *event.New(EV_KEYBOARD)
 	kbe.Key = key
+	kbe.PressType = presstype
+	kbe.Repeat = repeat
 	return
 }
 
-// Emits keydown event. TODO: keyup event, other key events, etc.
-func FireKeydownEvent(key Keycode) {
-	event.Fire(newKeyboardEvent(key))
+// Emits keypress event.
+func FireKeyPressEvent(key Keycode) {
+	event.Fire(newKeyboardEvent(key, KEY_PRESSED, false))
+}
+
+// Emits keyrelease event.
+func FireKeyReleaseEvent(key Keycode) {
+	event.Fire(newKeyboardEvent(key, KEY_RELEASED, false))
+}
+
+// Emits key repeated event. The KeyPressType of repeat events is always KEY_PRESSED.
+func FireKeyRepeatEvent(key Keycode) {
+	if suppress_key_repeats {
+		return
+	}
+
+	event.Fire(newKeyboardEvent(key, KEY_PRESSED, true))
 }
 
 // If the keyboard event represents a direction, returns a vec.Direction (or vec.DIR_NONE if not). Currently only does
 // cardinal directions.
+// TODO: make keypad keys also produce directions
 func (kb KeyboardEvent) Direction() vec.Direction {
 	switch kb.Key {
 	case K_UP:

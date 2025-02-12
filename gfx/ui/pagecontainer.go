@@ -127,6 +127,10 @@ func (pc *PageContainer) Render() {
 }
 
 func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+	if event.PressType == input.KEY_RELEASED {
+		return
+	}
+
 	switch event.Key {
 	case input.K_TAB:
 		pc.NextPage()

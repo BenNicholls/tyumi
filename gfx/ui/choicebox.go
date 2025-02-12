@@ -80,6 +80,10 @@ func (cb *ChoiceBox) Render() {
 }
 
 func (cb *ChoiceBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+	if event.PressType == input.KEY_RELEASED {
+		return
+	}
+
 	switch event.Key {
 	case input.K_RIGHT:
 		cb.Next()

@@ -147,6 +147,10 @@ func (l *List) Render() {
 }
 
 func (l *List) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+	if event.PressType == input.KEY_RELEASED {
+		return
+	}
+
 	switch event.Key {
 	case input.K_UP, input.K_PAGEUP:
 		l.Prev()

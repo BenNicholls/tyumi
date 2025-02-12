@@ -25,6 +25,10 @@ func NewInputbox(w, h int, pos vec.Coord, depth int) (ib *InputBox) {
 }
 
 func (ib *InputBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+	if event.PressType == input.KEY_RELEASED {
+		return
+	}
+	
 	if text := event.Text(); text != "" {
 		ib.Insert(text)
 		event_handled = true

@@ -31,6 +31,36 @@ type Border struct {
 	dirty bool
 }
 
+// Sets the border style flag. Options are:
+// - BORDER_STYLE_DEFAULT: uses the package-wide default at ui.DefaultBorderStyle
+// - BORDER_STYLE_INHERIT: uses the borderstyle of its parent element
+// - BORDER_STYLE_CUSTOM: uses the borderstyle provided in the 2nd argument
+func (b *Border) SetStyle(styleFlag borderStyleFlag, borderStyle ...BorderStyle) {
+	if styleFlag == BORDER_STYLE_CUSTOM {
+		if borderStyle == nil {
+			log.Error("Custom border style application failed: no borderstyle provided.")
+			return
+		}
+
+		b.custom_style = &borderStyle[0]
+	} else {
+		b.custom_style = nil
+	}
+
+	b.styleFlag = styleFlag
+}
+
+// Sets the border colours. Colours set this way will override the colours in the border's set style.
+// Use gfx.COL_DEFAULT to default to indicate you want to use one of both of the element's default colours.
+func (b *Border) SetColours(col col.Pair) {
+	if b.colours == col {
+		return
+	}
+
+	b.colours = col
+	b.dirty = true
+}
+
 func (b *Border) EnableScrollbar(content_height, pos int) {
 	if !b.scrollbar {
 		b.dirty = true
@@ -76,83 +106,53 @@ func (e *ElementPrototype) DisableBorder() {
 }
 
 func (e *ElementPrototype) setBorder(bordered bool) {
-	if e.border.enabled == bordered {
+	if e.Border.enabled == bordered {
 		return
 	}
 
 	if bordered {
 		e.Canvas.Resize(e.size.W+2, e.size.H+2)
 		e.SetOrigin(vec.Coord{1, 1})
-		e.border.dirty = true
+		e.Border.dirty = true
 	} else {
 		e.Canvas.Resize(e.size.W, e.size.H)
 		e.SetOrigin(vec.ZERO_COORD)
 	}
 
-	e.border.enabled = bordered
+	e.Border.enabled = bordered
 	e.forceRedraw = true
 	e.forceParentRedraw()
 }
 
 func (e *ElementPrototype) IsBordered() bool {
-	return e.border.enabled
+	return e.Border.enabled
 }
 
 // Creates and enables a border for the element. Title will be shown in the top left, and hint will be shown in the
 // bottom right.
 // TODO: centered titles? setting borderstyle at the same time?
 func (e *ElementPrototype) SetupBorder(title, hint string) {
-	e.border.title = title
-	e.border.hint = hint
+	e.Border.title = title
+	e.Border.hint = hint
 	e.EnableBorder()
 }
 
-// Sets the border style flag. Options are:
-// - BORDER_STYLE_DEFAULT: uses the package-wide default at ui.DefaultBorderStyle
-// - BORDER_STYLE_INHERIT: uses the borderstyle of its parent element
-// - BORDER_STYLE_CUSTOM: uses the borderstyle provided in the 2nd argument
-func (e *ElementPrototype) SetBorderStyle(styleFlag borderStyleFlag, borderStyle ...BorderStyle) {
-	if styleFlag == BORDER_STYLE_CUSTOM {
-		if borderStyle == nil {
-			log.Error("Custom border style application failed: no borderstyle provided.")
-			return
-		}
-
-		e.border.custom_style = &borderStyle[0]
-	} else {
-		e.border.custom_style = nil
-	}
-
-	e.border.styleFlag = styleFlag
-}
-
-// Sets the border colours. Colours set this way will override the colours in the border's set style. 
-// Use gfx.COL_DEFAULT to default to indicate you want to use one of both of the element's default colours.
-func (e *ElementPrototype) SetBorderColours(col col.Pair) {
-	if e.border.colours == col {
-		return
-	}
-
-	e.border.colours = col
-	e.border.dirty = true
-}
-
 func (e *ElementPrototype) getBorderStyle() (style BorderStyle) {
-	switch e.border.styleFlag {
+	switch e.Border.styleFlag {
 	case BORDER_STYLE_INHERIT:
 		if parent := e.GetParent(); parent != nil {
 			style = parent.getBorderStyle()
 		}
 	case BORDER_STYLE_CUSTOM:
-		if e.border.custom_style != nil {
-			style = *e.border.custom_style
+		if e.Border.custom_style != nil {
+			style = *e.Border.custom_style
 		}
 	case BORDER_STYLE_DEFAULT:
 		style = defaultBorderStyle
 	}
 
 	//find some colour to use, prioritizing current border, then the style, then falling back to the ui default
-	colours := e.border.colours
+	colours := e.Border.colours
 	if colours.Fore == col.NONE {
 		if style.Colours.Fore != col.NONE {
 			colours.Fore = style.Colours.Fore
@@ -189,8 +189,8 @@ func (e *ElementPrototype) DrawBorder() {
 	e.DrawBox(rect, BorderDepth, style.lineType, style.Colours)
 
 	//decorate and draw title
-	if e.border.title != "" {
-		decoratedTitle := style.DecorateText(e.border.title)
+	if e.Border.title != "" {
+		decoratedTitle := style.DecorateText(e.Border.title)
 		if len([]rune(decoratedTitle))%2 == 1 {
 			decoratedTitle += string(style.TextDecorationPad)
 		}
@@ -198,8 +198,8 @@ func (e *ElementPrototype) DrawBorder() {
 	}
 
 	//decorate and draw hint
-	if e.border.hint != "" {
-		decoratedHint := style.DecorateText(e.border.hint)
+	if e.Border.hint != "" {
+		decoratedHint := style.DecorateText(e.Border.hint)
 		if len([]rune(decoratedHint))%2 == 1 {
 			decoratedHint = string(style.TextDecorationPad) + decoratedHint
 		}
@@ -208,7 +208,7 @@ func (e *ElementPrototype) DrawBorder() {
 	}
 
 	//draw scrollbar if necessary
-	if e.border.scrollbar && e.border.scrollbarContentHeight > e.size.H {
+	if e.Border.scrollbar && e.Border.scrollbarContentHeight > e.size.H {
 		right := rect.X + rect.W - 1                      // x coord of the right side of the border
 		top := vec.Coord{right, rect.Y + 2}               //top of scrollbar area
 		bottom := vec.Coord{right, rect.Y + e.size.H - 1} //bottom of scrollbar area
@@ -217,14 +217,14 @@ func (e *ElementPrototype) DrawBorder() {
 		e.DrawLine(vec.Line{top, bottom}, BorderDepth+1, gfx.NewGlyphVisuals(gfx.GLYPH_FILL_SPARSE, style.Colours))
 
 		h := e.size.H - 2 //scrollbar area height (not including arrows)
-		barSize := util.Clamp(util.RoundFloatToInt(float64(e.size.H)/float64(e.border.scrollbarContentHeight)*float64(h)), 1, h-1)
+		barSize := util.Clamp(util.RoundFloatToInt(float64(e.size.H)/float64(e.Border.scrollbarContentHeight)*float64(h)), 1, h-1)
 
 		barPos := top                                                                       // default to barposition at top ie. no scrolling
-		if e.border.scrollbarViewportPosition == e.border.scrollbarContentHeight-e.size.H { // scrolling content is at bottom
+		if e.Border.scrollbarViewportPosition == e.Border.scrollbarContentHeight-e.size.H { // scrolling content is at bottom
 			barPos.Y += h - barSize
-		} else if e.border.scrollbarViewportPosition != 0 { //scrolling content is somewhere in the middle. must ensure bar isn't at top or bottom.
+		} else if e.Border.scrollbarViewportPosition != 0 { //scrolling content is somewhere in the middle. must ensure bar isn't at top or bottom.
 			barSize = util.Clamp(barSize, 1, h-2) // ensure bar cannot touch sides, so it shows that we scroll in both directions.
-			barPos.Y += util.Clamp(util.RoundFloatToInt(float64(e.border.scrollbarViewportPosition)/float64(e.border.scrollbarContentHeight)*float64(h-barSize)), 1, h-barSize-1)
+			barPos.Y += util.Clamp(util.RoundFloatToInt(float64(e.Border.scrollbarViewportPosition)/float64(e.Border.scrollbarContentHeight)*float64(h-barSize)), 1, h-barSize-1)
 		}
 
 		for i := range barSize {
@@ -234,6 +234,10 @@ func (e *ElementPrototype) DrawBorder() {
 }
 
 func (e *ElementPrototype) linkBorder() {
+	if style := e.getBorderStyle(); style.DisableLink {
+		return
+	}
+	
 	for cursor := range vec.EachCoordInPerimeter(e.Canvas) {
 		cell := e.GetCell(cursor)
 		switch cell.Mode {

@@ -22,7 +22,7 @@ type List struct {
 func NewList(w, h int, pos vec.Coord, depth int) (l *List) {
 	l = new(List)
 	l.ElementPrototype.Init(w, h, pos, depth)
-	l.border.EnableScrollbar(0, 0)
+	l.Border.EnableScrollbar(0, 0)
 	return
 }
 
@@ -43,7 +43,7 @@ func (l *List) RemoveChild(e Element) {
 	l.calibrate()
 }
 
-//if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
+// if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
 func (l *List) updateScrollPosition() {
 	if l.contentHeight > l.size.H {
 		selected := l.getSelected()
@@ -71,7 +71,7 @@ func (l *List) updateScrollPosition() {
 		l.scrollOffset = 0
 	}
 
-	l.border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
+	l.Border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
 }
 
 // positions all the children elements so they are top to bottom, and the selected item is visible

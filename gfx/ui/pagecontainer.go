@@ -28,7 +28,7 @@ func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc *PageContainer) {
 	pc.tabRow = new(ElementPrototype)
 	pc.tabRow.Init(w, 2, vec.Coord{0, 0}, BorderDepth)
 	pc.tabRow.SetupBorder("", "")
-	pc.tabRow.SetBorderStyle(BORDER_STYLE_INHERIT)
+	pc.tabRow.Border.SetStyle(BORDER_STYLE_INHERIT)
 	pc.AddChild(pc.tabRow)
 
 	pc.pages = make([]*Page, 0)
@@ -114,7 +114,7 @@ func (pc *PageContainer) Render() {
 	tab_bounds := selected_tab.Bounds()
 	cursor := tab_bounds.Coord
 	cursor.Move(0, 2)
-	brush := gfx.NewGlyphVisuals(selected_tab.getBorderStyle().GetGlyph(gfx.LINK_UL), selected_tab.border.colours)
+	brush := gfx.NewGlyphVisuals(selected_tab.getBorderStyle().GetGlyph(gfx.LINK_UL), selected_tab.Border.colours)
 	pc.DrawVisuals(cursor, BorderDepth, brush)
 	brush.Glyph = gfx.GLYPH_NONE
 	for range selected_tab.Size().W {
@@ -160,7 +160,7 @@ func newPage(width, height int, title string) (p *Page) {
 
 	p.tab = NewTextbox(FIT_TEXT, 1, vec.Coord{1, 1}, 5, title, false)
 	p.tab.EnableBorder()
-	p.tab.SetBorderStyle(BORDER_STYLE_INHERIT)
+	p.tab.Border.SetStyle(BORDER_STYLE_INHERIT)
 
 	p.deactivate()
 

@@ -46,15 +46,15 @@ type Element interface {
 type ElementPrototype struct {
 	gfx.Canvas
 	util.TreeNode[Element]
-	Updated bool //indicates this object's state has changed and needs to be re-rendered.
+	Updated bool   //indicates this object's state has changed and needs to be re-rendered.
+	Border  Border //the element's border data. use EnableBorder() to turn on
 
 	position    vec.Coord
 	size        vec.Dims
-	depth       int //depth for the UI system, relative to the element's parent. if no parent, relative to the console
+	depth       int //depth for the UI system, relative to the element's parent.
 	visible     bool
-	forceRedraw bool   //indicates this object needs to clear and render everything from zero
-	label       string // an optional identifier for the element
-	border      Border
+	forceRedraw bool           //indicates this object needs to clear and render everything from zero
+	label       string         // an optional identifier for the element
 	animations  []gfx.Animator //animations on this element. these are updated once per frame.
 }
 
@@ -79,7 +79,7 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 		return
 	}
 
-	if e.border.enabled {
+	if e.Border.enabled {
 		e.Canvas.Resize(size.W+2, size.H+2)
 	} else {
 		e.Canvas.Resize(size.W, size.H)
@@ -99,7 +99,7 @@ func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
 // Returns the bounding box of the element wrt its parent.
 // Use Canvas.Bounds() to get the bounds of the underlying canvas for drawing to
 func (e *ElementPrototype) Bounds() vec.Rect {
-	if e.border.enabled {
+	if e.Border.enabled {
 		return e.Canvas.Bounds().Translated(e.position)
 	}
 	return vec.Rect{e.position, e.size}
@@ -206,20 +206,20 @@ func (e *ElementPrototype) prepareRender() {
 		e.Clear()
 	}
 
-	if e.border.enabled && (e.border.dirty || e.forceRedraw) {
+	if e.Border.enabled && (e.Border.dirty || e.forceRedraw) {
 		e.DrawBorder()
 	}
 }
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
 func (e *ElementPrototype) finalizeRender() {
-	if e.border.enabled && (e.border.dirty || e.forceRedraw) {
+	if e.Border.enabled && (e.Border.dirty || e.forceRedraw) {
 		e.linkBorder()
 	}
 
 	e.Updated = false
 	e.forceRedraw = false
-	e.border.dirty = false
+	e.Border.dirty = false
 }
 
 func (e *ElementPrototype) renderAnimations() {

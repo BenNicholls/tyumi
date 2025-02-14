@@ -17,16 +17,16 @@ type Animator interface {
 
 // Base struct for animations. Embed this to satisfy Animator interface above.
 type Animation struct {
-	OneShot bool //indicates animation should play once and then be deleted
-	Repeat  bool //animation repeats when finished
+	OneShot  bool //indicates animation should play once and then be deleted
+	Repeat   bool //animation repeats when finished
+	Area     vec.Rect
+	Depth    int //depth value of the animation
+	Duration int //duration of animation in ticks
 
-	area     vec.Rect
-	depth    int  //depth value of the animation
-	duration int  //duration of animation in ticks
-	ticks    int  //incremented each update
-	enabled  bool //animation is playing
-	dirty    bool //animation needs to be re-rendered
-	reset    bool //indicates animation should reset and start over.
+	ticks   int  //incremented each update
+	enabled bool //animation is playing
+	dirty   bool //animation needs to be re-rendered
+	reset   bool //indicates animation should reset and start over.
 }
 
 func (a *Animation) Update() {
@@ -40,7 +40,7 @@ func (a *Animation) Update() {
 		a.reset = false
 	} else {
 		if a.Repeat {
-			a.ticks = (a.ticks + 1) % a.duration
+			a.ticks = (a.ticks + 1) % a.Duration
 		} else {
 			a.ticks += 1
 		}
@@ -53,7 +53,7 @@ func (a *Animation) Update() {
 }
 
 func (a Animation) Done() bool {
-	return !a.Repeat && a.ticks >= a.duration
+	return !a.Repeat && a.ticks >= a.Duration
 }
 
 func (a Animation) IsOneShot() bool {
@@ -61,7 +61,7 @@ func (a Animation) IsOneShot() bool {
 }
 
 func (a *Animation) MoveTo(pos vec.Coord) {
-	a.area.MoveTo(pos.X, pos.Y)
+	a.Area.MoveTo(pos.X, pos.Y)
 	a.dirty = true
 }
 
@@ -109,26 +109,27 @@ func (a *Animation) PlayPause() {
 }
 
 func (a Animation) Bounds() vec.Rect {
-	return a.area
+	return a.Area
 }
 
 // Animation that makes an area blink. The entire provided area will be filled with visuals Vis while blinking,
 // otherwise will draw what what is underneath.
 type BlinkAnimation struct {
 	Animation
-	Vis             Visuals //what to draw when the area is blinking
-	originalVisuals Canvas  //base visuals drawn when area not blinking
-	blinking        bool    //whether the area is rendering a blink or not
-	recapture       bool    //whether we need to recapture the original visuals
+	Vis Visuals //what to draw when the area is blinking
+
+	originalVisuals Canvas //base visuals drawn when area not blinking
+	blinking        bool   //whether the area is rendering a blink or not
+	recapture       bool   //whether we need to recapture the original visuals
 }
 
 func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba *BlinkAnimation) {
 	ba = &BlinkAnimation{
 		Animation: Animation{
-			area:     vec.Rect{pos, size},
-			depth:    depth,
+			Area:     vec.Rect{pos, size},
+			Depth:    depth,
 			Repeat:   true,
-			duration: rate,
+			Duration: rate,
 			reset:    true,
 		},
 		Vis:       vis,
@@ -155,17 +156,17 @@ func (ba *BlinkAnimation) Update() {
 func (ba *BlinkAnimation) Render(c *Canvas) {
 	//capture original canvas state
 	if c.dirty || ba.recapture {
-		ba.originalVisuals = c.CopyArea(ba.area)
+		ba.originalVisuals = c.CopyArea(ba.Area)
 		ba.recapture = false
 	}
 
 	if ba.dirty || c.dirty {
 		if ba.blinking {
-			for cursor := range vec.EachCoordInArea(ba.area) {
-				c.DrawVisuals(cursor, ba.depth, ba.Vis)
+			for cursor := range vec.EachCoordInArea(ba.Area) {
+				c.DrawVisuals(cursor, ba.Depth, ba.Vis)
 			}
 		} else {
-			ba.originalVisuals.Draw(c, ba.area.Coord, ba.depth)
+			ba.originalVisuals.Draw(c, ba.Area.Coord, ba.Depth)
 		}
 		ba.dirty = false
 	}
@@ -174,30 +175,31 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 // FlashAnimation makes an area flash once.
 type FlashAnimation struct {
 	Animation
-	flashColours    col.Pair
+	Colours col.Pair
+
 	originalColours []col.Pair
 }
 
-func NewFlashAnimation(area vec.Rect, depth int, flashColours col.Pair, duration_frames int) (fa *FlashAnimation) {
+func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duration_frames int) (fa *FlashAnimation) {
 	fa = &FlashAnimation{
 		Animation: Animation{
-			area:     area,
-			depth:    depth,
-			duration: duration_frames,
+			Area:     area,
+			Depth:    depth,
+			Duration: duration_frames,
 		},
-		flashColours: flashColours,
+		Colours: flash_colours,
 	}
 
 	return
 }
 
 func (fa *FlashAnimation) Update() {
-	fa.Animation.Update()
-	fa.dirty = true
-
 	if fa.reset {
 		fa.originalColours = nil
 	}
+
+	fa.Animation.Update()
+	fa.dirty = true
 }
 
 func (fa *FlashAnimation) Render(c *Canvas) {
@@ -207,17 +209,17 @@ func (fa *FlashAnimation) Render(c *Canvas) {
 
 	if fa.originalColours == nil {
 		//populate original colours to lerp to
-		fa.originalColours = make([]col.Pair, fa.area.Area())
-		for cursor := range vec.EachCoordInArea(fa.area) {
+		fa.originalColours = make([]col.Pair, fa.Area.Area())
+		for cursor := range vec.EachCoordInArea(fa.Area) {
 			cell := c.getCell(cursor)
-			col_index := cursor.Subtract(fa.area.Coord).ToIndex(fa.area.W)
+			col_index := cursor.Subtract(fa.Area.Coord).ToIndex(fa.Area.W)
 			fa.originalColours[col_index] = cell.Colours
 		}
 	}
 
-	for cursor := range vec.EachCoordInArea(fa.area) {
-		col_index := cursor.Subtract(fa.area.Coord).ToIndex(fa.area.W)
-		c.DrawColours(cursor, fa.depth, fa.flashColours.Lerp(fa.originalColours[col_index], fa.ticks, fa.duration-1))
+	for cursor := range vec.EachCoordInArea(fa.Area) {
+		col_index := cursor.Subtract(fa.Area.Coord).ToIndex(fa.Area.W)
+		c.DrawColours(cursor, fa.Depth, fa.Colours.Lerp(fa.originalColours[col_index], fa.ticks, fa.Duration-1))
 	}
 
 	fa.dirty = false

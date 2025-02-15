@@ -1,9 +1,25 @@
 package gfx
 
 import (
-	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/vec"
 )
+
+var EV_ANIMATION_COMPLETE = event.Register("Animation Complete")
+
+type AnimationEvent struct {
+	event.EventPrototype
+
+	Label string // label of the animation that produced the event
+}
+
+func fireAnimationCompleteEvent(label string) {
+	animEvent := AnimationEvent{
+		EventPrototype: *event.New(EV_ANIMATION_COMPLETE),
+		Label:          label,
+	}
+	event.Fire(&animEvent)
+}
 
 // Anything that can do animations on a Canvas
 type Animator interface {
@@ -31,6 +47,7 @@ type Animation struct {
 	Area     vec.Rect
 	Depth    int //depth value of the animation
 	Duration int //duration of animation in ticks
+	Label    string
 
 	ticks   int  //incremented each update
 	enabled bool //animation is playing
@@ -52,6 +69,9 @@ func (a *Animation) Update() {
 	}
 
 	if a.IsDone() {
+		if a.Label != "" {
+			fireAnimationCompleteEvent(a.Label)
+		}
 		a.enabled = false
 		a.reset = true
 	}

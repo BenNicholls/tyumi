@@ -93,7 +93,7 @@ func (sp *StatePrototype) InputEvents() *event.Stream {
 
 // sets the function for handling generic game events. these are collected during the tick(), and then processed
 // at the end of each tick() in the order they were received.
-func (sp *StatePrototype) AddEventHandler(handler event.Handler) {
+func (sp *StatePrototype) SetEventHandler(handler event.Handler) {
 	sp.events.AddHandler(handler)
 }
 

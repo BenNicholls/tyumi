@@ -295,12 +295,12 @@ func (e *ElementPrototype) drawChildren() {
 							e.LinkCell(corners[0])
 							if c.X+c.W > s.X+s.W {
 								e.LinkCell(corners[1])
-							} else if c.Y+c.H > s.Y+s.H {
+							} else if c.Y+c.H >= s.Y+s.H {
 								e.LinkCell(corners[2])
-							} else {								
+							} else {
 								e.LinkCell(corners[3])
 							}
-						case c.X > s.X && c.Y < s.Y:
+						case c.X > s.X && c.Y <= s.Y:
 							e.LinkCell(corners[0])
 							if c.Y+c.H > s.Y+s.H {
 								e.LinkCell(corners[3])
@@ -310,12 +310,12 @@ func (e *ElementPrototype) drawChildren() {
 								e.LinkCell(corners[1])
 							}
 						case c.X > s.X && c.Y > s.Y:
-							if c.X+c.H < s.X+s.W {
+							if c.X+c.W < s.X+s.W {
 								e.LinkCell(corners[2])
 								e.LinkCell(corners[3])
 							} else if c.Y+c.H < s.Y+s.H {
-								e.LinkCell(corners[2])
 								e.LinkCell(corners[1])
+								e.LinkCell(corners[2])
 							} else {
 								e.LinkCell(corners[1])
 								e.LinkCell(corners[3])

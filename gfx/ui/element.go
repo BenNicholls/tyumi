@@ -174,14 +174,14 @@ func (e *ElementPrototype) IsUpdated() bool {
 
 func (e *ElementPrototype) updateAnimations() {
 	for _, a := range e.animations {
-		if a.Playing() {
+		if a.IsPlaying() {
 			a.Update()
 		}
 	}
 
 	// remove finished one-shot animations
-	e.animations = slices.DeleteFunc[[]gfx.Animator](e.animations, func(a gfx.Animator) bool {
-		return a.IsOneShot() && a.Done()
+	e.animations = slices.DeleteFunc(e.animations, func(a gfx.Animator) bool {
+		return a.IsOneShot() && a.IsDone()
 	})
 }
 
@@ -224,7 +224,7 @@ func (e *ElementPrototype) finalizeRender() {
 
 func (e *ElementPrototype) renderAnimations() {
 	for _, animation := range e.animations {
-		if animation.Playing() && vec.Intersects(e.getCanvas(), animation) {
+		if animation.IsPlaying() && vec.Intersects(e.getCanvas(), animation) {
 			animation.Render(&e.Canvas)
 		}
 	}

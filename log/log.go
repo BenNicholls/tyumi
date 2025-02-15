@@ -44,7 +44,7 @@ type Entry struct {
 }
 
 func (m Entry) String() string {
-	return "[" + m.Time.Format(time.Stamp) + "] " + m.Level.String() + ": " + m.Message
+	return "[" + m.Time.Format(time.TimeOnly) + "] " + m.Level.String() + ": " + m.Message
 }
 
 func init() {

@@ -42,12 +42,13 @@ type Animator interface {
 
 // Base struct for animations. Embed this to satisfy Animator interface above.
 type Animation struct {
-	OneShot  bool //indicates animation should play once and then be deleted
-	Repeat   bool //animation repeats when finished
-	Area     vec.Rect
-	Depth    int //depth value of the animation
-	Duration int //duration of animation in ticks
-	Label    string
+	OneShot   bool //indicates animation should play once and then be deleted
+	Repeat    bool //animation repeats when finished
+	Area      vec.Rect
+	Depth     int  //depth value of the animation
+	Duration  int  //duration of animation in ticks
+	Backwards bool // play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
+	Label     string
 
 	ticks   int  //incremented each update
 	enabled bool //animation is playing
@@ -126,6 +127,15 @@ func (a Animation) Bounds() vec.Rect {
 
 func (a Animation) GetDuration() int {
 	return a.Duration
+}
+
+// gets the tick number, respecting the backwards flag. use in cases where you want to support backwards animating
+func (a Animation) getTicks() int {
+	if a.Backwards {
+		return a.Duration - a.ticks - 1
+	}
+
+	return a.ticks
 }
 
 // AnimationChain is a container for multiple animations. Playing the chain will play all of the

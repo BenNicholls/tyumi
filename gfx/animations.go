@@ -65,28 +65,27 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 	}
 }
 
-// FlashAnimation makes an area flash once.
-type FlashAnimation struct {
+type FadeAnimation struct {
 	Animation
 	Colours col.Pair
 
 	originalColours []col.Pair
 }
 
-func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duration_frames int) (fa FlashAnimation) {
-	fa = FlashAnimation{
+func NewFadeAnimation(area vec.Rect, depth int, fade_colours col.Pair, duration_frames int) (fa FadeAnimation) {
+	fa = FadeAnimation{
 		Animation: Animation{
 			Area:     area,
 			Depth:    depth,
 			Duration: duration_frames,
 		},
-		Colours: flash_colours,
+		Colours: fade_colours,
 	}
 
 	return
 }
 
-func (fa *FlashAnimation) Update() {
+func (fa *FadeAnimation) Update() {
 	if fa.reset {
 		fa.originalColours = nil
 	}
@@ -95,7 +94,7 @@ func (fa *FlashAnimation) Update() {
 	fa.dirty = true
 }
 
-func (fa *FlashAnimation) Render(c *Canvas) {
+func (fa *FadeAnimation) Render(c *Canvas) {
 	if !fa.dirty || !fa.enabled {
 		return
 	}
@@ -112,8 +111,20 @@ func (fa *FlashAnimation) Render(c *Canvas) {
 
 	for cursor := range vec.EachCoordInArea(fa.Area) {
 		col_index := cursor.Subtract(fa.Area.Coord).ToIndex(fa.Area.W)
-		c.DrawColours(cursor, fa.Depth, fa.Colours.Lerp(fa.originalColours[col_index], fa.ticks, fa.Duration-1))
+		c.DrawColours(cursor, fa.Depth, fa.originalColours[col_index].Lerp(fa.Colours, fa.getTicks(), fa.Duration-1))
 	}
 
 	fa.dirty = false
+}
+
+// FlashAnimation makes an area flash once.
+type FlashAnimation struct {
+	FadeAnimation
+}
+
+func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duration_frames int) (fa FlashAnimation) {
+	fa.FadeAnimation = NewFadeAnimation(area, depth, flash_colours, duration_frames)
+	fa.Backwards = true
+
+	return
 }

@@ -54,8 +54,8 @@ func (wnd *Window) Render() {
 		}
 	})
 
-	wnd.renderAnimations()
 	wnd.drawChildren()
+	wnd.renderAnimations()
 	wnd.finalizeRender()
 }
 

@@ -11,7 +11,7 @@ import (
 type InputBox struct {
 	Textbox
 
-	cursor *InputCursorAnimation
+	cursor InputCursorAnimation
 }
 
 func NewInputbox(w, h int, pos vec.Coord, depth int) (ib *InputBox) {
@@ -19,7 +19,7 @@ func NewInputbox(w, h int, pos vec.Coord, depth int) (ib *InputBox) {
 	ib.Textbox.Init(w, h, pos, depth, "", false)
 	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 0, 30)
 
-	ib.AddAnimation(ib.cursor)
+	ib.AddAnimation(&ib.cursor)
 
 	return
 }
@@ -64,10 +64,10 @@ type InputCursorAnimation struct {
 	gfx.BlinkAnimation
 }
 
-func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor *InputCursorAnimation) {
+func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor InputCursorAnimation) {
 	vis := gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.Pair{col.WHITE, col.BLACK})
-	cursor = &InputCursorAnimation{
-		BlinkAnimation: *gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, vis, rate),
+	cursor = InputCursorAnimation{
+		BlinkAnimation: gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, vis, rate),
 	}
 	cursor.Start()
 

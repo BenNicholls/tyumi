@@ -16,7 +16,7 @@ type ChoiceBox struct {
 	choices            []string
 	currentChoiceIndex int            //will be -1 if no choices present
 	arrowVisuals       [2]gfx.Visuals //LEFT and RIGHT
-	arrowAnimations    [2]*gfx.FlashAnimation
+	arrowAnimations    [2]gfx.FlashAnimation
 }
 
 func NewChoiceBox(w, h int, pos vec.Coord, depth int, choices ...string) (cb *ChoiceBox) {
@@ -34,8 +34,8 @@ func NewChoiceBox(w, h int, pos vec.Coord, depth int, choices ...string) (cb *Ch
 
 	cb.arrowAnimations[0] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{0, 0}, vec.Dims{1, 1}}, 1, col.Pair{col.RED, gfx.COL_DEFAULT}, 15)
 	cb.arrowAnimations[1] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{cb.Size().W - 1, 0}, vec.Dims{1, 1}}, 1, col.Pair{col.RED, gfx.COL_DEFAULT}, 15)
-	cb.AddAnimation(cb.arrowAnimations[0])
-	cb.AddAnimation(cb.arrowAnimations[1])
+	cb.AddAnimation(&cb.arrowAnimations[0])
+	cb.AddAnimation(&cb.arrowAnimations[1])
 
 	return
 }

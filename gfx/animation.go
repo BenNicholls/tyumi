@@ -123,8 +123,8 @@ type BlinkAnimation struct {
 	recapture       bool   //whether we need to recapture the original visuals
 }
 
-func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba *BlinkAnimation) {
-	ba = &BlinkAnimation{
+func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba BlinkAnimation) {
+	ba = BlinkAnimation{
 		Animation: Animation{
 			Area:     vec.Rect{pos, size},
 			Depth:    depth,
@@ -180,8 +180,8 @@ type FlashAnimation struct {
 	originalColours []col.Pair
 }
 
-func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duration_frames int) (fa *FlashAnimation) {
-	fa = &FlashAnimation{
+func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duration_frames int) (fa FlashAnimation) {
+	fa = FlashAnimation{
 		Animation: Animation{
 			Area:     area,
 			Depth:    depth,

@@ -20,6 +20,8 @@ type Animator interface {
 	IsPlaying() bool
 	IsDone() bool
 	IsOneShot() bool
+
+	GetDuration() int
 }
 
 // Base struct for animations. Embed this to satisfy Animator interface above.
@@ -63,13 +65,13 @@ func (a Animation) IsOneShot() bool {
 	return a.OneShot
 }
 
+func (a Animation) IsPlaying() bool {
+	return a.enabled
+}
+
 func (a *Animation) MoveTo(pos vec.Coord) {
 	a.Area.MoveTo(pos.X, pos.Y)
 	a.dirty = true
-}
-
-func (a Animation) IsPlaying() bool {
-	return a.enabled
 }
 
 // Starts an animation. If the animation is playing or paused, restarts it.
@@ -102,6 +104,47 @@ func (a Animation) Bounds() vec.Rect {
 	return a.Area
 }
 
+func (a Animation) GetDuration() int {
+	return a.Duration
 }
 
+// AnimationChain is a container for multiple animations. Playing the chain will play all of the
+// contained animations one after the other until all sub-animations have completed.
+type AnimationChain struct {
+	Animation
+
+	animations []Animator
+	current    int
+}
+
+// Adds animations to the chain. These animations will be played in the order provided.
+func (ac *AnimationChain) Add(anims ...Animator) {
+	for _, a := range anims {
+		ac.animations = append(ac.animations, a)
+		ac.Duration += a.GetDuration()
+	}
+}
+
+func (ac *AnimationChain) Update() {
+	ac.Animation.Update()
+
+	if ac.IsDone() {
+		return
+	}
+
+	//ensure all animations in the chain are reset when the chain is reset
+	if ac.ticks == 0 {
+		ac.current = 0
+		for _, anim := range ac.animations {
+			anim.Start()
+		}
+	} else if ac.animations[ac.current].IsDone() {
+		ac.current += 1
+	}
+
+	ac.animations[ac.current].Update()
+}
+
+func (ac *AnimationChain) Render(canvas *Canvas) {
+	ac.animations[ac.current].Render(canvas)
 }

@@ -40,6 +40,13 @@ func (s *Stream) Add(e Event) {
 	s.stream <- e
 }
 
+// Flushes all events from the stream instead of processing them.
+func (s *Stream) Flush() {
+	for range len(s.stream) {
+		<-s.stream
+	}
+}
+
 // pops the next event and returns it. if there are no events, this will return nil
 func (s *Stream) Next() Event {
 	if len(s.stream) == 0 {

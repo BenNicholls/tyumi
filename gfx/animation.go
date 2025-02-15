@@ -36,6 +36,7 @@ type Animator interface {
 	IsPlaying() bool
 	IsDone() bool
 	IsOneShot() bool
+	IsBlocking() bool
 
 	GetDuration() int
 }
@@ -49,6 +50,7 @@ type Animation struct {
 	Duration  int  //duration of animation in ticks
 	Backwards bool // play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
 	Label     string
+	Blocking  bool // whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
 
 	ticks   int  //incremented each update
 	enabled bool //animation is playing
@@ -62,6 +64,10 @@ func (a *Animation) Update() {
 		a.dirty = true
 		a.reset = false
 	} else {
+		if a.Repeat && a.Blocking { // make sure we don't get in an infinite blocking loop
+			a.Repeat = false
+		}
+
 		if a.Repeat {
 			a.ticks = (a.ticks + 1) % a.Duration
 		} else {
@@ -88,6 +94,10 @@ func (a Animation) IsOneShot() bool {
 
 func (a Animation) IsPlaying() bool {
 	return a.enabled
+}
+
+func (a Animation) IsBlocking() bool {
+	return a.Blocking
 }
 
 func (a *Animation) MoveTo(pos vec.Coord) {
@@ -129,8 +139,8 @@ func (a Animation) GetDuration() int {
 	return a.Duration
 }
 
-// gets the tick number, respecting the backwards flag. use in cases where you want to support backwards animating
-func (a Animation) getTicks() int {
+// gets the tick number. if the animation is being played backwards, this will count down instead of up!
+func (a Animation) GetTicks() int {
 	if a.Backwards {
 		return a.Duration - a.ticks - 1
 	}

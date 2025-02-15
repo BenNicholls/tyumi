@@ -23,6 +23,7 @@ type State interface {
 	InputEvents() *event.Stream
 	Events() *event.Stream
 	Ready() bool
+	IsBlocked() bool
 }
 
 // An embeddable prototype that satisfies the State interface. Build around this for easier gamestate management.
@@ -120,6 +121,10 @@ func (sp *StatePrototype) SetInputHandler(handler event.Handler) {
 
 func (sp *StatePrototype) Ready() bool {
 	return sp.ready
+}
+
+func (sp *StatePrototype) IsBlocked() bool {
+	return sp.window.IsBlocked()
 }
 
 // SetInitialMainState sets a state to be run by Tyumi at the beginning of execution.

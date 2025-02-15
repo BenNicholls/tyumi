@@ -111,7 +111,7 @@ func (fa *FadeAnimation) Render(c *Canvas) {
 
 	for cursor := range vec.EachCoordInArea(fa.Area) {
 		col_index := cursor.Subtract(fa.Area.Coord).ToIndex(fa.Area.W)
-		c.DrawColours(cursor, fa.Depth, fa.originalColours[col_index].Lerp(fa.Colours, fa.getTicks(), fa.Duration-1))
+		c.DrawColours(cursor, fa.Depth, fa.originalColours[col_index].Lerp(fa.Colours, fa.GetTicks(), fa.Duration-1))
 	}
 
 	fa.dirty = false

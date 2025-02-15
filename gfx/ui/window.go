@@ -11,7 +11,8 @@ import (
 type Window struct {
 	ElementPrototype
 
-	labels map[string]Element
+	labels              map[string]Element
+	blocking_animations int // number of running animations blocking updates
 }
 
 func NewWindow(w, h int, pos vec.Coord, depth int) (wnd *Window) {
@@ -24,9 +25,23 @@ func NewWindow(w, h int, pos vec.Coord, depth int) (wnd *Window) {
 
 // Updates all visible subelements in the window, as well as all visible animations.
 func (wnd *Window) Update() {
+	// see how many animations (if any) are blocking updates
+	wnd.blocking_animations = 0
+	util.WalkTree[Element](wnd, func(element Element) {
+		if element.IsVisible() {
+			for _, a := range element.getAnimations() {
+				if a.IsBlocking() && a.IsPlaying() {
+					wnd.blocking_animations += 1
+				}
+			}
+		}
+	})
+
 	util.WalkSubTrees[Element](wnd, func(element Element) {
 		if element.IsVisible() {
-			element.Update()
+			if !wnd.IsBlocked() {
+				element.Update()
+			}
 			element.updateAnimations()
 		}
 	})
@@ -69,6 +84,10 @@ func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled
 	return
 }
 
+func (wnd *Window) IsBlocked() bool {
+	return wnd.blocking_animations > 0
+}
+
 // returns this window so subelements can find this. how a window would find a parent window remains a topic
 // of active and fruitless discussion. thankfully i haven't thought about nesting windows yet so it doesn't keep
 // me up at night
@@ -107,6 +126,10 @@ func (wnd *Window) onSubNodeRemoved(subNode Element) {
 			wnd.removeLabel(e.GetLabel())
 		}
 	})
+}
+
+func (wnd *Window) onBlockingAnimationAdded() {
+	wnd.blocking_animations += 1
 }
 
 // Labelled elements can be retrieved via their label string from the window they are in. Also the labels can be

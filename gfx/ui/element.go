@@ -41,6 +41,7 @@ type Element interface {
 	getBorderStyle() BorderStyle
 	getDepth() int
 	getPosition() vec.Coord
+	getAnimations() []gfx.Animator
 }
 
 type ElementPrototype struct {
@@ -342,6 +343,17 @@ func (e *ElementPrototype) AddAnimation(a gfx.Animator) {
 	}
 
 	e.animations = append(e.animations, a)
+
+	//if we're added a blocking animation during an update, make sure the window knows to stop updating
+	if a.IsBlocking() && a.IsPlaying() {
+		if wnd := e.getWindow(); wnd != nil {
+			wnd.onBlockingAnimationAdded()
+		}
+	}
+}
+
+func (e *ElementPrototype) getAnimations() []gfx.Animator {
+	return e.animations
 }
 
 func (e *ElementPrototype) IsVisible() bool {

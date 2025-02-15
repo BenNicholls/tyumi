@@ -59,7 +59,7 @@ func (sp *StatePrototype) Init(w, h int) {
 	sp.inputEvents = event.NewStream(100, sp.handleInput)
 
 	//setup automatic listening for input events.
-	sp.inputEvents.Listen(input.EV_KEYBOARD)
+	sp.inputEvents.Listen(input.EV_KEYBOARD, input.EV_MOUSEBUTTON, input.EV_MOUSEMOVE)
 	sp.ready = true
 }
 

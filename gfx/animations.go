@@ -11,9 +11,7 @@ type BlinkAnimation struct {
 	Animation
 	Vis Visuals //what to draw when the area is blinking
 
-	originalVisuals Canvas //base visuals drawn when area not blinking
-	blinking        bool   //whether the area is rendering a blink or not
-	recapture       bool   //whether we need to recapture the original visuals
+	blinking bool //whether the area is rendering a blink or not
 }
 
 func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba BlinkAnimation) {
@@ -25,8 +23,7 @@ func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rat
 			Duration: rate,
 			reset:    true,
 		},
-		Vis:       vis,
-		recapture: true,
+		Vis: vis,
 	}
 
 	return
@@ -34,7 +31,6 @@ func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rat
 
 func (ba *BlinkAnimation) MoveTo(pos vec.Coord) {
 	ba.Animation.MoveTo(pos)
-	ba.recapture = true
 }
 
 func (ba *BlinkAnimation) Update() {
@@ -42,79 +38,62 @@ func (ba *BlinkAnimation) Update() {
 
 	if ba.ticks == 0 {
 		ba.blinking = !ba.blinking
-		ba.dirty = true
+		ba.Updated = true
 	}
 }
 
 func (ba *BlinkAnimation) Render(c *Canvas) {
-	//capture original canvas state
-	if c.dirty || ba.recapture {
-		ba.originalVisuals = c.CopyArea(ba.Area)
-		ba.recapture = false
-	}
-
-	if ba.dirty || c.dirty {
-		if ba.blinking {
-			for cursor := range vec.EachCoordInArea(ba.Area) {
-				c.DrawVisuals(cursor, ba.Depth, ba.Vis)
-			}
-		} else {
-			ba.originalVisuals.Draw(c, ba.Area.Coord, ba.Depth)
+	if ba.blinking {
+		for cursor := range vec.EachCoordInArea(ba.Area) {
+			c.DrawVisuals(cursor, ba.Depth, ba.Vis)
 		}
-		ba.dirty = false
 	}
+	ba.Updated = false
 }
 
+// FadeAnimation makes an area fade to the provided colours (ToColours). If FromColours is non-zero, it will start the
+// fade from there. Otherwise uses whatever colours are on the canvas.
 type FadeAnimation struct {
 	Animation
-	Colours col.Pair
-
-	originalColours []col.Pair
+	ToColours col.Pair
+	FromColours col.Pair
 }
 
-func NewFadeAnimation(area vec.Rect, depth int, fade_colours col.Pair, duration_frames int) (fa FadeAnimation) {
+// Sets up a Fade Animation. Optionally takes a col.Pair for the fade to start from. Omit this to just fade from
+// whatever the canvas colours are, which is generally what you want.
+func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colours col.Pair, start_colours ...col.Pair ) (fa FadeAnimation) {
 	fa = FadeAnimation{
 		Animation: Animation{
-			Area:     area,
-			Depth:    depth,
-			Duration: duration_frames,
+			Area:          area,
+			Depth:         depth,
+			Duration:      duration_frames,
+			AlwaysUpdates: true,
 		},
-		Colours: fade_colours,
+		ToColours: fade_colours,
+	}
+
+	if len(start_colours) > 0 {
+		fa.FromColours = start_colours[0]
 	}
 
 	return
 }
 
-func (fa *FadeAnimation) Update() {
-	if fa.reset {
-		fa.originalColours = nil
-	}
-
-	fa.Animation.Update()
-	fa.dirty = true
-}
-
 func (fa *FadeAnimation) Render(c *Canvas) {
-	if !fa.dirty || !fa.enabled {
-		return
-	}
-
-	if fa.originalColours == nil {
-		//populate original colours to lerp to
-		fa.originalColours = make([]col.Pair, fa.Area.Area())
-		for cursor := range vec.EachCoordInArea(fa.Area) {
-			cell := c.getCell(cursor)
-			col_index := cursor.Subtract(fa.Area.Coord).ToIndex(fa.Area.W)
-			fa.originalColours[col_index] = cell.Colours
+	for cursor := range vec.EachCoordInArea(vec.FindIntersectionRect(c, fa.Area)) {
+		dst_cell := c.getCell(cursor)
+		colours := fa.FromColours
+		if colours.Fore == col.NONE {
+			colours.Fore = dst_cell.Colours.Fore
 		}
+		if colours.Back == col.NONE {
+			colours.Back = dst_cell.Colours.Back
+		}
+
+		c.DrawColours(cursor, fa.Depth, colours.Lerp(fa.ToColours, fa.GetTicks(), fa.Duration-1))
 	}
 
-	for cursor := range vec.EachCoordInArea(fa.Area) {
-		col_index := cursor.Subtract(fa.Area.Coord).ToIndex(fa.Area.W)
-		c.DrawColours(cursor, fa.Depth, fa.originalColours[col_index].Lerp(fa.Colours, fa.GetTicks(), fa.Duration-1))
-	}
-
-	fa.dirty = false
+	fa.Updated = false
 }
 
 // FlashAnimation makes an area flash once.
@@ -123,7 +102,7 @@ type FlashAnimation struct {
 }
 
 func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duration_frames int) (fa FlashAnimation) {
-	fa.FadeAnimation = NewFadeAnimation(area, depth, flash_colours, duration_frames)
+	fa.FadeAnimation = NewFadeAnimation(area, depth, duration_frames, flash_colours)
 	fa.Backwards = true
 
 	return

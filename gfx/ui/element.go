@@ -203,6 +203,14 @@ func (e *ElementPrototype) forceParentRedraw() {
 
 // performs some pre-render operations. done for the whole tree before any rendering is done.
 func (e *ElementPrototype) prepareRender() {
+	//if any animations are rendering this frame, trigger a redraw
+	for _, a := range e.animations {
+		if a.IsPlaying() && a.IsUpdated() {
+			e.forceRedraw = true
+			break
+		}
+	}
+
 	if e.forceRedraw {
 		e.Clear()
 	}

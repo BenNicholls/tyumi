@@ -37,31 +37,33 @@ type Animator interface {
 	IsDone() bool
 	IsOneShot() bool
 	IsBlocking() bool
+	IsUpdated() bool
 
 	GetDuration() int
 }
 
 // Base struct for animations. Embed this to satisfy Animator interface above.
 type Animation struct {
-	OneShot   bool //indicates animation should play once and then be deleted
-	Repeat    bool //animation repeats when finished
-	Area      vec.Rect
-	Depth     int  //depth value of the animation
-	Duration  int  //duration of animation in ticks
-	Backwards bool // play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
-	Label     string
-	Blocking  bool // whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
+	OneShot       bool //indicates animation should play once and then be deleted
+	Repeat        bool //animation repeats when finished
+	Area          vec.Rect
+	Depth         int  //depth value of the animation
+	Duration      int  //duration of animation in ticks
+	Backwards     bool // play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
+	Label         string
+	Blocking      bool // whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
+	AlwaysUpdates bool // if true, indicates this animation updates every frame
+	Updated       bool //indicates to whatever is drawing the animation that it's going to render this frame
 
 	ticks   int  //incremented each update
 	enabled bool //animation is playing
-	dirty   bool //animation needs to be re-rendered
 	reset   bool //indicates animation should reset and start over.
 }
 
 func (a *Animation) Update() {
 	if a.reset {
 		a.ticks = 0
-		a.dirty = true
+		a.Updated = true
 		a.reset = false
 	} else {
 		if a.Repeat && a.Blocking { // make sure we don't get in an infinite blocking loop
@@ -100,9 +102,13 @@ func (a Animation) IsBlocking() bool {
 	return a.Blocking
 }
 
+func (a Animation) IsUpdated() bool {
+	return a.AlwaysUpdates || a.Updated
+}
+
 func (a *Animation) MoveTo(pos vec.Coord) {
 	a.Area.MoveTo(pos.X, pos.Y)
-	a.dirty = true
+	a.Updated = true
 }
 
 // Starts an animation. If the animation is playing or paused, restarts it.
@@ -183,8 +189,10 @@ func (ac *AnimationChain) Update() {
 	}
 
 	ac.animations[ac.current].Update()
+	ac.Updated = ac.animations[ac.current].IsUpdated()
 }
 
 func (ac *AnimationChain) Render(canvas *Canvas) {
 	ac.animations[ac.current].Render(canvas)
+	ac.Updated = false
 }

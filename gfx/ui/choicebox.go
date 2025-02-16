@@ -60,7 +60,7 @@ func (cb *ChoiceBox) Prev() {
 	}
 
 	cb.selectChoice(util.CycleClamp(cb.currentChoiceIndex-1, 0, len(cb.choices)-1))
-	cb.arrowAnimations[0].Play()
+	cb.arrowAnimations[0].Start()
 }
 
 func (cb *ChoiceBox) Next() {
@@ -69,7 +69,7 @@ func (cb *ChoiceBox) Next() {
 	}
 
 	cb.selectChoice(util.CycleClamp(cb.currentChoiceIndex+1, 0, len(cb.choices)-1))
-	cb.arrowAnimations[1].Play()
+	cb.arrowAnimations[1].Start()
 }
 
 func (cb *ChoiceBox) Render() {

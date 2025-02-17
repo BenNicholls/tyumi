@@ -44,7 +44,7 @@ func FireKeyReleaseEvent(key Keycode) {
 
 // Emits key repeated event. The KeyPressType of repeat events is always KEY_PRESSED.
 func FireKeyRepeatEvent(key Keycode) {
-	if suppress_key_repeats {
+	if !AllowKeyRepeats {
 		return
 	}
 

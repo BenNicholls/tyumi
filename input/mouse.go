@@ -25,5 +25,9 @@ func (mme MouseMoveEvent) String() string {
 }
 
 func FireMouseMoveEvent(pos, delta vec.Coord) {
+	if !EnableMouse {
+		return
+	}
+	
 	event.Fire(newMouseMoveEvent(pos, delta))
 }

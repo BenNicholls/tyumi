@@ -178,6 +178,10 @@ func (e *ElementPrototype) updateAnimations() {
 		if a.IsPlaying() {
 			a.Update()
 		}
+
+		if !a.IsPlaying() { //animation just finished
+			e.forceRedraw = true // make sure we reset just in case the animation left some garbage on the canvas
+		}
 	}
 
 	// remove finished one-shot animations

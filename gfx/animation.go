@@ -107,6 +107,10 @@ func (a Animation) IsUpdated() bool {
 }
 
 func (a *Animation) MoveTo(pos vec.Coord) {
+	if a.Area.Coord == pos {
+		return
+	}
+
 	a.Area.MoveTo(pos.X, pos.Y)
 	a.Updated = true
 }
@@ -152,6 +156,11 @@ func (a Animation) GetTicks() int {
 	}
 
 	return a.ticks
+}
+
+// GetProgress returns a value from [0,1] indicating the progress of the animation
+func (a Animation) GetProgress() float64 {
+	return float64(a.ticks) / float64(a.Duration)
 }
 
 // AnimationChain is a container for multiple animations. Playing the chain will play all of the

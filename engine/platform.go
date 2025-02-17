@@ -39,7 +39,7 @@ func SetPlatform(p Platform) (err error) {
 
 	current_platform = p
 	renderer = p.GetRenderer()
-	eventGenerator = p.GetEventGenerator()
+	event_generator = p.GetEventGenerator()
 
 	return
 }
@@ -65,7 +65,7 @@ type Renderer interface {
 // Sets up the renderer. This must be done after initializaing the console and setting the platform, but before
 // running the main game loop.
 func SetupRenderer(glyphPath, fontPath, title string) error {
-	if !console.ready {
+	if !main_console.ready {
 		log.Error("Cannot initialize renderer: console not initialized. Run InitConsole() first.")
 		return errors.New("NO CONSOLE.")
 	}
@@ -75,7 +75,7 @@ func SetupRenderer(glyphPath, fontPath, title string) error {
 		return errors.New("NO PLATFORM.")
 	}
 
-	err := renderer.Setup(&console.Canvas, glyphPath, fontPath, title)
+	err := renderer.Setup(&main_console.Canvas, glyphPath, fontPath, title)
 	if err != nil {
 		return err
 	}

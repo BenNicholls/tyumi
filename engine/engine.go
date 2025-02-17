@@ -10,13 +10,13 @@ import (
 )
 
 var renderer Renderer
-var eventGenerator EventGenerator
-var console Console
-var mainState State
+var event_generator EventGenerator
+var main_console console
+var main_state State
 
-var tick int                     //count of number of ticks since engine was initialized
-var frameTargetDur time.Duration // target duration of each frame, based on user-set framerate
-var frameTime time.Time          // time current frame began
+var tick int                       //count of number of ticks since engine was initialized
+var frame_target_dur time.Duration // target duration of each frame, based on user-set framerate
+var frame_time time.Time           // time current frame began
 
 var running bool
 
@@ -29,7 +29,7 @@ func init() {
 // Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
 func SetFramerate(f int) {
 	f = min(f, 1000)
-	frameTargetDur = time.Duration(1000/float64(f+1)) * time.Millisecond
+	frame_target_dur = time.Duration(1000/float64(f+1)) * time.Millisecond
 }
 
 // Gets the tick number for the current tick (duh)
@@ -52,11 +52,11 @@ func Run() {
 
 	for running = true; running; {
 		beginFrame()
-		eventGenerator() //take inputs from platform, convert to tyumi events as appropriate, and distribute
-		update()         //step forward the gamestate
-		updateUI()       //update changed UI elements
-		render()         //composite frame together, post process, and render to screen
-		events.Process() //processes internal events
+		event_generator() //take inputs from platform, convert to tyumi events as appropriate, and distribute
+		update()          //step forward the gamestate
+		updateUI()        //update changed UI elements
+		render()          //composite frame together, post process, and render to screen
+		events.Process()  //processes internal events
 		endFrame()
 	}
 
@@ -65,44 +65,44 @@ func Run() {
 }
 
 func beginFrame() {
-	frameTime = time.Now()
+	frame_time = time.Now()
 }
 
 // This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.
 func update() {
-	console.events.Process()
+	main_console.events.Process()
 
-	if !mainState.IsBlocked() {
-		mainState.InputEvents().Process()
+	if !main_state.IsBlocked() {
+		main_state.InputEvents().Process()
 	} else {
-		mainState.InputEvents().Flush()
+		main_state.InputEvents().Flush()
 	}
 
-	if !mainState.IsBlocked() {
-		mainState.Update()
+	if !main_state.IsBlocked() {
+		main_state.Update()
 	}
 
-	mainState.Events().Process() //process any gameplay events from this frame.
+	main_state.Events().Process() //process any gameplay events from this frame.
 }
 
 // Updates any UI elements that need updating after the most recent tick in the current active state.
 func updateUI() {
-	mainState.UpdateUI()
-	mainState.Window().Update()
+	main_state.UpdateUI()
+	main_state.Window().Update()
 }
 
 // builds the frame and renders using the current platform's renderer.
 func render() {
-	mainState.Window().Render()
-	mainState.Window().Draw(&console.Canvas, vec.ZERO_COORD, 0)
-	if console.Dirty() {
+	main_state.Window().Render()
+	main_state.Window().Draw(&main_console.Canvas, vec.ZERO_COORD, 0)
+	if main_console.Dirty() {
 		renderer.Render()
 	}
 }
 
 func endFrame() {
 	//framerate limiter, so the cpu doesn't implode
-	time.Sleep(frameTargetDur - time.Since(frameTime))
+	time.Sleep(frame_target_dur - time.Since(frame_time))
 	tick++
 }
 
@@ -111,7 +111,7 @@ func handleEvent(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_QUIT: //quit event, like from clicking the close window button on the window
 		running = false
-		mainState.Shutdown()
+		main_state.Shutdown()
 		event_handled = true
 	}
 
@@ -119,7 +119,7 @@ func handleEvent(e event.Event) (event_handled bool) {
 }
 
 func engineIsInitialized() bool {
-	if !console.ready {
+	if !main_console.ready {
 		log.Error("Cannot run Tyumi: console not initialized. Run InitConsole() first.")
 		return false
 	}
@@ -134,12 +134,12 @@ func engineIsInitialized() bool {
 		return false
 	}
 
-	if eventGenerator == nil {
+	if event_generator == nil {
 		log.Error("Cannot run Tyumi: platform did not provide an event generator.")
 		return false
 	}
 
-	if mainState == nil {
+	if main_state == nil {
 		log.Error("Cannot run Tyumi, no MainState set! Run SetInitialMainState() first.")
 		return false
 	}

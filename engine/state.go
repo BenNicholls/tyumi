@@ -41,16 +41,16 @@ type StatePrototype struct {
 // width and/or height to have the state size itself automatically.
 func (sp *StatePrototype) Init(w, h int) {
 	if w == FIT_CONSOLE || h == FIT_CONSOLE {
-		if !console.ready {
+		if !main_console.ready {
 			log.Error("Cannot fit state window to console: console not initialized.")
 			return
 		}
 
 		if w == FIT_CONSOLE {
-			w = console.Size().W
+			w = main_console.Size().W
 		}
 		if h == FIT_CONSOLE {
-			h = console.Size().H
+			h = main_console.Size().H
 		}
 	}
 
@@ -130,11 +130,11 @@ func (sp *StatePrototype) IsBlocked() bool {
 // SetInitialMainState sets a state to be run by Tyumi at the beginning of execution.
 // This function DOES NOTHING if a state has already been initialized.
 func SetInitialMainState(s State) {
-	if mainState != nil {
+	if main_state != nil {
 		return
 	}
 
-	if !console.ready {
+	if !main_console.ready {
 		log.Error("Cannot set main state: console not initialized. Run InitConsole() first.")
 		return
 	}
@@ -144,5 +144,5 @@ func SetInitialMainState(s State) {
 		return
 	}
 
-	mainState = s
+	main_state = s
 }

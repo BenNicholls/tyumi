@@ -15,6 +15,7 @@ type console struct {
 	gfx.Canvas
 	ready bool
 
+	mouseCursorEnabled bool
 	mouseCursorVisuals gfx.Visuals
 	mouseCursorPos     vec.Coord
 
@@ -24,9 +25,11 @@ type console struct {
 func (c *console) handleEvents(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case input.EV_MOUSEMOVE:
+		if c.mouseCursorEnabled {
 			c.Clear(vec.Rect{c.mouseCursorPos, vec.Dims{1, 1}})
 			c.mouseCursorPos = e.(*input.MouseMoveEvent).Position
 			c.DrawVisuals(c.mouseCursorPos, 100000000, c.mouseCursorVisuals) //TODO: cursor should probably have a proper depth level just for it
+		}
 	}
 
 	return
@@ -40,4 +43,10 @@ func InitConsole(w, h int) {
 	main_console.events.Listen(input.EV_MOUSEMOVE)
 
 	main_console.mouseCursorVisuals = gfx.NewGlyphVisuals(gfx.GLYPH_BORDER_UUDDLLRR, col.Pair{col.WHITE, col.NONE})
+}
+
+// EnableCursor enables drawing of the mouse cursor. Also sets input.EnableMouse = true
+func EnableCursor() {
+	main_console.mouseCursorEnabled = true
+	input.EnableMouse = true
 }

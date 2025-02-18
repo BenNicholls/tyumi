@@ -21,12 +21,12 @@ type PageContainer struct {
 	currentPageIndex int //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
 }
 
-func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc *PageContainer) {
+func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContainer) {
 	pc = new(PageContainer)
-	pc.ElementPrototype.Init(w, h, pos, depth)
+	pc.ElementPrototype.Init(size, pos, depth)
 
 	pc.tabRow = new(ElementPrototype)
-	pc.tabRow.Init(w, 2, vec.Coord{0, 0}, BorderDepth)
+	pc.tabRow.Init(vec.Dims{size.W, 2}, vec.Coord{0, 0}, BorderDepth)
 	pc.tabRow.SetupBorder("", "")
 	pc.tabRow.Border.SetStyle(BORDER_STYLE_INHERIT)
 	pc.AddChild(pc.tabRow)
@@ -40,7 +40,7 @@ func NewPageContainer(w, h int, pos vec.Coord, depth int) (pc *PageContainer) {
 // creates and adds a new page to the pagecontainer, and returns a reference to the new page for the user to populate
 // with other ui stuff
 func (pc *PageContainer) CreatePage(title string) *Page {
-	newpage := newPage(pc.size.W, pc.size.H-3, title)
+	newpage := newPage(pc.size.Shrink(0, 3), title)
 	pc.addPage(newpage)
 
 	return newpage
@@ -150,15 +150,15 @@ type Page struct {
 	active bool //whether this page is selected (currently not used... this feels necessary but I can't think of why just yet)
 }
 
-func newPage(width, height int, title string) (p *Page) {
+func newPage(page_size vec.Dims, title string) (p *Page) {
 	if title == "" {
 		title = " "
 	}
 	p = new(Page)
 	p.title = title
-	p.Init(width, height, vec.Coord{0, 3}, 0)
+	p.Init(page_size, vec.Coord{0, 3}, 0)
 
-	p.tab = NewTextbox(FIT_TEXT, 1, vec.Coord{1, 1}, 5, title, false)
+	p.tab = NewTextbox(vec.Dims{FIT_TEXT, 1}, vec.Coord{1, 1}, 5, title, false)
 	p.tab.EnableBorder()
 	p.tab.Border.SetStyle(BORDER_STYLE_INHERIT)
 

@@ -15,9 +15,9 @@ type Window struct {
 	blocking_animations int // number of running animations blocking updates
 }
 
-func NewWindow(w, h int, pos vec.Coord, depth int) (wnd *Window) {
+func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
 	wnd = new(Window)
-	wnd.Init(w, h, pos, depth)
+	wnd.Init(size, pos, depth)
 	wnd.TreeNode.Init(wnd)
 	wnd.labels = make(map[string]Element)
 	return

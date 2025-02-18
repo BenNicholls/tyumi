@@ -2,7 +2,7 @@ package gfx
 
 import (
 	"github.com/bennicholls/tyumi/gfx/col"
-	"github.com/bennicholls/tyumi/util"
+	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -14,19 +14,25 @@ type Canvas struct {
 	depthmap []int
 	dirty    bool //true if any cells in the Canvas are dirty and need to be drawn out. TODO: replace this with a dirty bitset
 
-	width, height int
-	offset        vec.Coord //coordinate of the top-left corner. generally (0,0)
+	//width, height int
+	size   vec.Dims
+	offset vec.Coord //coordinate of the top-left corner. generally (0,0)
 
 	defaultVisuals Visuals // Visuals drawn when the canvas is cleared.
 }
 
 // Initializes the canvas, setting all cells to a nice black and white default drawing mode.
-func (c *Canvas) Init(w, h int) {
+func (c *Canvas) Init(size vec.Dims) {
+	if size.Area() == 0 {
+		log.Error("Canvas cannot be initialized: size has zero area.")
+		return
+	}
+
 	c.defaultVisuals = Visuals{
 		Mode:    DRAW_GLYPH,
 		Colours: col.Pair{col.WHITE, col.BLACK},
 	}
-	c.Resize(w, h)
+	c.Resize(size)
 }
 
 // Returns true if the canvas has been initialized and is non-zero in size
@@ -55,19 +61,23 @@ func (c *Canvas) SetDefaultVisuals(vis Visuals) {
 }
 
 func (c *Canvas) Size() vec.Dims {
-	return vec.Dims{c.width, c.height}
+	return c.size
 }
 
 // Resizes the canvas. This also clears the canvas!
-func (c *Canvas) Resize(w, h int) {
-	c.width, c.height = util.Abs(w), util.Abs(h)
-	c.cells = make([]Cell, c.Size().Area())
-	c.depthmap = make([]int, c.Size().Area())
+func (c *Canvas) Resize(new_size vec.Dims) {
+	if c.size == new_size {
+		return
+	}
+
+	c.size = new_size
+	c.cells = make([]Cell, c.size.Area())
+	c.depthmap = make([]int, c.size.Area())
 	c.Clear()
 }
 
 func (c Canvas) Bounds() vec.Rect {
-	return vec.Rect{c.offset, c.Size()}
+	return vec.Rect{c.offset, c.size}
 }
 
 func (c *Canvas) InBounds(pos vec.Coord) bool {
@@ -77,7 +87,7 @@ func (c *Canvas) InBounds(pos vec.Coord) bool {
 // SetOrigin sets the origin coord for the canvas. draw operations will be done relative to this point.
 // must be a point in the canvas, so {0 <= x < W, 0 <= y < H}
 func (c *Canvas) SetOrigin(pos vec.Coord) {
-	if !vec.IsInside(pos, vec.Rect{vec.ZERO_COORD, c.Size()}) {
+	if !vec.IsInside(pos, vec.Rect{vec.ZERO_COORD, c.size}) {
 		return
 	}
 
@@ -94,10 +104,10 @@ func (c *Canvas) Clean() {
 
 func (c *Canvas) cellIndex(pos vec.Coord) int {
 	if c.offset == vec.ZERO_COORD {
-		return pos.ToIndex(c.width)
+		return pos.ToIndex(c.size.W)
 	}
 
-	return pos.Subtract(c.offset).ToIndex(c.width)
+	return pos.Subtract(c.offset).ToIndex(c.size.W)
 }
 
 // GetCell returns the cell at pos. Returns an empty cell if pos is out of bounds.
@@ -246,7 +256,7 @@ func (c Canvas) DefaultColours() col.Pair {
 
 // Returns a copy of a region of the canvas. If the area is not in the canvas, copy will be empty.
 func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
-	copy.Init(area.W, area.H)
+	copy.Init(area.Dims)
 	copy.defaultVisuals = c.defaultVisuals
 
 	if !vec.Intersects(c, area) {

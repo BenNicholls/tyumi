@@ -35,8 +35,8 @@ func (c *console) handleEvents(e event.Event) (event_handled bool) {
 	return
 }
 
-func InitConsole(w, h int) {
-	main_console.Init(w, h)
+func InitConsole(console_size vec.Dims) {
+	main_console.Init(console_size)
 	main_console.ready = true
 
 	main_console.events = event.NewStream(50, main_console.handleEvents)

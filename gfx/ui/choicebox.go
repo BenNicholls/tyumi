@@ -19,9 +19,9 @@ type ChoiceBox struct {
 	arrowAnimations    [2]gfx.FlashAnimation
 }
 
-func NewChoiceBox(w, h int, pos vec.Coord, depth int, choices ...string) (cb *ChoiceBox) {
+func NewChoiceBox(size vec.Dims, pos vec.Coord, depth int, choices ...string) (cb *ChoiceBox) {
 	cb = new(ChoiceBox)
-	cb.Textbox.Init(w, h, pos, depth, "No Choice", true)
+	cb.Textbox.Init(size, pos, depth, "No Choice", true)
 	cb.currentChoiceIndex = -1
 
 	cb.choices = choices

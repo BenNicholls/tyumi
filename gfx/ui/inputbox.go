@@ -14,9 +14,9 @@ type InputBox struct {
 	cursor InputCursorAnimation
 }
 
-func NewInputbox(w, h int, pos vec.Coord, depth int) (ib *InputBox) {
+func NewInputbox(size vec.Dims, pos vec.Coord, depth int) (ib *InputBox) {
 	ib = new(InputBox)
-	ib.Textbox.Init(w, h, pos, depth, "", false)
+	ib.Textbox.Init(size, pos, depth, "", false)
 	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 0, 30)
 
 	ib.AddAnimation(&ib.cursor)

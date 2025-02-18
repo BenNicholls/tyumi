@@ -123,3 +123,7 @@ func (d Dims) String() string {
 func (d Dims) Grow(dw, dh int) Dims {
 	return Dims{d.W + dw, d.H + dh}
 }
+
+func (d Dims) Shrink(dw, dh int) Dims {
+	return Dims{d.W - dw, d.H - dh}
+}

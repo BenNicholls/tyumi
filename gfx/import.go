@@ -7,7 +7,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// imports image data from an XP file at the provided path and draw it to depth 0
+// imports image data from an XP file at the provided, drawing it at depth zero on the returned canvas
 func ImportXPData(path string) (c Canvas) {
 	imageData, err := reximage.Import(path)
 	if err != nil {
@@ -15,7 +15,7 @@ func ImportXPData(path string) (c Canvas) {
 		return
 	}
 
-	c.Init(imageData.Width, imageData.Height)
+	c.Init(vec.Dims{imageData.Width, imageData.Height})
 	for cursor := range vec.EachCoordInArea(c) {
 		cell_data, err := imageData.GetCell(cursor.X, cursor.Y)
 		if err != nil {

@@ -39,22 +39,22 @@ type StatePrototype struct {
 
 // Init prepares the gamestate. If the console has been initialized, you can use FIT_CONSOLE as the
 // width and/or height to have the state size itself automatically.
-func (sp *StatePrototype) Init(w, h int) {
-	if w == FIT_CONSOLE || h == FIT_CONSOLE {
+func (sp *StatePrototype) Init(size vec.Dims) {
+	if size.W == FIT_CONSOLE || size.H == FIT_CONSOLE {
 		if !main_console.ready {
 			log.Error("Cannot fit state window to console: console not initialized.")
 			return
 		}
 
-		if w == FIT_CONSOLE {
-			w = main_console.Size().W
+		if size.W == FIT_CONSOLE {
+			size.W = main_console.Size().W
 		}
-		if h == FIT_CONSOLE {
-			h = main_console.Size().H
+		if size.H == FIT_CONSOLE {
+			size.H = main_console.Size().H
 		}
 	}
 
-	sp.window = ui.NewWindow(w, h, vec.ZERO_COORD, 0)
+	sp.window = ui.NewWindow(size, vec.ZERO_COORD, 0)
 
 	sp.events = event.NewStream(100, nil)
 	sp.inputEvents = event.NewStream(100, sp.handleInput)

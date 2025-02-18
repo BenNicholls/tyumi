@@ -59,11 +59,11 @@ type ElementPrototype struct {
 	animations  []gfx.Animator //animations on this element. these are updated once per frame.
 }
 
-func (e *ElementPrototype) Init(w, h int, pos vec.Coord, depth int) {
-	e.Canvas.Init(w, h)
+func (e *ElementPrototype) Init(size vec.Dims, pos vec.Coord, depth int) {
+	e.Canvas.Init(size)
 	e.SetDefaultVisuals(defaultCanvasVisuals)
 	e.position = pos
-	e.size = vec.Dims{w, h}
+	e.size = size
 	e.depth = depth
 	e.visible = true
 	e.Updated = true
@@ -81,9 +81,9 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 	}
 
 	if e.Border.enabled {
-		e.Canvas.Resize(size.W+2, size.H+2)
+		e.Canvas.Resize(size.Grow(2, 2))
 	} else {
-		e.Canvas.Resize(size.W, size.H)
+		e.Canvas.Resize(size)
 	}
 
 	e.size = size

@@ -111,11 +111,11 @@ func (e *ElementPrototype) setBorder(bordered bool) {
 	}
 
 	if bordered {
-		e.Canvas.Resize(e.size.W+2, e.size.H+2)
+		e.Canvas.Resize(e.size.Grow(2, 2))
 		e.SetOrigin(vec.Coord{1, 1})
 		e.Border.dirty = true
 	} else {
-		e.Canvas.Resize(e.size.W, e.size.H)
+		e.Canvas.Resize(e.size)
 		e.SetOrigin(vec.ZERO_COORD)
 	}
 
@@ -237,7 +237,7 @@ func (e *ElementPrototype) linkBorder() {
 	if style := e.getBorderStyle(); style.DisableLink {
 		return
 	}
-	
+
 	for cursor := range vec.EachCoordInPerimeter(e.Canvas) {
 		cell := e.GetCell(cursor)
 		switch cell.Mode {

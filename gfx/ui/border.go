@@ -181,7 +181,7 @@ func (e *ElementPrototype) getBorderStyle() (style BorderStyle) {
 	return
 }
 
-func (e *ElementPrototype) DrawBorder() {
+func (e *ElementPrototype) drawBorder() {
 	rect := e.Canvas.Bounds()
 	style := e.getBorderStyle()
 

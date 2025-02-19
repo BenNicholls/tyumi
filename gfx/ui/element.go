@@ -199,8 +199,7 @@ func (e *ElementPrototype) isRedrawing() bool {
 }
 
 func (e *ElementPrototype) forceParentRedraw() {
-	parent := e.GetParent()
-	if parent != nil {
+	if parent := e.GetParent(); parent != nil {
 		parent.ForceRedraw()
 	}
 }
@@ -220,7 +219,7 @@ func (e *ElementPrototype) prepareRender() {
 	}
 
 	if e.Border.enabled && (e.Border.dirty || e.forceRedraw) {
-		e.DrawBorder()
+		e.drawBorder()
 	}
 }
 
@@ -368,13 +367,18 @@ func (e *ElementPrototype) getAnimations() []gfx.Animator {
 	return e.animations
 }
 
+// IsVisible returns true if the element's visibility is true AND at least part of it is within the bounds of its
+// parent.
+// NOTE: this does NOT check if the parent is visible, so for a visible element whose parent is hidden this will still
+// return true. Perhaps this behaviour should be changed... that would require a recursive check up the tree right to
+// the window though, which could be expensive... hmm.
 func (e *ElementPrototype) IsVisible() bool {
 	if !e.visible {
 		return false
 	}
 
 	if parent := e.GetParent(); parent != nil {
-		if !vec.Intersects(e.Bounds(), parent.getCanvas()) {
+		if !vec.Intersects(e, parent.getCanvas()) {
 			return false
 		}
 	}
@@ -382,13 +386,24 @@ func (e *ElementPrototype) IsVisible() bool {
 	return true
 }
 
+// Show makes the element visible.
+func (e *ElementPrototype) Show() {
+	e.setVisible(true)
+}
+
+// Hide hides the element, preventing it and its children (if any) from receiving input, being updated/rendered.
+func (e *ElementPrototype) Hide() {
+	e.setVisible(false)
+}
+
+// ToggleVisible toggles element visibility.
 func (e *ElementPrototype) ToggleVisible() {
-	e.SetVisible(!e.visible)
+	e.setVisible(!e.visible)
 }
 
 // Sets the visibility of the element. If we're making it visible, we trigger a render of the element.
 // We also trigger a redraw of the parent element, in either case.
-func (e *ElementPrototype) SetVisible(v bool) {
+func (e *ElementPrototype) setVisible(v bool) {
 	if e.visible == v {
 		return
 	}
@@ -401,6 +416,8 @@ func (e *ElementPrototype) SetVisible(v bool) {
 	e.forceParentRedraw()
 }
 
+// SetLabel labels the element. References to labelled elements are retrievable from their parent window using
+// GetLabelled().
 func (e *ElementPrototype) SetLabel(label string) {
 	if e.label != "" {
 		//changing labels. if we're in a window, remove the old label from the map

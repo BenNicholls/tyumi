@@ -28,23 +28,20 @@ func (wnd *Window) Update() {
 	// see how many animations (if any) are blocking updates
 	wnd.blocking_animations = 0
 	util.WalkTree[Element](wnd, func(element Element) {
-		if element.IsVisible() {
-			for _, a := range element.getAnimations() {
-				if a.IsBlocking() && a.IsPlaying() {
-					wnd.blocking_animations += 1
-				}
+		for _, a := range element.getAnimations() {
+			if a.IsBlocking() && a.IsPlaying() {
+				wnd.blocking_animations += 1
 			}
 		}
-	})
+	}, if_visible)
 
+	// update all visible subelements (unless window is blocked) and their animations
 	util.WalkSubTrees[Element](wnd, func(element Element) {
-		if element.IsVisible() {
-			if !wnd.IsBlocked() {
-				element.Update()
-			}
-			element.updateAnimations()
+		if !wnd.IsBlocked() {
+			element.Update()
 		}
-	})
+		element.updateAnimations()
+	}, if_visible)
 
 	wnd.updateAnimations()
 }
@@ -52,22 +49,18 @@ func (wnd *Window) Update() {
 func (wnd *Window) Render() {
 	//prepare_render
 	util.WalkTree[Element](wnd, func(element Element) {
-		if element.IsVisible() {
-			element.prepareRender()
-		}
-	})
+		element.prepareRender()
+	}, if_visible)
 
-	//render all subnodes
+	//render all visible subnodes
 	util.WalkSubTrees[Element](wnd, func(element Element) {
-		if element.IsVisible() {
-			element.drawChildren()
-			if element.IsUpdated() || element.isRedrawing() {
-				element.Render()
-			}
-			element.renderAnimations()
-			element.finalizeRender() // does this need to go in a seperate walk??
+		element.drawChildren()
+		if element.IsUpdated() || element.isRedrawing() {
+			element.Render()
 		}
-	})
+		element.renderAnimations()
+		element.finalizeRender() // does this need to go in a seperate walk??
+	}, if_visible)
 
 	wnd.drawChildren()
 	wnd.renderAnimations()
@@ -76,10 +69,10 @@ func (wnd *Window) Render() {
 
 func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
 	util.WalkSubTrees[Element](wnd, func(element Element) {
-		if !event_handled && element.IsVisible() {
+		if !event_handled {
 			event_handled = element.HandleKeypress(key_event)
 		}
-	})
+	}, if_visible)
 
 	return
 }
@@ -138,4 +131,10 @@ type Labelled interface {
 	SetLabel(string)
 	GetLabel() string
 	IsLabelled() bool
+}
+
+// predicate for window's ui-tree-walking functions. elements that are not visible do not need to be updated
+// or rendered, and neither do their children, so we use this to break early
+func if_visible(e Element) bool {
+	return e.IsVisible()
 }

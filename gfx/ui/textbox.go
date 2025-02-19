@@ -53,7 +53,7 @@ func (tb *Textbox) ChangeText(txt string) {
 	}
 
 	tb.text = txt
-	tb.lines = util.WrapText(txt, tb.Size().W*2, tb.Size().H)
+	tb.lines = util.WrapText(txt, tb.size.W*2, tb.size.H)
 	tb.Updated = true
 }
 

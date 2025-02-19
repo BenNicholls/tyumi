@@ -1,7 +1,9 @@
 // utility functions for handling strings, text, runes, etc.
 package util
 
-import "strings"
+import (
+	"strings"
+)
 
 // WrapText wraps the provided string at WIDTH characters. optionally takes another int, used to determine the maximum
 // number of lines. returns a slice of strings, each element a wrapped line. for words longer than width it just brutally
@@ -19,6 +21,8 @@ func WrapText(str string, width int, maxlines ...int) (lines []string) {
 
 	for _, broken := range strings.Split(str, "/n") {
 		for _, s := range strings.Split(broken, " ") {
+			s = strings.TrimSpace(s) //get rid of nasty tabs and other weird whitespace.
+
 			//super long word make-it-not-break hack.
 			if len(s) > width {
 				s = s[:width]
@@ -35,6 +39,7 @@ func WrapText(str string, width int, maxlines ...int) (lines []string) {
 					break
 				}
 			}
+
 			currentLine += s
 			if len(currentLine) != width {
 				currentLine += " "

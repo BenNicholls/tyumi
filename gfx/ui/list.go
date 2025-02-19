@@ -17,6 +17,7 @@ type List struct {
 
 	contentHeight int //total height of all list contents. used for viewport and scrollbar purposes
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
+	padding       int //amount of padding added between list items
 }
 
 func NewList(size vec.Dims, pos vec.Coord, depth int) (l *List) {
@@ -82,8 +83,10 @@ func (l *List) calibrate() {
 		if child.IsBordered() {
 			child.Move(0, 1)
 		}
-		l.contentHeight += child.Bounds().H
+		l.contentHeight += child.Bounds().H + l.padding
 	}
+
+	l.contentHeight -= l.padding // remove the padding below the last item
 
 	l.updateScrollPosition()
 }
@@ -91,6 +94,17 @@ func (l *List) calibrate() {
 // Toggles highlighting of currently selected item.
 func (l *List) ToggleHighlight() {
 	l.highlight = !l.highlight
+	l.Updated = true
+}
+
+// Sets the amount of padding between list items.
+func (l *List) SetPadding(padding int) {
+	if l.padding == padding {
+		return
+	}
+
+	l.padding = padding
+	l.calibrate()
 }
 
 func (l *List) Select(selection int) {

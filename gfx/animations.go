@@ -55,13 +55,13 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 // fade from there. Otherwise uses whatever colours are on the canvas.
 type FadeAnimation struct {
 	Animation
-	ToColours col.Pair
+	ToColours   col.Pair
 	FromColours col.Pair
 }
 
 // Sets up a Fade Animation. Optionally takes a col.Pair for the fade to start from. Omit this to just fade from
 // whatever the canvas colours are, which is generally what you want.
-func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colours col.Pair, start_colours ...col.Pair ) (fa FadeAnimation) {
+func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colours col.Pair, start_colours ...col.Pair) (fa FadeAnimation) {
 	fa = FadeAnimation{
 		Animation: Animation{
 			Area:          area,
@@ -82,6 +82,10 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colour
 func (fa *FadeAnimation) Render(c *Canvas) {
 	for cursor := range vec.EachCoordInArea(vec.FindIntersectionRect(c, fa.Area)) {
 		dst_cell := c.getCell(cursor)
+		if dst_cell.Mode == DRAW_NONE {
+			continue
+		}
+
 		colours := fa.FromColours
 		if colours.Fore == col.NONE {
 			colours.Fore = dst_cell.Colours.Fore
@@ -106,4 +110,45 @@ func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duratio
 	fa.Backwards = true
 
 	return
+}
+
+// PulseAnimation makes an area pulse, fading to a set of colours and then fading back
+type PulseAnimation struct {
+	Animation
+
+	fade FadeAnimation
+}
+
+// Creates a pulse animation. duration_frames is the duration of the entire cycle: start -> fade to pulse colour -> fade back
+func NewPulseAnimation(area vec.Rect, depth int, duration_frames int, pulse_colours col.Pair) (pa PulseAnimation) {
+	pa.Animation = Animation{
+		Area:          area,
+		Depth:         depth,
+		Duration:      duration_frames,
+		AlwaysUpdates: true,
+	}
+
+	pa.fade = NewFadeAnimation(area, depth, duration_frames/2, pulse_colours)
+	pa.fade.Start()
+	return
+}
+
+func (pa *PulseAnimation) Update() {
+	if pa.reset {
+		pa.fade.Backwards = false
+		pa.fade.Start()
+	}
+	pa.Animation.Update()
+
+	if pa.fade.IsDone() {
+		pa.fade.Backwards = !pa.fade.Backwards
+		pa.fade.Start()
+	}
+	pa.fade.Update()
+}
+
+func (pa *PulseAnimation) Render(canvas *Canvas) {
+	pa.fade.Render(canvas)
+
+	pa.Updated = false // don't actually think this is necessary... more of a guard for if the user does something weird.
 }

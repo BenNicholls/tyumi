@@ -121,8 +121,15 @@ func GenerateGradient(num int, c1, c2 uint32) (p Palette) {
 }
 
 // Lineraly interpolates the colour between colour1 and colour2 over (steps) number of steps, returning the (val)th value.
-// NOTE: this completely disregards tranparent colours.
+// NOTE: this completely disregards tranparent colours, except for NONE. If lerping to NONE, it just doesn't do it and
+// returns the other colour.
 func Lerp(colour1, colour2 uint32, val, steps int) uint32 {
+	if colour1 == NONE {
+		return colour2
+	} else if colour2 == NONE {
+		return colour1
+	}
+
 	r1, g1, b1 := RGB(colour1)
 	r2, g2, b2 := RGB(colour2)
 	return MakeOpaque(util.Lerp(int(r1), int(r2), val, steps), util.Lerp(int(g1), int(g2), val, steps), util.Lerp(int(b1), int(b2), val, steps))

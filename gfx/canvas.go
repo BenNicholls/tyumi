@@ -81,13 +81,13 @@ func (c Canvas) Bounds() vec.Rect {
 }
 
 func (c *Canvas) InBounds(pos vec.Coord) bool {
-	return vec.IsInside(pos, c)
+	return pos.IsInside(c)
 }
 
 // SetOrigin sets the origin coord for the canvas. draw operations will be done relative to this point.
 // must be a point in the canvas, so {0 <= x < W, 0 <= y < H}
 func (c *Canvas) SetOrigin(pos vec.Coord) {
-	if !vec.IsInside(pos, vec.Rect{vec.ZERO_COORD, c.size}) {
+	if !pos.IsInside(c.size) {
 		return
 	}
 

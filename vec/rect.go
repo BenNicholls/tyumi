@@ -65,7 +65,7 @@ func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 
 		corners := r.Corners()
 
-		if r.W == 1 || r.H == 1 { // 1D box, aka a line. 
+		if r.W == 1 || r.H == 1 { // 1D box, aka a line.
 			line := Line{corners[0], corners[2]}
 			for coord := range line.EachCoord() {
 				if !yield(coord) {
@@ -73,10 +73,10 @@ func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 				}
 			}
 			return
-		}	
+		}
 
 		var sides [4]Line
-		sides[0] = Line{r.Coord, corners[1].Step(DIR_LEFT)}  // top
+		sides[0] = Line{r.Coord, corners[1].Step(DIR_LEFT)}     // top
 		sides[1] = Line{corners[1], corners[2].Step(DIR_UP)}    // right
 		sides[2] = Line{corners[2], corners[3].Step(DIR_RIGHT)} // bottom
 		sides[3] = Line{corners[3], r.Coord.Step(DIR_DOWN)}
@@ -88,12 +88,6 @@ func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 			}
 		}
 	}
-}
-
-// IsInside checks if the position is within the bounds of object b.
-func IsInside(pos Coord, b Bounded) bool {
-	r := b.Bounds()
-	return pos.X >= r.X && pos.X < r.X+r.W && pos.Y >= r.Y && pos.Y < r.Y+r.H
 }
 
 // FindIntersectionRect calculates the intersection of two rectangularly-bound objects. if no intersection

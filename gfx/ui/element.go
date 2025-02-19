@@ -107,7 +107,7 @@ func (e *ElementPrototype) Bounds() vec.Rect {
 }
 
 func (e *ElementPrototype) DrawableArea() vec.Rect {
-	return vec.Rect{vec.ZERO_COORD, e.size}
+	return e.size.Bounds()
 }
 
 func (e *ElementPrototype) MoveTo(pos vec.Coord) {

@@ -49,6 +49,12 @@ func (c Coord) ToIndex(stride int) int {
 	return c.Y*stride + c.X
 }
 
+// IsInside checks if the coord is within the bounds of object b.
+func (c Coord) IsInside(b Bounded) bool {
+	r := b.Bounds()
+	return !(c.X < r.X || c.X >= r.X+r.W || c.Y < r.Y || c.Y >= r.Y+r.H)
+}
+
 func (c Coord) String() string {
 	return fmt.Sprintf("(X: %d, Y: %d)", c.X, c.Y)
 }
@@ -107,7 +113,7 @@ func (d Direction) RotateCCW() Direction {
 	return DIR_NONE
 }
 
-// TODO this should be somewhere else...
+// Dims represent a set of dimensions in 2D.
 type Dims struct {
 	W, H int
 }
@@ -126,4 +132,9 @@ func (d Dims) Grow(dw, dh int) Dims {
 
 func (d Dims) Shrink(dw, dh int) Dims {
 	return Dims{d.W - dw, d.H - dh}
+}
+
+// Returns a rect with dimensions d, positioned at (0, 0)
+func (d Dims) Bounds() Rect {
+	return Rect{ZERO_COORD, d}
 }

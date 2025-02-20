@@ -46,7 +46,7 @@ func WrapText(str string, width int, maxlines ...int) (lines []string) {
 			}
 		}
 
-		currentLine = strings.TrimSpace(currentLine)
+		currentLine = strings.TrimSuffix(currentLine, " ")
 		lines = append(lines, currentLine)
 		currentLine = ""
 

@@ -29,7 +29,7 @@ func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) 
 	if input_length > 0 {
 		ib.inputLengthMax = input_length
 	} else {
-		ib.inputLengthMax = size.W*2
+		ib.inputLengthMax = size.W * 2
 	}
 	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 0, 30)
 	ib.AddAnimation(&ib.cursor)
@@ -70,6 +70,10 @@ func (ib *InputBox) Delete() {
 
 	ib.ChangeText(ib.text[:len(ib.text)-1])
 	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
+}
+
+func (ib InputBox) InputtedText() string {
+	return ib.text
 }
 
 type InputCursorAnimation struct {

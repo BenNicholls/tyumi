@@ -116,6 +116,10 @@ func (l *List) Select(selection int) {
 	l.updateScrollPosition()
 }
 
+func (l List) GetSelectionIndex() int {
+	return l.selected
+}
+
 func (l *List) getSelected() Element {
 	return l.GetChildren()[l.selected]
 }

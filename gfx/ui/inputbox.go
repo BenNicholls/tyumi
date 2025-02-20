@@ -11,24 +11,35 @@ import (
 type InputBox struct {
 	Textbox
 
-	cursor InputCursorAnimation
+	cursor         InputCursorAnimation
+	inputLengthMax int //limit for input length. defaults to the width of the box
 }
 
-func NewInputbox(size vec.Dims, pos vec.Coord, depth int) (ib *InputBox) {
+func NewInputbox(size vec.Dims, pos vec.Coord, depth, input_length int) (ib *InputBox) {
 	ib = new(InputBox)
-	ib.Textbox.Init(size, pos, depth, "", false)
-	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 0, 30)
-
-	ib.AddAnimation(&ib.cursor)
+	ib.Init(size, pos, depth, input_length)
 
 	return
+}
+
+// Initializes the inputbox. input_length limits the number of characters that can be written. if <= 0,
+// input will instead be limited to the width of the inputbox
+func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) {
+	ib.Textbox.Init(size, pos, depth, "", false)
+	if input_length > 0 {
+		ib.inputLengthMax = input_length
+	} else {
+		ib.inputLengthMax = size.W*2
+	}
+	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 0, 30)
+	ib.AddAnimation(&ib.cursor)
 }
 
 func (ib *InputBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
 	if event.PressType == input.KEY_RELEASED {
 		return
 	}
-	
+
 	if text := event.Text(); text != "" {
 		ib.Insert(text)
 		event_handled = true
@@ -41,12 +52,13 @@ func (ib *InputBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bo
 }
 
 // Appends the provided string to the contents of the inputbox.
-func (ib *InputBox) Insert(text string) {
-	if w := ib.Size().W; len(ib.text) == w*2 {
+func (ib *InputBox) Insert(input string) {
+	new_text := ib.text + input
+	if len(new_text) > ib.inputLengthMax {
 		return
 	}
 
-	ib.ChangeText(ib.text + text)
+	ib.ChangeText(new_text)
 	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
 }
 
@@ -65,7 +77,7 @@ type InputCursorAnimation struct {
 }
 
 func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor InputCursorAnimation) {
-	vis := gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.Pair{col.WHITE, col.BLACK})
+	vis := gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT})
 	cursor = InputCursorAnimation{
 		BlinkAnimation: gfx.NewBlinkAnimation(pos, vec.Dims{1, 1}, depth, vis, rate),
 	}

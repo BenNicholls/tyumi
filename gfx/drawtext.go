@@ -41,5 +41,10 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, txt string, colours col.Pair
 // respecting depth.
 // TODO: write this function you dweebo.
 func (c *Canvas) DrawFullText(pos vec.Coord, depth int, txt string, colours col.Pair) {
+	text_runes := []rune(txt)
 
+	for i, text_rune := range text_runes {		
+		c.setGlyph(pos.StepN(vec.DIR_RIGHT, i), depth, Glyph(text_rune))
+		c.setColours(pos.StepN(vec.DIR_RIGHT, i), depth, colours)
+	}
 }

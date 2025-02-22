@@ -5,6 +5,7 @@ import (
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/util"
 )
 
 var renderer Renderer
@@ -21,8 +22,8 @@ func init() {
 
 // Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
 func SetFramerate(f int) {
-	f = min(f, 1000)
-	frameTargetDuration = time.Duration(1000/float64(f+1)) * time.Millisecond
+	f = util.Clamp(f, 1, 1000)
+	frameTargetDuration = time.Duration(1000/float64(f)) * time.Millisecond
 }
 
 // Gets the tick number for the current tick (duh)

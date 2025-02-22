@@ -7,41 +7,57 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// A List is a container that renders it's children elements from top to bottom, like you would expect
-// a list to do.
+// A List is a container that renders it's children elements from top to bottom, like you would expect a list to do. If
+// the size of the content is too large a scrollbar is activated, like magic.
 type List struct {
-	ElementPrototype
+	Element
 
+	padding   int  //amount of padding added between list items
 	selected  int  //element that is currently selected. selected item will be ensured to be visible
 	highlight bool //toggle to highlight currently selected list item
 
 	contentHeight int //total height of all list contents. used for viewport and scrollbar purposes
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
-	padding       int //amount of padding added between list items
 }
 
 func NewList(size vec.Dims, pos vec.Coord, depth int) (l *List) {
 	l = new(List)
-	l.ElementPrototype.Init(size, pos, depth)
+	l.Element.Init(size, pos, depth)
 	l.Border.EnableScrollbar(0, 0)
 	return
 }
 
-func (l *List) AddChild(elem Element) {
-	l.ElementPrototype.AddChild(elem)
+func (l *List) AddChild(child element) {
+	l.Element.AddChild(child)
 	l.calibrate()
 	l.Updated = true
 }
 
-func (l *List) AddChildren(elems ...Element) {
-	l.ElementPrototype.AddChildren(elems...)
+func (l *List) AddChildren(children ...element) {
+	l.Element.AddChildren(children...)
 	l.calibrate()
 	l.Updated = true
 }
 
-func (l *List) RemoveChild(e Element) {
-	l.ElementPrototype.RemoveChild(e)
+func (l *List) RemoveChild(child element) {
+	l.Element.RemoveChild(child)
 	l.calibrate()
+}
+
+// positions all the children elements so they are top to bottom, and the selected item is visible
+func (l *List) calibrate() {
+	l.contentHeight = 0
+	for _, child := range l.GetChildren() {
+		child.MoveTo(vec.Coord{0, l.contentHeight - l.scrollOffset})
+		if child.IsBordered() {
+			child.Move(0, 1)
+		}
+		l.contentHeight += child.Bounds().H + l.padding
+	}
+
+	l.contentHeight -= l.padding // remove the padding below the last item
+
+	l.updateScrollPosition()
 }
 
 // if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
@@ -75,22 +91,6 @@ func (l *List) updateScrollPosition() {
 	l.Border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
 }
 
-// positions all the children elements so they are top to bottom, and the selected item is visible
-func (l *List) calibrate() {
-	l.contentHeight = 0
-	for _, child := range l.GetChildren() {
-		child.MoveTo(vec.Coord{0, l.contentHeight - l.scrollOffset})
-		if child.IsBordered() {
-			child.Move(0, 1)
-		}
-		l.contentHeight += child.Bounds().H + l.padding
-	}
-
-	l.contentHeight -= l.padding // remove the padding below the last item
-
-	l.updateScrollPosition()
-}
-
 // Toggles highlighting of currently selected item.
 func (l *List) ToggleHighlight() {
 	l.highlight = !l.highlight
@@ -120,7 +120,7 @@ func (l List) GetSelectionIndex() int {
 	return l.selected
 }
 
-func (l *List) getSelected() Element {
+func (l *List) getSelected() element {
 	return l.GetChildren()[l.selected]
 }
 
@@ -151,7 +151,7 @@ func (l *List) prepareRender() {
 		l.forceRedraw = true
 	}
 
-	l.ElementPrototype.prepareRender()
+	l.Element.prepareRender()
 }
 
 func (l *List) Render() {

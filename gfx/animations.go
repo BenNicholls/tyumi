@@ -55,6 +55,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 // fade from there. Otherwise uses whatever colours are on the canvas.
 type FadeAnimation struct {
 	Animation
+	
 	ToColours   col.Pair
 	FromColours col.Pair
 }

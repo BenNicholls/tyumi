@@ -8,17 +8,17 @@ import (
 
 // GetFileList returns a list of all files in the provided directory. If ext is provided, it only includes files with
 // that extension.
-func GetFileList(dirPath, ext string) (files []string, err error) {
+func GetFileList(directory_path, extension string) (files []string, err error) {
 	files = make([]string, 0)
 
-	dirContents, err := os.ReadDir(dirPath)
+	dirContents, err := os.ReadDir(directory_path)
 	if err != nil {
 		return
 	}
 
 	for _, entry := range dirContents {
 		if !entry.IsDir() {
-			if ext != "" && !strings.HasSuffix(entry.Name(), ext) {
+			if extension != "" && !strings.HasSuffix(entry.Name(), extension) {
 				continue
 			}
 			files = append(files, entry.Name())

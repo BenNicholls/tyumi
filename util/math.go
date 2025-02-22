@@ -10,24 +10,24 @@ import (
 )
 
 // Pow is an integer power function. Doesn't ~~do~~ negative exponents. Totally does 0 though.
-func Pow(val, exp int) int {
+func Pow(value, exponent int) int {
 	v := 1
-	for i := 0; i < exp; i++ {
-		v = v * val
+	for i := 0; i < exponent; i++ {
+		v = v * value
 	}
 	return v
 }
 
 // Abs returns the absolute value of val
-func Abs[T constraints.Signed](val T) T {
-	if val < 0 {
-		return val * (-1)
+func Abs[T constraints.Signed](value T) T {
+	if value < 0 {
+		return value * (-1)
 	}
-	return val
+	return value
 }
 
 // Clamp checks if min <= val <= max. If val < min, returns min. If val > max, returns max. Otherwise returns val.
-func Clamp[T constraints.Ordered](val, min, max T) T {
+func Clamp[T constraints.Ordered](value, min, max T) T {
 	if min == max {
 		return min
 	}
@@ -36,23 +36,24 @@ func Clamp[T constraints.Ordered](val, min, max T) T {
 		min, max = max, min
 	}
 
-	if val <= min {
+	if value <= min {
 		return min
-	} else if val >= max {
+	} else if value >= max {
 		return max
 	}
-	return val
+
+	return value
 }
 
 // CycleClamp is like clamp but instead of clamping at the endpoints, it overflows/underflows back to the other side of
 // the range. This range of the function is INCLUSIVE of min and max, so min <= val <= max.
-func CycleClamp(val, min, max int) int {
+func CycleClamp(value, min, max int) int {
 	if min == max {
 		return min
 	}
 	
-	clamped_val, _ := CycleClampWithOverflow(val, min, max)
-	return clamped_val
+	clampedValue, _ := CycleClampWithOverflow(value, min, max)
+	return clampedValue
 }
 
 // CycleClampWithOverflow is like CycleClamp but also returns the number of overflow cycles. negative for underflow,

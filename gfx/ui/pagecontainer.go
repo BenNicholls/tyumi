@@ -13,9 +13,9 @@ import (
 // NOTE: Pages are stored in the container but only the selected page is ever a proper child of the container node.
 // this means that unselected pages will never be rendered, updated, or receive input.
 type PageContainer struct {
-	ElementPrototype
+	Element
 
-	tabRow *ElementPrototype //TODO: this could be some kind of container type that does horizontal layouting? is that a word?
+	tabRow *Element //TODO: this could be some kind of container type that does horizontal layouting? is that a word?
 
 	pages            []*Page
 	currentPageIndex int //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
@@ -23,9 +23,9 @@ type PageContainer struct {
 
 func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContainer) {
 	pc = new(PageContainer)
-	pc.ElementPrototype.Init(size, pos, depth)
+	pc.Element.Init(size, pos, depth)
 
-	pc.tabRow = new(ElementPrototype)
+	pc.tabRow = new(Element)
 	pc.tabRow.Init(vec.Dims{size.W, 2}, vec.Coord{0, 0}, BorderDepth)
 	pc.tabRow.SetupBorder("", "")
 	pc.tabRow.Border.SetStyle(BORDER_STYLE_INHERIT)
@@ -110,19 +110,18 @@ func (pc *PageContainer) getSelectedPage() *Page {
 
 func (pc *PageContainer) Render() {
 	//blank out border below selected page's tab
-	selected_tab := pc.getSelectedPage().tab
-	tab_bounds := selected_tab.Bounds()
-	cursor := tab_bounds.Coord
+	selectedTab := pc.getSelectedPage().tab
+	cursor := selectedTab.Bounds().Coord
 	cursor.Move(0, 2)
-	brush := gfx.NewGlyphVisuals(selected_tab.getBorderStyle().GetGlyph(gfx.LINK_UL), selected_tab.Border.colours)
+	brush := gfx.NewGlyphVisuals(selectedTab.getBorderStyle().GetGlyph(gfx.LINK_UL), selectedTab.Border.colours)
 	pc.DrawVisuals(cursor, BorderDepth, brush)
 	brush.Glyph = gfx.GLYPH_NONE
-	for range selected_tab.Size().W {
+	for range selectedTab.Size().W {
 		cursor.Move(1, 0)
 		pc.DrawVisuals(cursor, BorderDepth, brush)
 	}
 	cursor.Move(1, 0)
-	brush.Glyph = selected_tab.getBorderStyle().GetGlyph(gfx.LINK_UR)
+	brush.Glyph = selectedTab.getBorderStyle().GetGlyph(gfx.LINK_UR)
 	pc.DrawVisuals(cursor, BorderDepth, brush)
 }
 
@@ -143,7 +142,7 @@ func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) (event_handl
 // Page is the content for a tab in a PageContainer. Size is defined and controlled by the PageContainer.
 // Pages are initialized as deactivated, and will be activated when selected by the page container
 type Page struct {
-	ElementPrototype
+	Element
 
 	tab    *Textbox //textbox for the tab in the pagecontainer
 	title  string

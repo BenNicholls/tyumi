@@ -23,11 +23,11 @@ type KeyboardEvent struct {
 	Repeat    bool //will be true if this is the key is being held down
 }
 
-func newKeyboardEvent(key Keycode, presstype KeyPressType, repeat bool) (kbe *KeyboardEvent) {
+func newKeyboardEvent(key Keycode, press_type KeyPressType, repeat bool) (kbe *KeyboardEvent) {
 	kbe = new(KeyboardEvent)
 	kbe.EventPrototype = *event.New(EV_KEYBOARD)
 	kbe.Key = key
-	kbe.PressType = presstype
+	kbe.PressType = press_type
 	kbe.Repeat = repeat
 	return
 }

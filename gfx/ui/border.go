@@ -21,7 +21,7 @@ type Border struct {
 	colours col.Pair
 
 	styleFlag    borderStyleFlag
-	custom_style *BorderStyle
+	customStyle *BorderStyle
 
 	//SCROLLBAR STUFF. for now, only vertical scrollbar for lists and the like.
 	scrollbar                 bool //whether the scrollbar is enabled. scrollbar will be drawn whenever content doesn't fit
@@ -35,39 +35,39 @@ type Border struct {
 // - BORDER_STYLE_DEFAULT: uses the package-wide default at ui.DefaultBorderStyle
 // - BORDER_STYLE_INHERIT: uses the borderstyle of its parent element
 // - BORDER_STYLE_CUSTOM: uses the borderstyle provided in the 2nd argument
-func (b *Border) SetStyle(styleFlag borderStyleFlag, borderStyle ...BorderStyle) {
-	if styleFlag == BORDER_STYLE_CUSTOM {
-		if borderStyle == nil {
+func (b *Border) SetStyle(style_flag borderStyleFlag, style ...BorderStyle) {
+	if style_flag == BORDER_STYLE_CUSTOM {
+		if style == nil {
 			log.Error("Custom border style application failed: no borderstyle provided.")
 			return
 		}
 
-		b.custom_style = &borderStyle[0]
+		b.customStyle = &style[0]
 	} else {
-		b.custom_style = nil
+		b.customStyle = nil
 	}
 
-	b.styleFlag = styleFlag
+	b.styleFlag = style_flag
 }
 
 // Sets the border colours. Colours set this way will override the colours in the border's set style.
 // Use gfx.COL_DEFAULT to default to indicate you want to use one of both of the element's default colours.
-func (b *Border) SetColours(col col.Pair) {
-	if b.colours == col {
+func (b *Border) SetColours(colours col.Pair) {
+	if b.colours == colours {
 		return
 	}
 
-	b.colours = col
+	b.colours = colours
 	b.dirty = true
 }
 
-func (b *Border) EnableScrollbar(content_height, pos int) {
+func (b *Border) EnableScrollbar(content_height, offset int) {
 	if !b.scrollbar {
 		b.dirty = true
 	}
 
 	b.scrollbar = true
-	b.UpdateScrollbar(content_height, pos)
+	b.UpdateScrollbar(content_height, offset)
 }
 
 func (b *Border) DisableScrollbar() {
@@ -81,13 +81,13 @@ func (b *Border) DisableScrollbar() {
 
 // Updates the position/size of the scrollbar.
 // NOTE: this does NOT enable the scrollbar. you have to do that manually during setup.
-func (b *Border) UpdateScrollbar(height, pos int) {
-	if b.scrollbarContentHeight == height && b.scrollbarViewportPosition == pos {
+func (b *Border) UpdateScrollbar(content_height, offset int) {
+	if b.scrollbarContentHeight == content_height && b.scrollbarViewportPosition == offset {
 		return
 	}
 
-	b.scrollbarContentHeight = height
-	b.scrollbarViewportPosition = pos
+	b.scrollbarContentHeight = content_height
+	b.scrollbarViewportPosition = offset
 
 	if b.scrollbar {
 		b.dirty = true
@@ -96,16 +96,16 @@ func (b *Border) UpdateScrollbar(height, pos int) {
 
 // Enable the border. If no border has been setup via SetupBorder(), a default one will be created. Style defaults to
 // ui.DefaultBorderStyle but you can use SetBorderStyle to use something else.
-func (e *ElementPrototype) EnableBorder() {
+func (e *Element) EnableBorder() {
 	e.setBorder(true)
 }
 
 // Disables the border. Doesn't delete any setup border, so you can make the old border reappear by enabling it again.
-func (e *ElementPrototype) DisableBorder() {
+func (e *Element) DisableBorder() {
 	e.setBorder(false)
 }
 
-func (e *ElementPrototype) setBorder(bordered bool) {
+func (e *Element) setBorder(bordered bool) {
 	if e.Border.enabled == bordered {
 		return
 	}
@@ -124,28 +124,28 @@ func (e *ElementPrototype) setBorder(bordered bool) {
 	e.forceParentRedraw()
 }
 
-func (e *ElementPrototype) IsBordered() bool {
+func (e *Element) IsBordered() bool {
 	return e.Border.enabled
 }
 
 // Creates and enables a border for the element. Title will be shown in the top left, and hint will be shown in the
 // bottom right.
 // TODO: centered titles? setting borderstyle at the same time?
-func (e *ElementPrototype) SetupBorder(title, hint string) {
+func (e *Element) SetupBorder(title, hint string) {
 	e.Border.title = title
 	e.Border.hint = hint
 	e.EnableBorder()
 }
 
-func (e *ElementPrototype) getBorderStyle() (style BorderStyle) {
+func (e *Element) getBorderStyle() (style BorderStyle) {
 	switch e.Border.styleFlag {
 	case BORDER_STYLE_INHERIT:
 		if parent := e.GetParent(); parent != nil {
 			style = parent.getBorderStyle()
 		}
 	case BORDER_STYLE_CUSTOM:
-		if e.Border.custom_style != nil {
-			style = *e.Border.custom_style
+		if e.Border.customStyle != nil {
+			style = *e.Border.customStyle
 		}
 	case BORDER_STYLE_DEFAULT:
 		style = defaultBorderStyle
@@ -181,7 +181,7 @@ func (e *ElementPrototype) getBorderStyle() (style BorderStyle) {
 	return
 }
 
-func (e *ElementPrototype) drawBorder() {
+func (e *Element) drawBorder() {
 	rect := e.Canvas.Bounds()
 	style := e.getBorderStyle()
 
@@ -219,7 +219,8 @@ func (e *ElementPrototype) drawBorder() {
 		h := e.size.H - 2 //scrollbar area height (not including arrows)
 		barSize := util.Clamp(util.RoundFloatToInt(float64(e.size.H)/float64(e.Border.scrollbarContentHeight)*float64(h)), 1, h-1)
 
-		barPos := top                                                                       // default to barposition at top ie. no scrolling
+		// default to barposition at top ie. no scrolling
+		barPos := top                                                                       
 		if e.Border.scrollbarViewportPosition == e.Border.scrollbarContentHeight-e.size.H { // scrolling content is at bottom
 			barPos.Y += h - barSize
 		} else if e.Border.scrollbarViewportPosition != 0 { //scrolling content is somewhere in the middle. must ensure bar isn't at top or bottom.
@@ -233,7 +234,7 @@ func (e *ElementPrototype) drawBorder() {
 	}
 }
 
-func (e *ElementPrototype) linkBorder() {
+func (e *Element) linkBorder() {
 	if style := e.getBorderStyle(); style.DisableLink {
 		return
 	}

@@ -10,10 +10,10 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// An element is the base structure of anything handled by the UI system.
-type Element interface {
+// element is the base api of anything handled by the UI system.
+type element interface {
 	vec.Bounded
-	util.TreeType[Element]
+	util.TreeType[element]
 	Labelled
 
 	Update()
@@ -44,22 +44,32 @@ type Element interface {
 	getAnimations() []gfx.Animator
 }
 
-type ElementPrototype struct {
+// Element is the base implementation for any UI Element handled by Tyumi's UI system. More complex UI elements can
+// be created by embedding this and overriding the methods. Of highest importance are the Update() method, which
+// describes how the element evolves with each tick, and the Render() method, which draws the element to the internal
+// canvas when necessary. To trigger a render, set element.Updated = true when changing the element's state.
+//
+// Elements can be organized into a tree -- an element's children will be composited together with the element's
+// own visuals when required. Note that children of an element are clipped by it, portions of the child not inside
+// the element's bounds will not be drawn.
+type Element struct {
 	gfx.Canvas
-	util.TreeNode[Element]
+	util.TreeNode[element]
 	Updated bool   //indicates this object's state has changed and needs to be re-rendered.
 	Border  Border //the element's border data. use EnableBorder() to turn on
 
-	position    vec.Coord
-	size        vec.Dims
-	depth       int //depth for the UI system, relative to the element's parent.
-	visible     bool
+	position    vec.Coord      //position relative to parent
+	size        vec.Dims       //size of the drawable area of the element
+	depth       int            //depth for the UI system, relative to the element's parent.
+	visible     bool           //visibility, controlled via Show() and Hide()
 	forceRedraw bool           //indicates this object needs to clear and render everything from zero
-	label       string         // an optional identifier for the element
-	animations  []gfx.Animator //animations on this element. these are updated once per frame.
+	label       string         //an optional identifier for the element
+	animations  []gfx.Animator //animations on this element. these are updated once per frame while playing
 }
 
-func (e *ElementPrototype) Init(size vec.Dims, pos vec.Coord, depth int) {
+// Init initializes the element, setting its size, as well as its position and depth relative to its parent. This must
+// be done for all elements! Don't forget!
+func (e *Element) Init(size vec.Dims, pos vec.Coord, depth int) {
 	e.Canvas.Init(size)
 	e.SetDefaultVisuals(defaultCanvasVisuals)
 	e.position = pos
@@ -70,12 +80,13 @@ func (e *ElementPrototype) Init(size vec.Dims, pos vec.Coord, depth int) {
 	e.TreeNode.Init(e)
 }
 
-func (e *ElementPrototype) Size() vec.Dims {
+// Size returns the size of the drawable area of the element.
+func (e *Element) Size() vec.Dims {
 	return e.size
 }
 
 // Resizes the element. This clears the internal canvas and forces redraws of everything.
-func (e *ElementPrototype) Resize(size vec.Dims) {
+func (e *Element) Resize(size vec.Dims) {
 	if size == e.size {
 		return
 	}
@@ -92,25 +103,26 @@ func (e *ElementPrototype) Resize(size vec.Dims) {
 	e.forceParentRedraw()
 }
 
-func (e *ElementPrototype) SetDefaultColours(colours col.Pair) {
+// Sets the default colours for draw operations on this element.
+func (e *Element) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
 	e.Updated = true
 }
 
 // Returns the bounding box of the element wrt its parent.
 // Use Canvas.Bounds() to get the bounds of the underlying canvas for drawing to
-func (e *ElementPrototype) Bounds() vec.Rect {
+func (e *Element) Bounds() vec.Rect {
 	if e.Border.enabled {
 		return e.Canvas.Bounds().Translated(e.position)
 	}
 	return vec.Rect{e.position, e.size}
 }
 
-func (e *ElementPrototype) DrawableArea() vec.Rect {
+func (e *Element) DrawableArea() vec.Rect {
 	return e.size.Bounds()
 }
 
-func (e *ElementPrototype) MoveTo(pos vec.Coord) {
+func (e *Element) MoveTo(pos vec.Coord) {
 	if e.position == pos {
 		return
 	}
@@ -120,11 +132,13 @@ func (e *ElementPrototype) MoveTo(pos vec.Coord) {
 }
 
 // THINK: should this take a coord too? or a Vec2i?
-func (e *ElementPrototype) Move(dx, dy int) {
+func (e *Element) Move(dx, dy int) {
 	e.MoveTo(vec.Coord{e.position.X + dx, e.position.Y + dy})
 }
 
-func (e *ElementPrototype) AddChild(child Element) {
+// AddChild add a child element to this one. Child elements are composited together along with their parent to
+// produce the final visuals for the element.
+func (e *Element) AddChild(child element) {
 	e.TreeNode.AddChild(child)
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeAdded(child)
@@ -132,13 +146,13 @@ func (e *ElementPrototype) AddChild(child Element) {
 	e.ForceRedraw()
 }
 
-func (e *ElementPrototype) AddChildren(children ...Element) {
+func (e *Element) AddChildren(children ...element) {
 	for _, child := range children {
 		e.AddChild(child)
 	}
 }
 
-func (e *ElementPrototype) RemoveChild(child Element) {
+func (e *Element) RemoveChild(child element) {
 	e.TreeNode.RemoveChild(child)
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeRemoved(child)
@@ -149,31 +163,33 @@ func (e *ElementPrototype) RemoveChild(child Element) {
 // OVERRIDABLE FUNCTIONS!
 // -----------------
 
-// Update() can be overriden to update the state of the UI Element. Note that the element's animations are updated
-// separately and do not need to be managed here.
-func (e *ElementPrototype) Update() {
+// Update() can be overriden to update the state of the UI Element. Update() is called on each tick. If the element's
+// state is changed and need to be redrawn, you can set its Updated flag to true to trigger a render on the next frame.
+// Note that the element's animations are updated separately and do not need to be managed here.
+func (e *Element) Update() {
 	return
 }
 
 // Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour.
-// Note that this is called *after* any subelements are drawn to the canvas, and *before* any running animations
-// are rendered.
-func (e *ElementPrototype) Render() {
+// Elements are rendered if their Updated flag is true. Note that an element's children are composited seperately and
+// you do not have to handle that here. Render() is called *after* child elements are drawn, and *before* any playing
+// animations are drawn.
+func (e *Element) Render() {
 	return
 }
 
 // Handles keypresses. Override this to implement key input handling.
-func (e *ElementPrototype) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+func (e *Element) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
 	return
 }
 
 // -------------------
 
-func (e *ElementPrototype) IsUpdated() bool {
+func (e *Element) IsUpdated() bool {
 	return e.Updated
 }
 
-func (e *ElementPrototype) updateAnimations() {
+func (e *Element) updateAnimations() {
 	for _, a := range e.animations {
 		if a.IsPlaying() {
 			a.Update()
@@ -190,22 +206,25 @@ func (e *ElementPrototype) updateAnimations() {
 	})
 }
 
-func (e *ElementPrototype) ForceRedraw() {
+// ForceRedraw will force an element to clear itself redraw all of its children, and perform a Render(). This generally
+// isn't necessary as the UI system will trigger these operations automatically, only when strictly needed. But in cases
+// where this can't be done you can use ForceRedraw to trigger the process manually.
+func (e *Element) ForceRedraw() {
 	e.forceRedraw = true
 }
 
-func (e *ElementPrototype) isRedrawing() bool {
+func (e *Element) isRedrawing() bool {
 	return e.forceRedraw
 }
 
-func (e *ElementPrototype) forceParentRedraw() {
+func (e *Element) forceParentRedraw() {
 	if parent := e.GetParent(); parent != nil {
 		parent.ForceRedraw()
 	}
 }
 
 // performs some pre-render operations. done for the whole tree before any rendering is done.
-func (e *ElementPrototype) prepareRender() {
+func (e *Element) prepareRender() {
 	//if any animations are rendering this frame, trigger a redraw
 	for _, a := range e.animations {
 		if a.IsPlaying() && a.IsUpdated() {
@@ -224,7 +243,7 @@ func (e *ElementPrototype) prepareRender() {
 }
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
-func (e *ElementPrototype) finalizeRender() {
+func (e *Element) finalizeRender() {
 	if e.Border.enabled && (e.Border.dirty || e.forceRedraw) {
 		e.linkBorder()
 	}
@@ -234,7 +253,7 @@ func (e *ElementPrototype) finalizeRender() {
 	e.Border.dirty = false
 }
 
-func (e *ElementPrototype) renderAnimations() {
+func (e *Element) renderAnimations() {
 	for _, animation := range e.animations {
 		if animation.IsPlaying() && vec.Intersects(e.getCanvas(), animation) {
 			animation.Render(&e.Canvas)
@@ -242,7 +261,7 @@ func (e *ElementPrototype) renderAnimations() {
 	}
 }
 
-func (e *ElementPrototype) drawChildren() {
+func (e *Element) drawChildren() {
 	for i, child := range e.GetChildren() {
 		if !child.IsVisible() {
 			continue
@@ -340,30 +359,30 @@ func (e *ElementPrototype) drawChildren() {
 	}
 }
 
-// Adds an animation to the ui element.
-func (e *ElementPrototype) AddAnimation(a gfx.Animator) {
+// Adds an animation to the ui element. Note that this does NOT start the animation.
+func (e *Element) AddAnimation(animation gfx.Animator) {
 	if e.animations == nil {
 		e.animations = make([]gfx.Animator, 0)
 	}
 
 	//check for duplicate add
 	for _, anim := range e.animations {
-		if a == anim {
+		if animation == anim {
 			return
 		}
 	}
 
-	e.animations = append(e.animations, a)
+	e.animations = append(e.animations, animation)
 
 	//if we're added a blocking animation during an update, make sure the window knows to stop updating
-	if a.IsBlocking() && a.IsPlaying() {
+	if animation.IsBlocking() && animation.IsPlaying() {
 		if wnd := e.getWindow(); wnd != nil {
 			wnd.onBlockingAnimationAdded()
 		}
 	}
 }
 
-func (e *ElementPrototype) getAnimations() []gfx.Animator {
+func (e *Element) getAnimations() []gfx.Animator {
 	return e.animations
 }
 
@@ -372,7 +391,7 @@ func (e *ElementPrototype) getAnimations() []gfx.Animator {
 // NOTE: this does NOT check if the parent is visible, so for a visible element whose parent is hidden this will still
 // return true. Perhaps this behaviour should be changed... that would require a recursive check up the tree right to
 // the window though, which could be expensive... hmm.
-func (e *ElementPrototype) IsVisible() bool {
+func (e *Element) IsVisible() bool {
 	if !e.visible {
 		return false
 	}
@@ -387,23 +406,21 @@ func (e *ElementPrototype) IsVisible() bool {
 }
 
 // Show makes the element visible.
-func (e *ElementPrototype) Show() {
+func (e *Element) Show() {
 	e.setVisible(true)
 }
 
-// Hide hides the element, preventing it and its children (if any) from receiving input, being updated/rendered.
-func (e *ElementPrototype) Hide() {
+// Hide hides the element, preventing it and its children (if any) from receiving input, or being updated/rendered.
+func (e *Element) Hide() {
 	e.setVisible(false)
 }
 
 // ToggleVisible toggles element visibility.
-func (e *ElementPrototype) ToggleVisible() {
+func (e *Element) ToggleVisible() {
 	e.setVisible(!e.visible)
 }
 
-// Sets the visibility of the element. If we're making it visible, we trigger a render of the element.
-// We also trigger a redraw of the parent element, in either case.
-func (e *ElementPrototype) setVisible(v bool) {
+func (e *Element) setVisible(v bool) {
 	if e.visible == v {
 		return
 	}
@@ -418,43 +435,39 @@ func (e *ElementPrototype) setVisible(v bool) {
 
 // SetLabel labels the element. References to labelled elements are retrievable from their parent window using
 // GetLabelled().
-func (e *ElementPrototype) SetLabel(label string) {
-	if e.label != "" {
-		//changing labels. if we're in a window, remove the old label from the map
-		if window := e.getWindow(); window != nil {
+func (e *Element) SetLabel(label string) {
+	if window := e.getWindow(); window != nil {
+		if e.label != "" {
+			//changing labels. if we're in a window, remove the old label from the map
 			window.removeLabel(e.label)
 		}
+		window.addLabel(label, e)
 	}
 
 	e.label = label
-
-	//get window, if it exists, and update the label map
-	if window := e.getWindow(); window != nil {
-		window.addLabel(e.label, e)
-	}
 }
 
-func (e *ElementPrototype) GetLabel() string {
+func (e *Element) GetLabel() string {
 	return e.label
 }
 
-func (e *ElementPrototype) IsLabelled() bool {
+func (e *Element) IsLabelled() bool {
 	return e.label != ""
 }
 
-func (e *ElementPrototype) getPosition() vec.Coord {
+func (e *Element) getPosition() vec.Coord {
 	return e.position
 }
 
-func (e *ElementPrototype) getDepth() int {
+func (e *Element) getDepth() int {
 	return e.depth
 }
 
-func (e *ElementPrototype) getCanvas() *gfx.Canvas {
+func (e *Element) getCanvas() *gfx.Canvas {
 	return &e.Canvas
 }
 
-func (e *ElementPrototype) getWindow() *Window {
+func (e *Element) getWindow() *Window {
 	parent := e.GetParent()
 	if parent == nil {
 		//if this element *is* a window, we can find out by grabbing the self pointer from the internal

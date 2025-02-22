@@ -158,7 +158,7 @@ func (t TreeNode[T]) ChildCount() int {
 // any number of predicates. If any are provided, they are called for each node before continuing to traverse the
 // tree and if any return false, stops the walk for that node and all of its children.
 // THINK: should there be non-depth-first versions?
-func WalkTree[T TreeType[T]](node T, f func(T), predicates ...func(T) bool) {
+func WalkTree[T TreeType[T]](node T, fn func(T), predicates ...func(T) bool) {
 	if predicates != nil {
 		for i := range predicates {
 			if !predicates[i](node) {
@@ -170,18 +170,18 @@ func WalkTree[T TreeType[T]](node T, f func(T), predicates ...func(T) bool) {
 
 	for _, child := range node.GetChildren() {
 		if predicates != nil {
-			WalkTree(child, f, predicates...)
+			WalkTree(child, fn, predicates...)
 		} else {
-			WalkTree(child, f)
+			WalkTree(child, fn)
 		}
 	}
 
-	f(node)
+	fn(node)
 }
 
 // Walks the tree, calling function f on all subnodes in the tree below the provided node.
 // This is identical to Walktree, except it doesn't call f on the root node.
-func WalkSubTrees[T TreeType[T]](node T, f func(T), predicates ...func(T) bool) {
+func WalkSubTrees[T TreeType[T]](node T, fn func(T), predicates ...func(T) bool) {
 	if predicates != nil {
 		for i := range predicates {
 			if !predicates[i](node) {
@@ -192,9 +192,9 @@ func WalkSubTrees[T TreeType[T]](node T, f func(T), predicates ...func(T) bool) 
 
 	for _, child := range node.GetChildren() {
 		if predicates != nil {
-			WalkTree(child, f, predicates...)
+			WalkTree(child, fn, predicates...)
 		} else {
-			WalkTree(child, f)
+			WalkTree(child, fn)
 		}
 	}
 }

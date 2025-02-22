@@ -10,7 +10,7 @@ import (
 const FIT_TEXT int = 0
 
 type Textbox struct {
-	ElementPrototype
+	Element
 
 	text   string //text to be displayed
 	center bool
@@ -34,7 +34,7 @@ func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, ce
 
 	//auto-fit text if required
 	if size.W == FIT_TEXT {
-		size = vec.Dims{(len(text)+1)/2, 1}
+		size = vec.Dims{(len(text) + 1) / 2, 1}
 		tb.lines = make([]string, 1)
 		tb.lines[0] = text
 	} else if size.H == FIT_TEXT {
@@ -44,7 +44,7 @@ func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, ce
 		tb.lines = util.WrapText(text, size.W*2)
 	}
 
-	tb.ElementPrototype.Init(size, pos, depth)
+	tb.Element.Init(size, pos, depth)
 }
 
 func (tb *Textbox) ChangeText(txt string) {

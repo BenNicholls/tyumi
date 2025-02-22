@@ -49,10 +49,10 @@ type Animation struct {
 	Area          vec.Rect
 	Depth         int  //depth value of the animation
 	Duration      int  //duration of animation in ticks
-	Backwards     bool // play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
+	Backwards     bool //play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
 	Label         string
-	Blocking      bool // whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
-	AlwaysUpdates bool // if true, indicates this animation updates every frame
+	Blocking      bool //whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
+	AlwaysUpdates bool //if true, indicates this animation updates every frame
 	Updated       bool //indicates to whatever is drawing the animation that it's going to render this frame
 
 	ticks   int  //incremented each update
@@ -173,10 +173,10 @@ type AnimationChain struct {
 }
 
 // Adds animations to the chain. These animations will be played in the order provided.
-func (ac *AnimationChain) Add(anims ...Animator) {
-	for _, a := range anims {
-		ac.animations = append(ac.animations, a)
-		ac.Duration += a.GetDuration()
+func (ac *AnimationChain) Add(animations ...Animator) {
+	for _, animation := range animations {
+		ac.animations = append(ac.animations, animation)
+		ac.Duration += animation.GetDuration()
 	}
 }
 

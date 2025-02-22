@@ -1,4 +1,4 @@
-package engine
+package tyumi
 
 import (
 	"errors"
@@ -21,7 +21,7 @@ type Platform interface {
 	Shutdown()
 }
 
-var current_platform Platform = nil
+var currentPlatform Platform = nil
 
 // Sets the platform to be used by Tyumi for rendering, gathering of system events, and more. This must be called
 // after console initialization and before running the game loop. The engine will Init() the platform for you.
@@ -32,14 +32,14 @@ func SetPlatform(p Platform) (err error) {
 		return
 	}
 
-	if current_platform != nil {
+	if currentPlatform != nil {
 		log.Info("Shutting down old platform.")
-		current_platform.Shutdown()
+		currentPlatform.Shutdown()
 	}
 
-	current_platform = p
+	currentPlatform = p
 	renderer = p.GetRenderer()
-	event_generator = p.GetEventGenerator()
+	eventGenerator = p.GetEventGenerator()
 
 	return
 }
@@ -64,18 +64,18 @@ type Renderer interface {
 
 // Sets up the renderer. This must be done after initializaing the console and setting the platform, but before
 // running the main game loop.
-func SetupRenderer(glyphPath, fontPath, title string) error {
-	if !main_console.ready {
+func SetupRenderer(glyph_path, font_path, title string) error {
+	if !mainConsole.ready {
 		log.Error("Cannot initialize renderer: console not initialized. Run InitConsole() first.")
 		return errors.New("NO CONSOLE.")
 	}
 
-	if current_platform == nil {
+	if currentPlatform == nil {
 		log.Error("Cannot initialize renderer: no platform set. Run SetPlatform() first.")
 		return errors.New("NO PLATFORM.")
 	}
 
-	err := renderer.Setup(&main_console.Canvas, glyphPath, fontPath, title)
+	err := renderer.Setup(&mainConsole.Canvas, glyph_path, font_path, title)
 	if err != nil {
 		return err
 	}

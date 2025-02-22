@@ -39,13 +39,13 @@ func (bs BorderStyle) GetGlyph(neighbour_flags int) gfx.Glyph {
 	return gfx.LineStyles[bs.lineType].Glyphs[neighbour_flags]
 }
 
-func (bs BorderStyle) DecorateText(text string) (decoratedText string) {
+func (bs BorderStyle) DecorateText(text string) (decorated_text string) {
 	if bs.TextDecorationL != 0 {
-		decoratedText += string(bs.TextDecorationL)
+		decorated_text += string(bs.TextDecorationL)
 	}
-	decoratedText += text
+	decorated_text += text
 	if bs.TextDecorationR != 0 {
-		decoratedText += string(bs.TextDecorationR)
+		decorated_text += string(bs.TextDecorationR)
 	}
 
 	return

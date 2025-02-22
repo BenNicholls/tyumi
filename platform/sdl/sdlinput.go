@@ -1,4 +1,4 @@
-package platform_sdl
+package sdl
 
 import (
 	"github.com/bennicholls/tyumi/input"

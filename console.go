@@ -1,4 +1,4 @@
-package engine
+package tyumi
 
 import (
 	"github.com/bennicholls/tyumi/event"
@@ -8,9 +8,8 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// The console is where the UI of the game state is composited together before being sent to the renderer. It also
-// defines the size of the window you're using, and must be initialized with InitConsole() before running the
-// gameloop.
+var mainConsole console
+
 type console struct {
 	gfx.Canvas
 	ready bool
@@ -35,18 +34,21 @@ func (c *console) handleEvents(e event.Event) (event_handled bool) {
 	return
 }
 
+// Initializes the console. The console is where Tyumi composites together the frame along with the mouse cursor and
+// any post-processing effects (coming soon TM) before being sent to the renderer to be displayed. The size here is in
+// Cells, not pixels. The final window size will be the size here multiplied by however big your tiles are.
 func InitConsole(console_size vec.Dims) {
-	main_console.Init(console_size)
-	main_console.ready = true
+	mainConsole.Init(console_size)
+	mainConsole.ready = true
 
-	main_console.events = event.NewStream(50, main_console.handleEvents)
-	main_console.events.Listen(input.EV_MOUSEMOVE)
+	mainConsole.events = event.NewStream(50, mainConsole.handleEvents)
+	mainConsole.events.Listen(input.EV_MOUSEMOVE)
 
-	main_console.mouseCursorVisuals = gfx.NewGlyphVisuals(gfx.GLYPH_BORDER_UUDDLLRR, col.Pair{col.WHITE, col.NONE})
+	mainConsole.mouseCursorVisuals = gfx.NewGlyphVisuals(gfx.GLYPH_BORDER_UUDDLLRR, col.Pair{col.WHITE, col.NONE})
 }
 
 // EnableCursor enables drawing of the mouse cursor. Also sets input.EnableMouse = true
 func EnableCursor() {
-	main_console.mouseCursorEnabled = true
+	mainConsole.mouseCursorEnabled = true
 	input.EnableMouse = true
 }

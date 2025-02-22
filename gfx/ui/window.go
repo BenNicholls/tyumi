@@ -9,58 +9,58 @@ import (
 
 // Window acts as a root node for the UI system.
 type Window struct {
-	ElementPrototype
+	Element
 
-	labels              map[string]Element
-	blocking_animations int // number of running animations blocking updates
+	labels             map[string]element
+	blockingAnimations int // number of running animations blocking updates
 }
 
 func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
 	wnd = new(Window)
 	wnd.Init(size, pos, depth)
 	wnd.TreeNode.Init(wnd)
-	wnd.labels = make(map[string]Element)
+	wnd.labels = make(map[string]element)
 	return
 }
 
 // Updates all visible subelements in the window, as well as all visible animations.
 func (wnd *Window) Update() {
 	// see how many animations (if any) are blocking updates
-	wnd.blocking_animations = 0
-	util.WalkTree[Element](wnd, func(element Element) {
+	wnd.blockingAnimations = 0
+	util.WalkTree[element](wnd, func(element element) {
 		for _, a := range element.getAnimations() {
 			if a.IsBlocking() && a.IsPlaying() {
-				wnd.blocking_animations += 1
+				wnd.blockingAnimations += 1
 			}
 		}
-	}, if_visible)
+	}, ifVisible)
 
 	// update all visible subelements (unless window is blocked) and their animations
-	util.WalkSubTrees[Element](wnd, func(element Element) {
+	util.WalkSubTrees[element](wnd, func(element element) {
 		if !wnd.IsBlocked() {
 			element.Update()
 		}
 		element.updateAnimations()
-	}, if_visible)
+	}, ifVisible)
 
 	wnd.updateAnimations()
 }
 
 func (wnd *Window) Render() {
 	//prepare_render
-	util.WalkTree[Element](wnd, func(element Element) {
+	util.WalkTree[element](wnd, func(element element) {
 		element.prepareRender()
-	}, if_visible)
+	}, ifVisible)
 
 	//render all visible subnodes
-	util.WalkSubTrees[Element](wnd, func(element Element) {
+	util.WalkSubTrees[element](wnd, func(element element) {
 		element.drawChildren()
 		if element.IsUpdated() || element.isRedrawing() {
 			element.Render()
 		}
 		element.renderAnimations()
 		element.finalizeRender() // does this need to go in a seperate walk??
-	}, if_visible)
+	}, ifVisible)
 
 	wnd.drawChildren()
 	wnd.renderAnimations()
@@ -68,17 +68,17 @@ func (wnd *Window) Render() {
 }
 
 func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
-	util.WalkSubTrees[Element](wnd, func(element Element) {
+	util.WalkSubTrees[element](wnd, func(element element) {
 		if !event_handled {
 			event_handled = element.HandleKeypress(key_event)
 		}
-	}, if_visible)
+	}, ifVisible)
 
 	return
 }
 
 func (wnd *Window) IsBlocked() bool {
-	return wnd.blocking_animations > 0
+	return wnd.blockingAnimations > 0
 }
 
 // returns this window so subelements can find this. how a window would find a parent window remains a topic
@@ -90,7 +90,7 @@ func (wnd *Window) getWindow() *Window {
 	return wnd
 }
 
-func (wnd *Window) addLabel(label string, e Element) {
+func (wnd *Window) addLabel(label string, e element) {
 	if _, ok := wnd.labels[label]; ok {
 		log.Warning("Duplicate label: ", label)
 		return
@@ -103,18 +103,18 @@ func (wnd *Window) removeLabel(label string) {
 	delete(wnd.labels, label)
 }
 
-func (wnd *Window) onSubNodeAdded(subNode Element) {
+func (wnd *Window) onSubNodeAdded(subNode element) {
 	//find labelled subnodes of the new element and add them to the label map
-	util.WalkTree[Element](subNode, func(e Element) {
+	util.WalkTree(subNode, func(e element) {
 		if e.IsLabelled() {
 			wnd.addLabel(e.GetLabel(), e)
 		}
 	})
 }
 
-func (wnd *Window) onSubNodeRemoved(subNode Element) {
+func (wnd *Window) onSubNodeRemoved(subNode element) {
 	//find labelled subnodes of the removed element and remove them from the label map
-	util.WalkTree[Element](subNode, func(e Element) {
+	util.WalkTree(subNode, func(e element) {
 		if e.IsLabelled() {
 			wnd.removeLabel(e.GetLabel())
 		}
@@ -122,7 +122,7 @@ func (wnd *Window) onSubNodeRemoved(subNode Element) {
 }
 
 func (wnd *Window) onBlockingAnimationAdded() {
-	wnd.blocking_animations += 1
+	wnd.blockingAnimations += 1
 }
 
 // Labelled elements can be retrieved via their label string from the window they are in. Also the labels can be
@@ -135,6 +135,6 @@ type Labelled interface {
 
 // predicate for window's ui-tree-walking functions. elements that are not visible do not need to be updated
 // or rendered, and neither do their children, so we use this to break early
-func if_visible(e Element) bool {
+func ifVisible(e element) bool {
 	return e.IsVisible()
 }

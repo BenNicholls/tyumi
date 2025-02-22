@@ -16,18 +16,18 @@ type Visuals struct {
 	Chars   [2]uint8
 }
 
-func NewGlyphVisuals(g Glyph, colours col.Pair) (vis Visuals) {
-	vis = Visuals{
+func NewGlyphVisuals(glyph Glyph, colours col.Pair) (visuals Visuals) {
+	visuals = Visuals{
 		Mode:    DRAW_GLYPH,
-		Glyph:   g,
+		Glyph:   glyph,
 		Colours: colours,
 	}
 
 	return
 }
 
-func NewTextVisuals(char1, char2 uint8, colours col.Pair) (vis Visuals) {
-	vis = Visuals{
+func NewTextVisuals(char1, char2 uint8, colours col.Pair) (visuals Visuals) {
+	visuals = Visuals{
 		Mode:    DRAW_TEXT,
 		Colours: colours,
 		Chars:   [2]uint8{char1, char2},
@@ -37,8 +37,8 @@ func NewTextVisuals(char1, char2 uint8, colours col.Pair) (vis Visuals) {
 }
 
 // Changes the glyph. Also enables glyph drawmode.
-func (v *Visuals) ChangeGlyph(g Glyph) {
-	v.Glyph = g
+func (v *Visuals) ChangeGlyph(glyph Glyph) {
+	v.Glyph = glyph
 	v.Mode = DRAW_GLYPH
 }
 

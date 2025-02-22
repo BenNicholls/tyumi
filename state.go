@@ -1,4 +1,4 @@
-package engine
+package tyumi
 
 import (
 	"github.com/bennicholls/tyumi/event"
@@ -8,14 +8,14 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var currentState State //the current state object
+var currentState state
 
 const (
 	FIT_CONSOLE int = 0 //window size flag
 )
 
 // A gameobject to be handled by Tyumi's state machine.
-type State interface {
+type state interface {
 	Update()
 	UpdateUI()
 	Shutdown()
@@ -26,8 +26,11 @@ type State interface {
 	IsBlocked() bool
 }
 
-// An embeddable prototype that satisfies the State interface. Build around this for easier gamestate management.
-type StatePrototype struct {
+// State is the base implementation for Tyumi game state object. States contain a window, where the programs UI is built,
+// as well as the machinery for handling game and input events. Custom states can be made by embedding this and
+// overriding the virtual functions defined here. Most important is the Update() function, which runs once per-tick
+// and should contain your main game code.
+type State struct {
 	window *ui.Window
 
 	events       event.Stream  //for engine events, game events, etc. processed at the end of each tick
@@ -39,18 +42,18 @@ type StatePrototype struct {
 
 // Init prepares the gamestate. If the console has been initialized, you can use FIT_CONSOLE as the
 // width and/or height to have the state size itself automatically.
-func (sp *StatePrototype) Init(size vec.Dims) {
+func (sp *State) Init(size vec.Dims) {
 	if size.W == FIT_CONSOLE || size.H == FIT_CONSOLE {
-		if !main_console.ready {
+		if !mainConsole.ready {
 			log.Error("Cannot fit state window to console: console not initialized.")
 			return
 		}
 
 		if size.W == FIT_CONSOLE {
-			size.W = main_console.Size().W
+			size.W = mainConsole.Size().W
 		}
 		if size.H == FIT_CONSOLE {
-			size.H = main_console.Size().H
+			size.H = mainConsole.Size().H
 		}
 	}
 
@@ -64,41 +67,43 @@ func (sp *StatePrototype) Init(size vec.Dims) {
 	sp.ready = true
 }
 
-func (sp *StatePrototype) Update() {
+// Update is run each tick, after input has been handled and before UI is updated/rendered. Override this function
+// with your primary game code!
+func (sp *State) Update() {
 	return
 }
 
-// UpdateUI is called before each frame is rendered, allowing the user to apply ui changes for rendering all at once if
-// they prefer. Otherwise they can implement Update() routines on the individual UI elements themselves and have them
+// UpdateUI is called before each frame is rendered, allowing you to apply ui changes for rendering all at once if
+// you prefer. Otherwise you can implement Update() functions on the individual UI elements themselves and have them
 // control their own behaviour.
-func (sp *StatePrototype) UpdateUI() {
+func (sp *State) UpdateUI() {
 	return
 }
 
-func (sp *StatePrototype) Shutdown() {
+func (sp *State) Shutdown() {
 	//TODO MAYBE: de-listen for input events??
 	return
 }
 
-func (sp *StatePrototype) Window() *ui.Window {
+func (sp *State) Window() *ui.Window {
 	return sp.window
 }
 
-func (sp *StatePrototype) Events() *event.Stream {
+func (sp *State) Events() *event.Stream {
 	return &sp.events
 }
 
-func (sp *StatePrototype) InputEvents() *event.Stream {
+func (sp *State) InputEvents() *event.Stream {
 	return &sp.inputEvents
 }
 
-// sets the function for handling generic game events. these are collected during the tick(), and then processed
-// at the end of each tick() in the order they were received.
-func (sp *StatePrototype) SetEventHandler(handler event.Handler) {
+// sets the function for handling game events. these are collected during Update(), and then processed
+// at the end of each Update() in the order they were received.
+func (sp *State) SetEventHandler(handler event.Handler) {
 	sp.events.AddHandler(handler)
 }
 
-func (sp *StatePrototype) handleInput(event event.Event) (event_handled bool) {
+func (sp *State) handleInput(event event.Event) (event_handled bool) {
 	switch event.ID() {
 	case input.EV_KEYBOARD:
 		event_handled = sp.window.HandleKeypress(event.(*input.KeyboardEvent))
@@ -111,30 +116,32 @@ func (sp *StatePrototype) handleInput(event event.Event) (event_handled bool) {
 	return
 }
 
-// sets the function for handling inputs to the state object. inputs are collected, distributed and then
+// Sets the function for handling inputs to the state object. Inputs are collected, distributed and then
 // processed at the beginning of each tick(). This handler is called after the UI has had a chance to handle
 // the input. If the UI handles the input, event.Handled() will be true. You can still choose to ignore that and
 // handle the event again if you like though.
-func (sp *StatePrototype) SetInputHandler(handler event.Handler) {
+func (sp *State) SetInputHandler(handler event.Handler) {
 	sp.inputHandler = handler
 }
 
-func (sp *StatePrototype) Ready() bool {
+func (sp *State) Ready() bool {
 	return sp.ready
 }
 
-func (sp *StatePrototype) IsBlocked() bool {
+// Returns true if updating has been blocked. Currently this only happens from blocking animations, but later might
+// also indicate that the game is paused perhaps.
+func (sp *State) IsBlocked() bool {
 	return sp.window.IsBlocked()
 }
 
 // SetInitialMainState sets a state to be run by Tyumi at the beginning of execution.
 // This function DOES NOTHING if a state has already been initialized.
-func SetInitialMainState(s State) {
-	if main_state != nil {
+func SetInitialMainState(s state) {
+	if currentState != nil {
 		return
 	}
 
-	if !main_console.ready {
+	if !mainConsole.ready {
 		log.Error("Cannot set main state: console not initialized. Run InitConsole() first.")
 		return
 	}
@@ -144,5 +151,5 @@ func SetInitialMainState(s State) {
 		return
 	}
 
-	main_state = s
+	currentState = s
 }

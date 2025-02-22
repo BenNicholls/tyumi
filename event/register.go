@@ -14,14 +14,14 @@ type eventInfo struct {
 	listeners []*Stream
 }
 
-func (e *eventInfo) addListener(s *Stream) {
-	for _, l := range e.listeners {
-		if l == s {
+func (e *eventInfo) addListener(stream *Stream) {
+	for _, listener := range e.listeners {
+		if listener == stream {
 			return
 		}
 	}
 
-	e.listeners = append(e.listeners, s)
+	e.listeners = append(e.listeners, stream)
 }
 
 // Registers an event type with the event system and returns the assigned ID.

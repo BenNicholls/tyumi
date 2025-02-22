@@ -51,12 +51,12 @@ func (c *Canvas) SetDefaultColours(colours col.Pair) {
 }
 
 // Sets the default visuals for a canvas, then does a reset of the canvas to apply them.
-func (c *Canvas) SetDefaultVisuals(vis Visuals) {
-	if c.defaultVisuals == vis {
+func (c *Canvas) SetDefaultVisuals(visuals Visuals) {
+	if c.defaultVisuals == visuals {
 		return
 	}
 
-	c.defaultVisuals = vis
+	c.defaultVisuals = visuals
 	c.Clear()
 }
 
@@ -142,30 +142,30 @@ func (c *Canvas) setDepth(pos vec.Coord, depth int) {
 	c.depthmap[c.cellIndex(pos)] = depth
 }
 
-func (c *Canvas) setForeColour(pos vec.Coord, depth int, col uint32) {
+func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour uint32) {
 	if c.getDepth(pos) > depth {
 		return
 	}
 
-	if col == COL_DEFAULT {
-		col = c.defaultVisuals.Colours.Fore
+	if colour == COL_DEFAULT {
+		colour = c.defaultVisuals.Colours.Fore
 	}
 	cell := c.getCell(pos)
-	cell.SetForeColour(col)
+	cell.SetForeColour(colour)
 	c.dirty = c.dirty || cell.Dirty
 	c.setDepth(pos, depth)
 }
 
-func (c *Canvas) setBackColour(pos vec.Coord, depth int, col uint32) {
+func (c *Canvas) setBackColour(pos vec.Coord, depth int, colour uint32) {
 	if c.getDepth(pos) > depth {
 		return
 	}
 
-	if col == COL_DEFAULT {
-		col = c.defaultVisuals.Colours.Back
+	if colour == COL_DEFAULT {
+		colour = c.defaultVisuals.Colours.Back
 	}
 	cell := c.getCell(pos)
-	cell.SetBackColour(col)
+	cell.SetBackColour(colour)
 	c.dirty = c.dirty || cell.Dirty
 	c.setDepth(pos, depth)
 }

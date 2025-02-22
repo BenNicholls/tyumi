@@ -12,7 +12,7 @@ type Line struct {
 	End   Coord
 }
 
-// Length computes the precise cartesian length of the line. Consider using LengthSq() if you don't actually need this
+// Length computes the precise cartesian length of the line. Consider using LengthSq() if you don't actually need the
 // absolute value and are just doing comparisons.
 func (l Line) Length() float64 {
 	return Vec2i(l.Start.Subtract(l.End)).Mag()

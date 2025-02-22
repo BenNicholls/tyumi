@@ -8,7 +8,7 @@ import (
 // WrapText wraps the provided string at WIDTH characters. optionally takes another int, used to determine the maximum
 // number of lines. returns a slice of strings, each element a wrapped line. for words longer than width it just brutally
 // cuts them off. no mercy.
-func WrapText(str string, width int, maxlines ...int) (lines []string) {
+func WrapText(text string, width int, maxlines ...int) (lines []string) {
 	capped := false
 	if len(maxlines) == 1 {
 		lines = make([]string, 0, maxlines[0])
@@ -19,7 +19,7 @@ func WrapText(str string, width int, maxlines ...int) (lines []string) {
 
 	currentLine := ""
 
-	for _, broken := range strings.Split(str, "/n") {
+	for _, broken := range strings.Split(text, "/n") {
 		for _, s := range strings.Split(broken, " ") {
 			s = strings.TrimSpace(s) //get rid of nasty tabs and other weird whitespace.
 

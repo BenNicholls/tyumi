@@ -43,8 +43,8 @@ type Entry struct {
 	Message string
 }
 
-func (m Entry) String() string {
-	return "[" + m.Time.Format(time.TimeOnly) + "] " + m.Level.String() + ": " + m.Message
+func (e Entry) String() string {
+	return "[" + e.Time.Format(time.TimeOnly) + "] " + e.Level.String() + ": " + e.Message
 }
 
 func init() {
@@ -72,6 +72,8 @@ func log(level level, messages ...any) {
 	}
 }
 
+// Writes the log to log.txt. 
+// TODO: make this filepath customizable.
 func WriteToDisk() {
 	f, err := os.Create("log.txt")
 	if err != nil {

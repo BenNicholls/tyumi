@@ -37,36 +37,36 @@ func (c *Canvas) CalcLinkedGlyph(src_glyph Glyph, dst_pos vec.Coord, depth int) 
 	}
 
 	//determine possible linking directions. we skip directions that the src-glyph is already linking towards
-	neighbour_dirs := make([]vec.Direction, 0, 3)
+	neighbourDirs := make([]vec.Direction, 0, 3)
 	for _, dir := range vec.CardinalDirections {
 		if linkFlags&GetLinkFlagByDirection(dir) == 0 {
-			neighbour_dirs = append(neighbour_dirs, dir)
+			neighbourDirs = append(neighbourDirs, dir)
 		}
 	}
 
-	for _, dir := range neighbour_dirs {
-		neighbour_pos := dst_pos.Step(dir)
-		if !c.InBounds(neighbour_pos) || c.getDepth(neighbour_pos) != depth {
+	for _, dir := range neighbourDirs {
+		neighbourPos := dst_pos.Step(dir)
+		if !c.InBounds(neighbourPos) || c.getDepth(neighbourPos) != depth {
 			continue
 		}
 
-		neighbour_cell := c.getCell(neighbour_pos)
-		switch neighbour_cell.Mode {
+		neighbourCell := c.getCell(neighbourPos)
+		switch neighbourCell.Mode {
 		case DRAW_GLYPH:
-			if style := LineStyles[line]; style.glyphIsLinkable(neighbour_cell.Glyph) {
-				neighbour_cell_flags := style.GetBorderFlags(neighbour_cell.Glyph)
-				if neighbour_cell_flags&GetLinkFlagByDirection(dir.Inverted()) != 0 {
+			if style := LineStyles[line]; style.glyphIsLinkable(neighbourCell.Glyph) {
+				neighbourCellFlags := style.GetBorderFlags(neighbourCell.Glyph)
+				if neighbourCellFlags&GetLinkFlagByDirection(dir.Inverted()) != 0 {
 					linkFlags |= GetLinkFlagByDirection(dir)
 				}
 			}
 		case DRAW_TEXT:
 			//some special cases for linking with titles/hints of ui borders
 			if dir == vec.DIR_RIGHT {
-				if neighbour_cell.Chars[0] == TEXT_BORDER_DECO_LEFT || neighbour_cell.Chars[0] == TEXT_BORDER_LR {
+				if neighbourCell.Chars[0] == TEXT_BORDER_DECO_LEFT || neighbourCell.Chars[0] == TEXT_BORDER_LR {
 					linkFlags |= LINK_R
 				}
 			} else if dir == vec.DIR_LEFT {
-				if neighbour_cell.Chars[1] == TEXT_BORDER_DECO_RIGHT || neighbour_cell.Chars[1] == TEXT_BORDER_LR {
+				if neighbourCell.Chars[1] == TEXT_BORDER_DECO_RIGHT || neighbourCell.Chars[1] == TEXT_BORDER_LR {
 					linkFlags |= LINK_L
 				}
 			}

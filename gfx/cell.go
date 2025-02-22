@@ -7,6 +7,7 @@ import (
 // A single tile in a canvas.
 type Cell struct {
 	Visuals
+
 	Dirty bool //this will be true if the cell has been changed since the last time its canvas has been drawn out
 }
 
@@ -102,12 +103,12 @@ func (c *Cell) SetBlank() {
 }
 
 // Sets the cell's Visuals to vis all at once
-func (c *Cell) SetVisuals(vis Visuals) {
-	if c.Visuals == vis {
+func (c *Cell) SetVisuals(visuals Visuals) {
+	if c.Visuals == visuals {
 		return
 	}
 
-	c.Visuals = vis
+	c.Visuals = visuals
 	c.Dirty = true
 }
 

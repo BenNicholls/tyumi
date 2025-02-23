@@ -16,6 +16,11 @@ var EV_QUIT = event.Register("Quit Event")
 // what features they support. This is a problem for later.
 type Platform interface {
 	Init() error
+
+	LoadAudio(path string) (platform_res_id int, err error)
+	UnloadAudio(platform_res_id int)
+	PlayAudio(platform_id int)
+
 	GetRenderer() Renderer
 	GetEventGenerator() EventGenerator
 	Shutdown()

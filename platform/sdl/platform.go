@@ -2,7 +2,9 @@ package sdl
 
 import (
 	"github.com/bennicholls/tyumi"
+	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/vec"
+	"github.com/veandco/go-sdl2/mix"
 )
 
 type Platform struct {
@@ -13,6 +15,12 @@ type Platform struct {
 
 func (p *Platform) Init() (err error) {
 	p.renderer = NewRenderer()
+
+	err = mix.OpenAudio(44100, mix.DEFAULT_FORMAT, 2, 4096)
+	if err != nil {
+		log.Error("SDL: Could not set up audio mixer")
+	}
+
 	return
 }
 
@@ -26,6 +34,7 @@ func (p *Platform) GetEventGenerator() tyumi.EventGenerator {
 
 func (p *Platform) Shutdown() {
 	p.renderer.Cleanup()
+	p.shutdownAudio()
 }
 
 // Creates a platform for use by Tyumi. Pass this into engine.SetPlatform()

@@ -65,8 +65,6 @@ func (r *Resource) Unload() {
 		return
 	}
 
-	currentPlatform.UnloadAudio(r.platform_id)
-
 	r.ready = false
 }
 

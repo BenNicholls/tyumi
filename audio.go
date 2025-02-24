@@ -6,6 +6,15 @@ type AudioResource struct {
 	Resource
 }
 
+func (ar *AudioResource) Unload() {
+	if !ar.ready {
+		return
+	}
+
+	currentPlatform.UnloadAudio(ar.platform_id)
+	ar.Resource.Unload()
+}
+
 func LoadAudioResource(path string) (resource_id ResourceID) {
 	if id := getResourceIDByPath(path); id != resourceNotFound {
 		log.Debug("resource already loaded!!")

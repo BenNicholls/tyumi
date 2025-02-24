@@ -1,6 +1,8 @@
 package tyumi
 
-import "github.com/bennicholls/tyumi/log"
+import (
+	"github.com/bennicholls/tyumi/log"
+)
 
 type AudioResource struct {
 	Resource
@@ -16,6 +18,11 @@ func (ar *AudioResource) Unload() {
 }
 
 func LoadAudioResource(path string) (resource_id ResourceID) {
+	if currentPlatform == nil {
+		log.Error("Could not load audio at", path, "platform not set up yet.")
+		return invalidResource
+	}
+
 	if id := getResourceIDByPath(path); id != resourceNotFound {
 		log.Debug("resource already loaded!!")
 		return id
@@ -39,6 +46,10 @@ func LoadAudioResource(path string) (resource_id ResourceID) {
 }
 
 func PlayAudio(audio_resource_id ResourceID) {
+	if audio_resource_id == invalidResource {
+		return
+	}
+
 	audioResource := getResource[*AudioResource](audio_resource_id)
 	if audioResource == nil {
 		log.Error("Could not fetch audio resource... oops.")
@@ -54,6 +65,10 @@ func PlayAudio(audio_resource_id ResourceID) {
 }
 
 func UnloadAudio(audio_resource_id ResourceID) {
+	if audio_resource_id == invalidResource {
+		return
+	}
+
 	audioResource := getResource[*AudioResource](audio_resource_id)
 	if audioResource == nil {
 		log.Error("Could not fetch audio resource... oops.")

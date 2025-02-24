@@ -4,6 +4,7 @@ package tyumi
 type ResourceID int
 
 var resourceNotFound ResourceID = -1
+var invalidResource ResourceID = -1
 
 type resource interface {
 	Ready() bool
@@ -49,9 +50,9 @@ func getResourceIDByPath(path string) ResourceID {
 }
 
 type Resource struct {
-	path        string
-	platform_id int //the id assigned to this resource by the platform
-	ready       bool
+	path        string //path to resource on disk, used to prevent duplicate loads
+	platform_id int    //the id assigned to this resource by the platform
+	ready       bool   //true if resource was successfully loaded and has not been unloaded
 }
 
 // Reports if this resource is has been loaded successfully and has not been unloaded.

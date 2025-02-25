@@ -2,6 +2,7 @@ package sdl
 
 import (
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/veandco/go-sdl2/mix"
 )
 
@@ -33,7 +34,7 @@ func (p *Platform) UnloadAudio(id int) {
 	audioCache[id] = nil
 }
 
-func (p *Platform) PlayAudio(id, channel int) {
+func (p *Platform) PlayAudio(id, channel, volume_pct int) {
 	if id >= len(audioCache) {
 		log.Debug("BAD! Too much platform id to handle!!!")
 		return
@@ -45,6 +46,8 @@ func (p *Platform) PlayAudio(id, channel int) {
 		return
 	}
 
+	volume := util.Clamp(int(1.28*float64(volume_pct)), 0, 128)
+	chunk.Volume(volume)
 	chunk.Play(channel, 0)
 }
 

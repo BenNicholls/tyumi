@@ -19,7 +19,7 @@ type Platform interface {
 
 	LoadAudio(path string) (platform_res_id int, err error)
 	UnloadAudio(platform_res_id int)
-	PlayAudio(platform_id int)
+	PlayAudio(platform_id, channel int)
 
 	GetRenderer() Renderer
 	GetEventGenerator() EventGenerator

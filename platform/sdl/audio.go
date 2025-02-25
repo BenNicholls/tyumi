@@ -10,8 +10,7 @@ var audioCache []*mix.Chunk
 func (p *Platform) LoadAudio(path string) (res_id int, err error) {
 	chunk, err := mix.LoadWAV(path)
 	if err != nil {
-		log.Error("Could not load wav at", path, ":", err)
-		return
+		return -1, err
 	}
 
 	audioCache = append(audioCache, chunk)
@@ -34,7 +33,7 @@ func (p *Platform) UnloadAudio(id int) {
 	audioCache[id] = nil
 }
 
-func (p *Platform) PlayAudio(id int) {
+func (p *Platform) PlayAudio(id, channel int) {
 	if id >= len(audioCache) {
 		log.Debug("BAD! Too much platform id to handle!!!")
 		return
@@ -46,7 +45,7 @@ func (p *Platform) PlayAudio(id int) {
 		return
 	}
 
-	chunk.Play(-1, 0)
+	chunk.Play(channel, 0)
 }
 
 func (p *Platform) shutdownAudio() {

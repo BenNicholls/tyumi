@@ -11,6 +11,10 @@ import (
 type InputBox struct {
 	Textbox
 
+	OnTextChanged  func() //callback triggered when input changes
+	OnTextInputted func() //callback triggered when input is added
+	OnTextDeleted  func() //callback triggered when input is deleted
+
 	cursor         InputCursorAnimation
 	inputLengthMax int //limit for input length. defaults to the width of the box
 }
@@ -60,6 +64,8 @@ func (ib *InputBox) Insert(input string) {
 
 	ib.ChangeText(new_text)
 	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
+
+	fireCallbacks(ib.OnTextChanged, ib.OnTextInputted)
 }
 
 // Deletes the final character of the contents of the Inputbox
@@ -70,6 +76,8 @@ func (ib *InputBox) Delete() {
 
 	ib.ChangeText(ib.text[:len(ib.text)-1])
 	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
+
+	fireCallbacks(ib.OnTextChanged, ib.OnTextDeleted)
 }
 
 func (ib InputBox) InputtedText() string {

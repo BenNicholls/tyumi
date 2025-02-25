@@ -12,6 +12,8 @@ import (
 type List struct {
 	Element
 
+	OnChangeSelection func() //callback triggered any time selection is changed, i.e. by scrolling
+
 	padding   int  //amount of padding added between list items
 	selected  int  //element that is currently selected. selected item will be ensured to be visible
 	highlight bool //toggle to highlight currently selected list item
@@ -114,6 +116,10 @@ func (l *List) Select(selection int) {
 
 	l.selected = util.Clamp(selection, 0, l.ChildCount()-1)
 	l.updateScrollPosition()
+
+	fireCallbacks(l.OnChangeSelection)
+
+	l.Updated = true
 }
 
 func (l List) GetSelectionIndex() int {
@@ -124,26 +130,24 @@ func (l *List) getSelected() element {
 	return l.GetChildren()[l.selected]
 }
 
-// Selects the next item
+// Selects the next item in the list, wrapping back around to the top if necessary.
 func (l *List) Next() {
 	if l.ChildCount() <= 1 {
 		return
 	}
 
-	l.selected = util.CycleClamp(l.selected+1, 0, l.ChildCount()-1)
-	l.updateScrollPosition()
-	l.Updated = true
+	nextIndex := util.CycleClamp(l.selected+1, 0, l.ChildCount()-1)
+	l.Select(nextIndex)
 }
 
-// Selects the previous item in the list
+// Selects the previous item in the list, wrapping back around to the bottom if necessary.
 func (l *List) Prev() {
 	if l.ChildCount() <= 1 {
 		return
 	}
 
-	l.selected = util.CycleClamp(l.selected-1, 0, l.ChildCount()-1)
-	l.updateScrollPosition()
-	l.Updated = true
+	prevIndex := util.CycleClamp(l.selected-1, 0, l.ChildCount()-1)
+	l.Select(prevIndex)
 }
 
 func (l *List) prepareRender() {

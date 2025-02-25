@@ -50,3 +50,11 @@ func GetLabelled[T element](window *Window, label string) (element T) {
 
 	return
 }
+
+func fireCallbacks(callbacks ...func()) {
+	for _, callback := range callbacks {
+		if callback != nil {
+			callback()
+		}
+	}
+}

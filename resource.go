@@ -3,8 +3,8 @@ package tyumi
 // An ID for a loaded resource. Use these to refer to resources
 type ResourceID int
 
-var resourceNotFound ResourceID = -1
-var invalidResource ResourceID = -1
+var resourceNotFound ResourceID = 0
+var invalidResource ResourceID = 0
 
 type resource interface {
 	Ready() bool
@@ -16,16 +16,22 @@ type resource interface {
 var resourceCache []resource
 
 func addResourceToCache(res resource) (id ResourceID) {
-	resourceCache = append(resourceCache, res)
-	return ResourceID(len(resourceCache) - 1)
-}
-
-func getResource[T resource](resource_id ResourceID) (res T) {
-	if int(resource_id) > len(resourceCache)-1 {
+	if res == nil {
 		return
 	}
 
-	resource := resourceCache[resource_id]
+	resourceCache = append(resourceCache, res)
+
+	// remember: resource IDs are offset by 1 so 0 can be the invalid resource id.
+	return ResourceID(len(resourceCache))
+}
+
+func getResource[T resource](resource_id ResourceID) (res T) {
+	if resource_id == invalidResource || int(resource_id) > len(resourceCache) {
+		return
+	}
+
+	resource := resourceCache[resource_id - 1]
 	if r, ok := resource.(T); ok {
 		return r
 	} else {

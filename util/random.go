@@ -17,3 +17,8 @@ func RandomDirection() (int, int) {
 func GenerateCoord(x, y, w, h int) (int, int) {
 	return rand.Intn(w) + x, rand.Intn(h) + y
 }
+
+// Picks a random element from the slice and returns it.
+func PickOne[S ~[]E, E any](slice S) E {
+	return slice[rand.Intn(len(slice))]
+}

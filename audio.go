@@ -28,13 +28,49 @@ func SetMusicVolume(volume int) {
 	musicVolume = util.Clamp(float64(volume)/100.0, 0, 1)
 }
 
+func PlayMusic(music_resource AudioResource) {
+	if !music_resource.ready {
+		log.Debug("Cannot play music, music not ready.")
+		return
+	}
+
+	if music_resource.audioType != AUDIO_MUSIC {
+		log.Debug("Cannot play ", music_resource.name, ", not a music resource.")
+		return
+	}
+
+	music_resource.Play()
+}
+
+func PauseMusic() {
+	currentPlatform.PauseMusic()
+}
+
+func ResumeMusic() {
+	currentPlatform.ResumeMusic()
+}
+
+func StopMusic() {
+	currentPlatform.StopMusic()
+}
+
+type AudioType int
+
+const (
+	AUDIO_SOUND AudioType = iota
+	AUDIO_MUSIC
+)
+
 // AudioResource describes a loaded sound.
 type AudioResource struct {
-	channel     int     // channel to play on
+	Looping     bool    // used for music. if true, music loops until stopped.
+
+	audioType   AudioType
+	channel     int     // channel to play on. only used for sounds, music gets its own special channel.
 	volume      float64 // volume of the sound, from [0 - 1]
-	ready       bool
+	name        string  // sound name, by default this is the file name (minus extension)
 	platform_id int
-	name        string // sound name, by default this is the file name (minus extension)
+	ready       bool
 }
 
 // Sets the volume for the sound. This is a percentage value between [0 - 100].
@@ -58,8 +94,15 @@ func (ar AudioResource) Play() {
 		return
 	}
 
-	mixedVolume := masterVolume * sfxVolume * ar.volume
-	currentPlatform.PlayAudio(ar.platform_id, ar.channel, int(mixedVolume*100))
+	switch ar.audioType {
+	case AUDIO_SOUND:
+		mixedVolume := masterVolume * sfxVolume * ar.volume
+		currentPlatform.PlaySound(ar.platform_id, ar.channel, int(mixedVolume*100))
+	case AUDIO_MUSIC:
+		mixedVolume := masterVolume * musicVolume * ar.volume
+		currentPlatform.SetMusicVolume(int(mixedVolume * 100))
+		currentPlatform.PlayMusic(ar.platform_id, ar.Looping)
+	}
 }
 
 func (ar AudioResource) Ready() bool {
@@ -71,29 +114,56 @@ func (ar *AudioResource) Unload() {
 		return
 	}
 
-	currentPlatform.UnloadAudio(ar.platform_id)
+	switch ar.audioType {
+	case AUDIO_SOUND:
+		currentPlatform.UnloadSound(ar.platform_id)
+	case AUDIO_MUSIC:
+		currentPlatform.UnloadMusic(ar.platform_id)
+	}
+
 	ar.ready = false
+}
+
+func LoadSound(path string) (sound AudioResource) {
+	log.Info("Loading sound at ", path)
+	return loadAudioResource(path, AUDIO_SOUND)
+}
+
+func LoadMusic(path string) (music AudioResource) {
+	log.Info("Loading music at ", path)
+	return loadAudioResource(path, AUDIO_MUSIC)
 }
 
 // LoadAudioResource loads a WAV file at path and if successful returns a playable audio resource. If not successfully
 // loaded audio_resource will be nil.
-func LoadAudioResource(path string) (audio_resource AudioResource) {
-	log.Info("Loading audio at ", path)
+func loadAudioResource(path string, audio_type AudioType) (audio_resource AudioResource) {
 	if currentPlatform == nil {
 		log.Error("Could not load audio at", path, "platform not set up yet.")
 		return
 	}
 
-	platformID, err := currentPlatform.LoadAudio(path)
+	var platformID int
+	var err error
+
+	switch audio_type {
+	case AUDIO_SOUND:
+		platformID, err = currentPlatform.LoadSound(path)
+	case AUDIO_MUSIC:
+		platformID, err = currentPlatform.LoadMusic(path)
+	default:
+		return
+	}
+
 	if err != nil {
 		log.Error("Could not load audio: ", err)
 		return
 	}
 
 	audio_resource.platform_id = platformID
+	audio_resource.audioType = audio_type
 	audio_resource.volume = 1
+	audio_resource.name = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 	audio_resource.ready = true
-	audio_resource.name = strings.TrimSuffix(filepath.Base(path), ".wav")
 
 	return
 }
@@ -191,7 +261,7 @@ func LoadSoundLibrary(dir_path string) (library SoundLibrary) {
 		}
 
 		if strings.HasSuffix(file.Name(), ".wav") {
-			res := LoadAudioResource(filepath.Join(dir_path, file.Name()))
+			res := LoadSound(filepath.Join(dir_path, file.Name()))
 			if res.ready {
 				library.AddSound(res)
 			}

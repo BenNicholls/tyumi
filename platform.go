@@ -17,9 +17,17 @@ var EV_QUIT = event.Register("Quit Event")
 type Platform interface {
 	Init() error
 
-	LoadAudio(path string) (platform_res_id int, err error)
-	UnloadAudio(platform_res_id int)
-	PlayAudio(platform_res_id, channel, volume_pct int)
+	LoadSound(path string) (platform_audio_id int, err error)
+	UnloadSound(platform_audio_id int)
+	PlaySound(platform_audio_id, channel, volume_pct int)
+
+	LoadMusic(path string) (platform_music_id int, err error)
+	UnloadMusic(platform_music_id int)
+	PlayMusic(platform_music_id int, looping bool)
+	SetMusicVolume(volume_pct int)
+	PauseMusic()
+	ResumeMusic()
+	StopMusic()
 
 	GetRenderer() Renderer
 	GetEventGenerator() EventGenerator

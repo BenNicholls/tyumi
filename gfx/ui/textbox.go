@@ -9,11 +9,20 @@ import (
 
 const FIT_TEXT int = 50000
 
+// Determines how to justify text
+type Justification int
+
+const (
+	JUSTIFY_LEFT Justification = iota
+	JUSTIFY_CENTER
+	JUSTIFY_RIGHT
+)
+
 type Textbox struct {
 	Element
 
 	text       string //text to be displayed
-	center     bool
+	justify    Justification
 	lines      []string //text after it has been word wrapped
 	textMode   gfx.TextMode
 	fit_width  bool
@@ -23,16 +32,16 @@ type Textbox struct {
 // Creates a textbox. You can set the width or height to FIT_TEXT to have the textbox compute the dimensions for you. If
 // width is set to FIT_TEXT, the box will ensure the entire text fits on 1 line (aka height will be 1). Setting height =
 // FIT_TEXT will wrap the text at the provided width, and the textbox will have height = however many lines are required.
-func NewTextbox(size vec.Dims, pos vec.Coord, depth int, text string, center bool) (tb *Textbox) {
+func NewTextbox(size vec.Dims, pos vec.Coord, depth int, text string, justify Justification) (tb *Textbox) {
 	tb = new(Textbox)
-	tb.Init(size, pos, depth, text, center)
+	tb.Init(size, pos, depth, text, justify)
 
 	return tb
 }
 
-func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, center bool) {
+func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, justify Justification) {
 	tb.text = text
-	tb.center = center
+	tb.justify = justify
 	tb.lines = make([]string, 0)
 
 	if size.W == FIT_TEXT {
@@ -113,13 +122,23 @@ func (tb *Textbox) Render() {
 	for i, line := range tb.lines {
 		x_offset := 0
 		pos := vec.Coord{0, i}
-		if tb.center {
+		switch tb.justify {
+		case JUSTIFY_CENTER:
 			switch tb.getTextMode() {
 			case gfx.TEXTMODE_FULL:
 				x_offset = (tb.size.W - len(line)) / 2
 				pos.X = x_offset
 			case gfx.TEXTMODE_HALF:
 				x_offset = (tb.size.W*2 - len(line)) / 2
+				pos.X = x_offset / 2
+			}
+		case JUSTIFY_RIGHT:
+			switch tb.getTextMode() {
+			case gfx.TEXTMODE_FULL:
+				x_offset = tb.size.W - len(line)
+				pos.X = x_offset
+			case gfx.TEXTMODE_HALF:
+				x_offset = tb.size.W*2 - len(line)
 				pos.X = x_offset / 2
 			}
 		}

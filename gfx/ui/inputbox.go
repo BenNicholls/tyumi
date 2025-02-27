@@ -29,7 +29,7 @@ func NewInputbox(size vec.Dims, pos vec.Coord, depth, input_length int) (ib *Inp
 // Initializes the inputbox. input_length limits the number of characters that can be written. if <= 0,
 // input will instead be limited to the width of the inputbox
 func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) {
-	ib.Textbox.Init(size, pos, depth, "", false)
+	ib.Textbox.Init(size, pos, depth, "", JUSTIFY_LEFT)
 	if input_length > 0 {
 		ib.inputLengthMax = input_length
 	} else {

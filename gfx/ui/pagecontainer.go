@@ -157,7 +157,7 @@ func newPage(page_size vec.Dims, title string) (p *Page) {
 	p.title = title
 	p.Init(page_size, vec.Coord{0, 3}, 0)
 
-	p.tab = NewTextbox(vec.Dims{FIT_TEXT, 1}, vec.Coord{1, 1}, 5, title, false)
+	p.tab = NewTextbox(vec.Dims{FIT_TEXT, 1}, vec.Coord{1, 1}, 5, title, JUSTIFY_LEFT)
 	p.tab.EnableBorder()
 	p.tab.Border.SetStyle(BORDER_STYLE_INHERIT)
 

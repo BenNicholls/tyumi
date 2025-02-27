@@ -21,7 +21,7 @@ type ChoiceBox struct {
 
 func NewChoiceBox(size vec.Dims, pos vec.Coord, depth int, choices ...string) (cb *ChoiceBox) {
 	cb = new(ChoiceBox)
-	cb.Textbox.Init(size, pos, depth, "No Choice", true)
+	cb.Textbox.Init(size, pos, depth, "No Choice", JUSTIFY_CENTER)
 	cb.currentChoiceIndex = -1
 
 	cb.choices = choices

@@ -9,9 +9,25 @@ import (
 	"github.com/bennicholls/tyumi/util"
 )
 
+var audioSystem AudioSystem
+
 var masterVolume float64 = 1
 var sfxVolume float64 = 1
 var musicVolume float64 = 1
+
+func EnableAudio() {
+	if currentPlatform == nil {
+		log.Error("Cannot enable audio: platform not set.")
+		return
+	}
+
+	audioSystem = currentPlatform.GetAudioSystem()
+	if audioSystem != nil {
+		log.Info("Audio system enabled.")
+	} else {
+		log.Info("Audio system not enabled: platform did not supply system.")
+	}
+}
 
 // Sets the master volume for all sounds and music. volume is a percentage [0 - 100]
 func SetVolume(volume int) {
@@ -43,15 +59,21 @@ func PlayMusic(music_resource AudioResource) {
 }
 
 func PauseMusic() {
-	currentPlatform.PauseMusic()
+	if audioSystem != nil {
+		audioSystem.PauseMusic()
+	}
 }
 
 func ResumeMusic() {
-	currentPlatform.ResumeMusic()
+	if audioSystem != nil {
+		audioSystem.ResumeMusic()
+	}
 }
 
 func StopMusic() {
-	currentPlatform.StopMusic()
+	if audioSystem != nil {
+		audioSystem.StopMusic()
+	}
 }
 
 type AudioType int
@@ -89,6 +111,10 @@ func (ar *AudioResource) SetChannelAny() {
 }
 
 func (ar AudioResource) Play() {
+	if audioSystem == nil {
+		return
+	}
+	
 	if !ar.ready {
 		log.Error("Audio resource not ready, has it been unloaded perhaps?")
 		return
@@ -97,11 +123,11 @@ func (ar AudioResource) Play() {
 	switch ar.audioType {
 	case AUDIO_SOUND:
 		mixedVolume := masterVolume * sfxVolume * ar.volume
-		currentPlatform.PlaySound(ar.platform_id, ar.channel, int(mixedVolume*100))
+		audioSystem.PlaySound(ar.platform_id, ar.channel, int(mixedVolume*100))
 	case AUDIO_MUSIC:
 		mixedVolume := masterVolume * musicVolume * ar.volume
-		currentPlatform.SetMusicVolume(int(mixedVolume * 100))
-		currentPlatform.PlayMusic(ar.platform_id, ar.Looping)
+		audioSystem.SetMusicVolume(int(mixedVolume * 100))
+		audioSystem.PlayMusic(ar.platform_id, ar.Looping)
 	}
 }
 
@@ -110,15 +136,15 @@ func (ar AudioResource) Ready() bool {
 }
 
 func (ar *AudioResource) Unload() {
-	if !ar.ready {
+	if audioSystem == nil || !ar.ready{
 		return
 	}
 
 	switch ar.audioType {
 	case AUDIO_SOUND:
-		currentPlatform.UnloadSound(ar.platform_id)
+		audioSystem.UnloadSound(ar.platform_id)
 	case AUDIO_MUSIC:
-		currentPlatform.UnloadMusic(ar.platform_id)
+		audioSystem.UnloadMusic(ar.platform_id)
 	}
 
 	ar.ready = false
@@ -137,8 +163,8 @@ func LoadMusic(path string) (music AudioResource) {
 // LoadAudioResource loads a WAV file at path and if successful returns a playable audio resource. If not successfully
 // loaded audio_resource will be nil.
 func loadAudioResource(path string, audio_type AudioType) (audio_resource AudioResource) {
-	if currentPlatform == nil {
-		log.Error("Could not load audio at", path, "platform not set up yet.")
+	if audioSystem == nil {
+		log.Error("Could not load audio at", path, "audio system not enabled.")
 		return
 	}
 
@@ -147,9 +173,9 @@ func loadAudioResource(path string, audio_type AudioType) (audio_resource AudioR
 
 	switch audio_type {
 	case AUDIO_SOUND:
-		platformID, err = currentPlatform.LoadSound(path)
+		platformID, err = audioSystem.LoadSound(path)
 	case AUDIO_MUSIC:
-		platformID, err = currentPlatform.LoadMusic(path)
+		platformID, err = audioSystem.LoadMusic(path)
 	default:
 		return
 	}

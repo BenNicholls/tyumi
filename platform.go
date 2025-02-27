@@ -16,21 +16,9 @@ var EV_QUIT = event.Register("Quit Event")
 // what features they support. This is a problem for later.
 type Platform interface {
 	Init() error
-
-	LoadSound(path string) (platform_audio_id int, err error)
-	UnloadSound(platform_audio_id int)
-	PlaySound(platform_audio_id, channel, volume_pct int)
-
-	LoadMusic(path string) (platform_music_id int, err error)
-	UnloadMusic(platform_music_id int)
-	PlayMusic(platform_music_id int, looping bool)
-	SetMusicVolume(volume_pct int)
-	PauseMusic()
-	ResumeMusic()
-	StopMusic()
-
 	GetRenderer() Renderer
 	GetEventGenerator() EventGenerator
+	GetAudioSystem() AudioSystem
 	Shutdown()
 }
 
@@ -94,4 +82,20 @@ func SetupRenderer(glyph_path, font_path, title string) error {
 	}
 
 	return nil
+}
+
+type AudioSystem interface {
+	LoadSound(path string) (platform_audio_id int, err error)
+	UnloadSound(platform_audio_id int)
+	PlaySound(platform_audio_id, channel, volume_pct int)
+
+	LoadMusic(path string) (platform_music_id int, err error)
+	UnloadMusic(platform_music_id int)
+	PlayMusic(platform_music_id int, looping bool)
+	SetMusicVolume(volume_pct int)
+	PauseMusic()
+	ResumeMusic()
+	StopMusic()
+
+	Shutdown()
 }

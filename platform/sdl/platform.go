@@ -7,21 +7,20 @@ import (
 )
 
 type Platform struct {
-	renderer *Renderer
-	audio tyumi.AudioSystem
+	renderer Renderer
+	audio    tyumi.AudioSystem
 
 	mouse_position vec.Coord
 }
 
 func (p *Platform) Init() (err error) {
-	p.renderer = NewRenderer()
 	gfx.DefaultTextMode = gfx.TEXTMODE_HALF
 
 	return
 }
 
 func (p *Platform) GetRenderer() tyumi.Renderer {
-	return p.renderer
+	return &p.renderer
 }
 
 func (p *Platform) GetEventGenerator() tyumi.EventGenerator {
@@ -30,14 +29,14 @@ func (p *Platform) GetEventGenerator() tyumi.EventGenerator {
 
 func (p *Platform) Shutdown() {
 	p.renderer.Cleanup()
-	
+
 	if p.audio != nil {
 		p.audio.Shutdown()
 	}
 }
 
 // Creates a platform for use by Tyumi. Pass this into engine.SetPlatform()
-func New() *Platform {
+func NewPlatform() *Platform {
 	sdl_platform := new(Platform)
 	return sdl_platform
 }

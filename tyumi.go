@@ -32,18 +32,18 @@ func GetTick() int {
 }
 
 func isInitialized() bool {
-	if !mainConsole.ready {
-		log.Error("Cannot run Tyumi: console not initialized. Run InitConsole() first.")
-		return false
-	}
-
 	if currentPlatform == nil {
 		log.Error("Cannot run Tyumi: no platform set. Run SetPlatform() first.")
 		return false
 	}
 
+	if !mainConsole.ready {
+		log.Error("Cannot run Tyumi: console not initialized. Run InitConsole() first.")
+		return false
+	}
+
 	if !renderer.Ready() {
-		log.Error("Cannot run Tyumi: renderer not set up. Run SetupRenderer() first.")
+		log.Error("Cannot run Tyumi: renderer was not set up correctly.")
 		return false
 	}
 

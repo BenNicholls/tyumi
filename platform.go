@@ -1,8 +1,6 @@
 package tyumi
 
 import (
-	"errors"
-
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/log"
@@ -16,10 +14,11 @@ var EV_QUIT = event.Register("Quit Event")
 // what features they support. This is a problem for later.
 type Platform interface {
 	Init() error
+	Shutdown()
+
 	GetRenderer() Renderer
 	GetEventGenerator() EventGenerator
 	GetAudioSystem() AudioSystem
-	Shutdown()
 }
 
 var currentPlatform Platform = nil
@@ -61,27 +60,6 @@ type Renderer interface {
 	Render()
 	ForceRedraw()
 	ToggleDebugMode(string)
-}
-
-// Sets up the renderer. This must be done after initializaing the console and setting the platform, but before
-// running the main game loop.
-func SetupRenderer(glyph_path, font_path, title string) error {
-	if !mainConsole.ready {
-		log.Error("Cannot initialize renderer: console not initialized. Run InitConsole() first.")
-		return errors.New("NO CONSOLE.")
-	}
-
-	if currentPlatform == nil {
-		log.Error("Cannot initialize renderer: no platform set. Run SetPlatform() first.")
-		return errors.New("NO PLATFORM.")
-	}
-
-	err := renderer.Setup(&mainConsole.Canvas, glyph_path, font_path, title)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type AudioSystem interface {

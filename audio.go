@@ -22,29 +22,49 @@ func EnableAudio() {
 	}
 
 	audioSystem = currentPlatform.GetAudioSystem()
-	if audioSystem != nil {
+	if audioEnabled() {
 		log.Info("Audio system enabled.")
 	} else {
-		log.Info("Audio system not enabled: platform did not supply system.")
+		log.Info("Audio system not enabled: platform did not supply audio system.")
 	}
+}
+
+func audioEnabled() bool {
+	return audioSystem != nil
 }
 
 // Sets the master volume for all sounds and music. volume is a percentage [0 - 100]
 func SetVolume(volume int) {
+	if !audioEnabled() {
+		return
+	}
+
 	masterVolume = util.Clamp(float64(volume)/100.0, 0, 1)
 }
 
 // Sets the volume for all sounds. volume is a percentage [0 - 100]
 func SetSFXVolume(volume int) {
+	if !audioEnabled() {
+		return
+	}
+
 	sfxVolume = util.Clamp(float64(volume)/100.0, 0, 1)
 }
 
 // Sets the volume for all music. volume is a percentage [0 - 100]
 func SetMusicVolume(volume int) {
+	if !audioEnabled() {
+		return
+	}
+
 	musicVolume = util.Clamp(float64(volume)/100.0, 0, 1)
 }
 
 func PlayMusic(music_resource AudioResource) {
+	if !audioEnabled() {
+		return
+	}
+
 	if !music_resource.ready {
 		log.Debug("Cannot play music, music not ready.")
 		return
@@ -58,22 +78,31 @@ func PlayMusic(music_resource AudioResource) {
 	music_resource.Play()
 }
 
+// PauseMusic pauses any playing music. If no music is playing this does nothing.
 func PauseMusic() {
-	if audioSystem != nil {
-		audioSystem.PauseMusic()
+	if !audioEnabled() {
+		return
 	}
+
+	audioSystem.PauseMusic()
 }
 
+// ResumeMusic resumes and music that has been paused. If no music is in a paused state this does nothing.
 func ResumeMusic() {
-	if audioSystem != nil {
-		audioSystem.ResumeMusic()
+	if !audioEnabled() {
+		return
 	}
+
+	audioSystem.ResumeMusic()
 }
 
+// StopMusic immediately halts any playing music.
 func StopMusic() {
-	if audioSystem != nil {
-		audioSystem.StopMusic()
+	if !audioEnabled() {
+		return
 	}
+
+	audioSystem.StopMusic()
 }
 
 type AudioType int
@@ -83,21 +112,21 @@ const (
 	AUDIO_MUSIC
 )
 
-// AudioResource describes a loaded sound.
+// AudioResource describes a loaded sound or music file.
 type AudioResource struct {
-	Looping     bool    // used for music. if true, music loops until stopped.
+	Looping bool // used for music. if true, music loops until stopped.
 
 	audioType   AudioType
 	channel     int     // channel to play on. only used for sounds, music gets its own special channel.
 	volume      float64 // volume of the sound, from [0 - 1]
 	name        string  // sound name, by default this is the file name (minus extension)
-	platform_id int
-	ready       bool
+	platform_id int     // id used by the platform
+	ready       bool    // true if sound was successfully loaded and has not been unloaded
 }
 
 // Sets the volume for the sound. This is a percentage value between [0 - 100].
-func (ar *AudioResource) SetVolume(volume int) {
-	ar.volume = util.Clamp(float64(volume)/100.0, 0, 1)
+func (ar *AudioResource) SetVolume(volume_pct int) {
+	ar.volume = util.Clamp(float64(volume_pct)/100.0, 0, 1)
 }
 
 // Sets which channel this sound should play on. Sounds played on the same channel will cut eachother off.
@@ -111,10 +140,10 @@ func (ar *AudioResource) SetChannelAny() {
 }
 
 func (ar AudioResource) Play() {
-	if audioSystem == nil {
+	if !audioEnabled() {
 		return
 	}
-	
+
 	if !ar.ready {
 		log.Error("Audio resource not ready, has it been unloaded perhaps?")
 		return
@@ -136,7 +165,7 @@ func (ar AudioResource) Ready() bool {
 }
 
 func (ar *AudioResource) Unload() {
-	if audioSystem == nil || !ar.ready{
+	if !audioEnabled() || !ar.ready {
 		return
 	}
 
@@ -150,24 +179,29 @@ func (ar *AudioResource) Unload() {
 	ar.ready = false
 }
 
+// LoadSound loads the sound at the provided path.
 func LoadSound(path string) (sound AudioResource) {
+	if !audioEnabled() {
+		return
+	}
+
 	log.Info("Loading sound at ", path)
 	return loadAudioResource(path, AUDIO_SOUND)
 }
 
+// LoadMusic loads the music at the provided path.
 func LoadMusic(path string) (music AudioResource) {
+	if !audioEnabled() {
+		return
+	}
+
 	log.Info("Loading music at ", path)
 	return loadAudioResource(path, AUDIO_MUSIC)
 }
 
-// LoadAudioResource loads a WAV file at path and if successful returns a playable audio resource. If not successfully
-// loaded audio_resource will be nil.
+// LoadAudioResource loads a file at path and if successful returns a playable audio resource. If not successfully
+// loaded audio_resource will be unconfigured and Ready() will report false.
 func loadAudioResource(path string, audio_type AudioType) (audio_resource AudioResource) {
-	if audioSystem == nil {
-		log.Error("Could not load audio at", path, "audio system not enabled.")
-		return
-	}
-
 	var platformID int
 	var err error
 
@@ -194,6 +228,9 @@ func loadAudioResource(path string, audio_type AudioType) (audio_resource AudioR
 	return
 }
 
+// A SoundLibrary is a collection of sounds, indexed by name. A SoundLibrary can be created using LoadSoundLibrary(),
+// which takes a path to a directory and loads all of the sounds inside into the library. Alternatively, you can make
+// a custom library and use SoundLibrary.AddSound() to add whatever loaded sounds you want!
 type SoundLibrary struct {
 	names  map[string]int // map of names to index
 	sounds []AudioResource
@@ -211,22 +248,48 @@ func (sl *SoundLibrary) AddSound(audio_resource AudioResource) {
 		sl.names = make(map[string]int)
 	}
 
+	if i, ok := sl.names[audio_resource.name]; ok {
+		log.Debug("Overwriting sound in library with name ", audio_resource.name)
+		sl.sounds[i].Unload()
+	}
+
 	sl.names[audio_resource.name] = len(sl.sounds) - 1
 }
 
-// Returns a reference to a sound in the library. If the name is invalid, the resource will be nil.
-func (sl *SoundLibrary) Get(sound_name string) *AudioResource {
-	if i, ok := sl.names[sound_name]; ok {
-		return &sl.sounds[i]
-	} else {
-		log.Debug("No sound called ", sound_name)
-		return nil
+// SetChannelAll sets the channel for all sounds in the library to the provided channel.
+func (sl *SoundLibrary) SetChannelAll(channel int) {
+	for i := range sl.sounds {
+		sl.sounds[i].SetChannel(channel)
 	}
+}
+
+// SetChannel sets the channel for the named sound. Be default, sounds play on channel 0.
+func (sl *SoundLibrary) SetChannel(sound_name string, channel int) {
+	sound := sl.get(sound_name)
+	if sound == nil {
+		return
+	}
+
+	sound.SetChannel(channel)
+}
+
+// SetVolume sets the volume for the named sound. Volume_pct is a percentage, from [0 - 100]
+func (sl *SoundLibrary) SetVolume(sound_name string, volume_pct int) {
+	sound := sl.get(sound_name)
+	if sound == nil {
+		return
+	}
+
+	sound.SetVolume(volume_pct)
 }
 
 // Plays a sound! If sound_name is invalid, does nothing.
 func (sl *SoundLibrary) Play(sound_name string) {
-	sound := sl.Get(sound_name)
+	if !audioEnabled() {
+		return
+	}
+
+	sound := sl.get(sound_name)
 	if sound == nil || !sound.ready {
 		return
 	}
@@ -236,7 +299,7 @@ func (sl *SoundLibrary) Play(sound_name string) {
 
 // Plays a random sound from the library. Optionally you can provide a list of sound names to randomize between.
 func (sl *SoundLibrary) PlayRandom(sound_names ...string) {
-	if !sl.containsReadySounds() {
+	if !audioEnabled() || !sl.containsReadySounds() {
 		return
 	}
 
@@ -254,12 +317,22 @@ func (sl *SoundLibrary) PlayRandom(sound_names ...string) {
 		// go through user-provided names, extract those which are valid and point to ready sounds.
 		sounds := make([]*AudioResource, 0)
 		for _, name := range sound_names {
-			if sound := sl.Get(name); sound != nil && sound.ready {
+			if sound := sl.get(name); sound != nil && sound.ready {
 				sounds = append(sounds, sound)
 			}
 		}
 
 		util.PickOne(sounds).Play()
+	}
+}
+
+// Returns a reference to a sound in the library. If the name is invalid, the resource will be nil.
+func (sl *SoundLibrary) get(sound_name string) *AudioResource {
+	if i, ok := sl.names[sound_name]; ok {
+		return &sl.sounds[i]
+	} else {
+		log.Debug("No sound called ", sound_name)
+		return nil
 	}
 }
 
@@ -273,8 +346,14 @@ func (sl SoundLibrary) containsReadySounds() bool {
 	return false
 }
 
-// LoadSoundLibrary loads all sounds in a provided directory and returns a library of those sounds.
+// LoadSoundLibrary loads all sounds in a provided directory and returns a library of those sounds. If this fails for
+// whatever reason, the returned library will be empty.
 func LoadSoundLibrary(dir_path string) (library SoundLibrary) {
+	if !audioEnabled() {
+		log.Debug("Could not load sound library at ", dir_path, ", audio system not enabled.")
+		return
+	}
+
 	dir, err := os.ReadDir(dir_path)
 	if err != nil {
 		log.Error("Could not load sound library:", err)

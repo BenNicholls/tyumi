@@ -26,8 +26,8 @@ type state interface {
 	IsBlocked() bool
 }
 
-// State is the base implementation for Tyumi game state object. States contain a window, where the programs UI is built,
-// as well as the machinery for handling game and input events. Custom states can be made by embedding this and
+// State is the base implementation for Tyumi's game state object. States contain a window, where the programs UI is
+// built, as well as the machinery for handling game and input events. Custom states can be made by embedding this and
 // overriding the virtual functions defined here. Most important is the Update() function, which runs once per-tick
 // and should contain your main game code.
 type State struct {

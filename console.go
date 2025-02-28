@@ -79,7 +79,8 @@ func ChangeTitle(title string) {
 	mainConsole.changeTitle(title)
 }
 
-// EnableCursor enables drawing of the mouse cursor. Also sets input.EnableMouse = true
+// EnableCursor enables drawing of the mouse cursor. Also sets input.EnableMouse = true so mouse events start being
+// fired.
 func EnableCursor() {
 	mainConsole.mouseCursorEnabled = true
 	input.EnableMouse = true

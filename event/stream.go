@@ -56,7 +56,7 @@ func (s *Stream) Next() Event {
 	return <-s.stream
 }
 
-// Begins listening for the specified event.
+// Begins listening for the specified event(s).
 func (s *Stream) Listen(ids ...int) {
 	for _, id := range ids {
 		if id < 0 || id >= len(registeredEvents) {

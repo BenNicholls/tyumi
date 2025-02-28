@@ -1,7 +1,6 @@
 package tyumi
 
 import (
-	"runtime"
 	"time"
 
 	"github.com/bennicholls/tyumi/event"
@@ -13,7 +12,6 @@ var running bool
 
 // This is the gameloop
 func Run() {
-	runtime.LockOSThread() //most of sdl is single threaded
 	defer log.WriteToDisk()
 
 	if !isInitialized() {

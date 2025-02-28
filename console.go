@@ -14,12 +14,22 @@ var mainConsole console
 type console struct {
 	gfx.Canvas
 	ready bool
+	title string // title of the program
 
 	mouseCursorEnabled bool
 	mouseCursorVisuals gfx.Visuals
 	mouseCursorPos     vec.Coord
 
 	events event.Stream
+}
+
+func (c *console) changeTitle(new_title string) {
+	if c.title == new_title {
+		return
+	}
+
+	c.title = new_title
+	currentPlatform.ChangeTitle(c.title)
 }
 
 func (c *console) handleEvents(e event.Event) (event_handled bool) {
@@ -61,6 +71,12 @@ func InitConsole(title string, console_size vec.Dims, glyph_path, font_path stri
 	mainConsole.mouseCursorVisuals = gfx.NewGlyphVisuals(gfx.GLYPH_BORDER_UUDDLLRR, col.Pair{col.WHITE, col.NONE})
 
 	mainConsole.ready = true
+}
+
+// ChangeTitle changes the title of the running program. i.e. the string shown in the title bar of the program's
+// window for a windows/mac/linux program, or the string in the tab of a running web app.
+func ChangeTitle(title string) {
+	mainConsole.changeTitle(title)
 }
 
 // EnableCursor enables drawing of the mouse cursor. Also sets input.EnableMouse = true

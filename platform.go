@@ -16,6 +16,8 @@ type Platform interface {
 	Init() error
 	Shutdown()
 
+	ChangeTitle(title string)
+
 	GetRenderer() Renderer
 	GetEventGenerator() EventGenerator
 	GetAudioSystem() AudioSystem

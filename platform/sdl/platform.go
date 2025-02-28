@@ -19,6 +19,14 @@ func (p *Platform) Init() (err error) {
 	return
 }
 
+func (p *Platform) ChangeTitle(title string) {
+	if !p.renderer.ready {
+		return
+	}
+
+	p.renderer.window.SetTitle(title)
+}
+
 func (p *Platform) GetRenderer() tyumi.Renderer {
 	return &p.renderer
 }

@@ -136,6 +136,38 @@ func (e *Element) Move(dx, dy int) {
 	e.MoveTo(vec.Coord{e.position.X + dx, e.position.Y + dy})
 }
 
+// Centers the element within its parent. If not a child of another element, does nothing.
+// NOTE: this does not keep the object centered, if the object changes shape or the parent does something, this must
+// be called again.
+func (e *Element) Center() {
+	e.CenterHorizontal()
+	e.CenterVertical()
+}
+
+// Centers the element horizontally within its parent. If not a child of another element, does nothing.
+// NOTE: this does not keep the object centered, if the object changes shape or the parent does something, this must
+// be called again.
+func (e *Element) CenterHorizontal() {
+	parent := e.GetParent()
+	if parent == nil {
+		return
+	}
+
+	e.MoveTo(vec.Coord{(parent.Size().W - e.size.W) / 2, e.position.Y})
+}
+
+// Centers the element vertically within its parent. If not a child of another element, does nothing.
+// NOTE: this does not keep the object centered, if the object changes shape or the parent does something, this must
+// be called again.
+func (e *Element) CenterVertical() {
+	parent := e.GetParent()
+	if parent == nil {
+		return
+	}
+
+	e.MoveTo(vec.Coord{e.position.X, (parent.Size().H - e.size.H) / 2})
+}
+
 // AddChild add a child element to this one. Child elements are composited together along with their parent to
 // produce the final visuals for the element.
 func (e *Element) AddChild(child element) {

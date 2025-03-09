@@ -8,6 +8,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+var EV_CHANGESTATE = event.Register("State Change Event")
 var currentState state
 
 const (
@@ -42,7 +43,7 @@ type State struct {
 
 // Init prepares the gamestate. If the console has been initialized, you can use FIT_CONSOLE as the
 // width and/or height to have the state size itself automatically.
-func (sp *State) Init(size vec.Dims) {
+func (s *State) Init(size vec.Dims) {
 	if size.W == FIT_CONSOLE || size.H == FIT_CONSOLE {
 		if !mainConsole.ready {
 			log.Error("Cannot fit state window to console: console not initialized.")
@@ -57,60 +58,60 @@ func (sp *State) Init(size vec.Dims) {
 		}
 	}
 
-	sp.window = ui.NewWindow(size, vec.ZERO_COORD, 0)
+	s.window = ui.NewWindow(size, vec.ZERO_COORD, 0)
 
-	sp.events = event.NewStream(100, nil)
-	sp.inputEvents = event.NewStream(100, sp.handleInput)
+	s.events = event.NewStream(100, nil)
+	s.inputEvents = event.NewStream(100, s.handleInput)
 
 	//setup automatic listening for input events.
-	sp.inputEvents.Listen(input.EV_KEYBOARD, input.EV_MOUSEBUTTON, input.EV_MOUSEMOVE)
-	sp.ready = true
+	s.inputEvents.Listen(input.EV_KEYBOARD, input.EV_MOUSEBUTTON, input.EV_MOUSEMOVE)
+	s.ready = true
 }
 
 // Update is run each tick, after input has been handled and before UI is updated/rendered. Override this function
 // with your primary game code!
-func (sp *State) Update() {
+func (s *State) Update() {
 	return
 }
 
 // UpdateUI is called before each frame is rendered, allowing you to apply ui changes for rendering all at once if
 // you prefer. Otherwise you can implement Update() functions on the individual UI elements themselves and have them
 // control their own behaviour.
-func (sp *State) UpdateUI() {
+func (s *State) UpdateUI() {
 	return
 }
 
-func (sp *State) Shutdown() {
+func (s *State) Shutdown() {
 	//TODO MAYBE: de-listen for input events??
 	return
 }
 
-func (sp *State) Window() *ui.Window {
-	return sp.window
+func (s *State) Window() *ui.Window {
+	return s.window
 }
 
-func (sp *State) Events() *event.Stream {
-	return &sp.events
+func (s *State) Events() *event.Stream {
+	return &s.events
 }
 
-func (sp *State) InputEvents() *event.Stream {
-	return &sp.inputEvents
+func (s *State) InputEvents() *event.Stream {
+	return &s.inputEvents
 }
 
 // sets the function for handling game events. these are collected during Update(), and then processed
 // at the end of each Update() in the order they were received.
-func (sp *State) SetEventHandler(handler event.Handler) {
-	sp.events.AddHandler(handler)
+func (s *State) SetEventHandler(handler event.Handler) {
+	s.events.AddHandler(handler)
 }
 
-func (sp *State) handleInput(event event.Event) (event_handled bool) {
+func (s *State) handleInput(event event.Event) (event_handled bool) {
 	switch event.ID() {
 	case input.EV_KEYBOARD:
-		event_handled = sp.window.HandleKeypress(event.(*input.KeyboardEvent))
+		event_handled = s.window.HandleKeypress(event.(*input.KeyboardEvent))
 	}
 
-	if sp.inputHandler != nil {
-		event_handled = event_handled || sp.inputHandler(event)
+	if s.inputHandler != nil {
+		event_handled = event_handled || s.inputHandler(event)
 	}
 
 	return
@@ -120,18 +121,18 @@ func (sp *State) handleInput(event event.Event) (event_handled bool) {
 // processed at the beginning of each tick(). This handler is called after the UI has had a chance to handle
 // the input. If the UI handles the input, event.Handled() will be true. You can still choose to ignore that and
 // handle the event again if you like though.
-func (sp *State) SetInputHandler(handler event.Handler) {
-	sp.inputHandler = handler
+func (s *State) SetInputHandler(handler event.Handler) {
+	s.inputHandler = handler
 }
 
-func (sp *State) Ready() bool {
-	return sp.ready
+func (s *State) Ready() bool {
+	return s.ready
 }
 
 // Returns true if updating has been blocked. Currently this only happens from blocking animations, but later might
 // also indicate that the game is paused perhaps.
-func (sp *State) IsBlocked() bool {
-	return sp.window.IsBlocked()
+func (s *State) IsBlocked() bool {
+	return s.window.IsBlocked()
 }
 
 // SetInitialMainState sets a state to be run by Tyumi at the beginning of execution.
@@ -152,4 +153,32 @@ func SetInitialMainState(s state) {
 	}
 
 	currentState = s
+}
+
+type StateChangeEvent struct {
+	event.EventPrototype
+
+	newState state
+}
+
+// ChangeState changes the current state being run in Tyumi's gameloop. The change is done at the end of the current
+// engine tick. The old state's Shutdown() method is called before we swap in the new one. Be sure to initialize the
+// new state before calling ChangeState(), otherwise no change will happen and the old state will remain.
+func ChangeState(new_state state) {
+	if new_state == nil || !new_state.Ready() {
+		log.Error("Could not change state: state invalid or not initialized.")
+		return
+	}
+
+	//if user tries to use this to setup the initial main state, just forgive them their sin and do it. no need to
+	//harass them with "the correct way".
+	if currentState == nil {
+		SetInitialMainState(new_state)
+		return
+	}
+
+	event.Fire(&StateChangeEvent{
+		EventPrototype: *event.New(EV_CHANGESTATE),
+		newState:       new_state,
+	})
 }

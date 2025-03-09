@@ -5,7 +5,6 @@ import (
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/log"
-	"github.com/bennicholls/tyumi/vec"
 )
 
 var running bool
@@ -66,7 +65,7 @@ func updateUI() {
 // builds the frame and renders using the current platform's renderer.
 func render() {
 	currentState.Window().Render()
-	currentState.Window().Draw(&mainConsole.Canvas, vec.ZERO_COORD, 0)
+	currentState.Window().Draw(&mainConsole.Canvas)
 	if mainConsole.Dirty() {
 		renderer.Render()
 	}

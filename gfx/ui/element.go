@@ -21,6 +21,7 @@ type element interface {
 
 	prepareRender()
 	Render()
+	Draw(dst_canvas *gfx.Canvas)
 	renderAnimations()
 	finalizeRender()
 	drawChildren()
@@ -40,7 +41,6 @@ type element interface {
 	getWindow() *Window
 	getBorderStyle() BorderStyle
 	getDepth() int
-	getPosition() vec.Coord
 	getAnimations() []gfx.Animator
 }
 
@@ -293,6 +293,11 @@ func (e *Element) renderAnimations() {
 	}
 }
 
+// Draws the element to a provided canvas, based on the element's position and respecting depth.
+func (e *Element) Draw(dst_canvas *gfx.Canvas) {
+	e.Canvas.Draw(dst_canvas, e.position, e.depth)
+}
+
 func (e *Element) drawChildren() {
 	for i, child := range e.GetChildren() {
 		if !child.IsVisible() {
@@ -300,7 +305,7 @@ func (e *Element) drawChildren() {
 		}
 
 		if child.getCanvas().Dirty() || e.forceRedraw {
-			child.getCanvas().Draw(&e.Canvas, child.getPosition(), child.getDepth())
+			child.Draw(&e.Canvas)
 			if child.IsBordered() {
 				// attempt to link to siblings' borders
 				for sib_i, sibling := range e.GetChildren() {

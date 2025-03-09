@@ -41,9 +41,53 @@ type State struct {
 	ready bool // indicates the state has been successfully initialized
 }
 
-// Init prepares the gamestate. If the console has been initialized, you can use FIT_CONSOLE as the
-// width and/or height to have the state size itself automatically.
-func (s *State) Init(size vec.Dims) {
+// Init prepares the gamestate, defaulting to a window the full size of the console. 
+// NOTE: If you want a border drawn around the window, use InitBordered() instead since Tyumi draws borders *around*
+// objects and if the window is the size of the console you wouldn't be able to see it.
+func (s *State) Init() {
+	if !mainConsole.ready {
+		log.Error("Cannot fit state window to console: console not initialized.")
+		return
+	}
+
+	s.init(mainConsole.Size(), vec.ZERO_COORD, false)
+}
+
+// InitBordered prepares the gamestate, defaulting to a window the full size of the console with a border drawn around
+// the outside. 
+func (s *State) InitBordered() {
+	if !mainConsole.ready {
+		log.Error("Cannot fit state window to console: console not initialized.")
+		return
+	}
+
+	s.init(mainConsole.Size().Shrink(2, 2), vec.Coord{1,1}, true)
+}
+
+// InitCentered prepares the gamestate, centering the state's window inside the console.
+func (s *State) InitCentered(size vec.Dims) {
+	if !mainConsole.ready {
+		log.Error("Cannot fit state window to console: console not initialized.")
+		return
+	}
+	
+	pos := vec.Coord{(mainConsole.Size().W- size.W)/2, (mainConsole.Size().H - size.H)/2}
+	s.init(size, pos, false)
+}
+
+// InitCustom prepares the gamestate, creating a window using the given size and position. The position will be relative
+// to the console. If the console has been initialized, you can use FIT_CONSOLE as the width and/or height to have the
+// state size itself automatically.
+func (s *State) InitCustom(size vec.Dims, pos vec.Coord) {
+	s.init(size, pos, false)
+}
+
+func (s *State) init(size vec.Dims, pos vec.Coord, bordered bool) {
+	if s.ready {
+		log.Error("Trying to initialize a state more than once. Don't do that.")
+		return
+	}
+	
 	if size.W == FIT_CONSOLE || size.H == FIT_CONSOLE {
 		if !mainConsole.ready {
 			log.Error("Cannot fit state window to console: console not initialized.")
@@ -58,7 +102,10 @@ func (s *State) Init(size vec.Dims) {
 		}
 	}
 
-	s.window = ui.NewWindow(size, vec.ZERO_COORD, 0)
+	s.window = ui.NewWindow(size, pos, 0)
+	if bordered {
+		s.window.EnableBorder()
+	}
 
 	s.events = event.NewStream(100, nil)
 	s.inputEvents = event.NewStream(100, s.handleInput)

@@ -46,6 +46,13 @@ func (l *List) RemoveChild(child element) {
 	l.calibrate()
 }
 
+// AddTextItems adds simple textboxes to the list, one for each string passed.
+func (l *List) AddTextItems(justify Justification, items ...string) {
+	for _, item := range items {
+		l.AddChild(NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, justify))
+	}
+}
+
 // positions all the children elements so they are top to bottom, and the selected item is visible
 func (l *List) calibrate() {
 	l.contentHeight = 0
@@ -93,9 +100,27 @@ func (l *List) updateScrollPosition() {
 	l.Border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
 }
 
-// Toggles highlighting of currently selected item.
+// Enables list element highlighting for the currently selected element.
+func (l *List) EnableHighlight() {
+	l.setHighlight(true)
+}
+
+// Disables list element highlighting for the currently selected element.
+func (l *List) DisableHighlight() {
+	l.setHighlight(false)
+}
+
+// Toggles highlighting of currently selected element.
 func (l *List) ToggleHighlight() {
-	l.highlight = !l.highlight
+	l.setHighlight(!l.highlight)
+}
+
+func (l *List) setHighlight(highlight bool) {
+	if l.highlight == highlight {
+		return
+	}
+
+	l.highlight = highlight
 	l.Updated = true
 }
 

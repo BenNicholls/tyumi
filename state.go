@@ -24,7 +24,7 @@ type state interface {
 	Events() *event.Stream
 	Ready() bool
 	IsBlocked() bool
-	
+
 	shutdown()
 }
 
@@ -42,7 +42,7 @@ type State struct {
 	ready bool // indicates the state has been successfully initialized
 }
 
-// Init prepares the gamestate, defaulting to a window the full size of the console. 
+// Init prepares the gamestate, defaulting to a window the full size of the console.
 // NOTE: If you want a border drawn around the window, use InitBordered() instead since Tyumi draws borders *around*
 // objects and if the window is the size of the console you wouldn't be able to see it.
 func (s *State) Init() {
@@ -55,14 +55,14 @@ func (s *State) Init() {
 }
 
 // InitBordered prepares the gamestate, defaulting to a window the full size of the console with a border drawn around
-// the outside. 
+// the outside.
 func (s *State) InitBordered() {
 	if !mainConsole.ready {
 		log.Error("Cannot fit state window to console: console not initialized.")
 		return
 	}
 
-	s.init(mainConsole.Size().Shrink(2, 2), vec.Coord{1,1}, true)
+	s.init(mainConsole.Size().Shrink(2, 2), vec.Coord{1, 1}, true)
 }
 
 // InitCentered prepares the gamestate, centering the state's window inside the console.
@@ -72,7 +72,7 @@ func (s *State) InitCentered(size vec.Dims) {
 		return
 	}
 
-	pos := vec.Coord{(mainConsole.Size().W- size.W)/2, (mainConsole.Size().H - size.H)/2}
+	pos := vec.Coord{(mainConsole.Size().W - size.W) / 2, (mainConsole.Size().H - size.H) / 2}
 	s.init(size, pos, false)
 }
 
@@ -88,7 +88,7 @@ func (s *State) init(size vec.Dims, pos vec.Coord, bordered bool) {
 		log.Error("Trying to initialize a state more than once. Don't do that.")
 		return
 	}
-	
+
 	if size.W == FIT_CONSOLE || size.H == FIT_CONSOLE {
 		if !mainConsole.ready {
 			log.Error("Cannot fit state window to console: console not initialized.")
@@ -137,7 +137,7 @@ func (s *State) shutdown() {
 
 	// in theory states should be freed from memory after being shutdown so this is pointless, but on the off chance a
 	// reference is hanging around maybe this will help catch a bug.
-	s.ready = false 
+	s.ready = false
 }
 
 // Shutdown is called when the state is no longer needed and should cleanly pack itself away (for example, when

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/bennicholls/tyumi/gfx"
@@ -65,6 +66,27 @@ type Element struct {
 	forceRedraw bool           //indicates this object needs to clear and render everything from zero
 	label       string         //an optional identifier for the element
 	animations  []gfx.Animator //animations on this element. these are updated once per frame while playing
+}
+
+func (e *Element) String() string {
+	desc := fmt.Sprintf("[UI Element] pos: %v, size: %v, depth: %d, visible: %t\n +-- %v", e.position, e.size, e.depth, e.visible, e.Canvas)
+	if e.label != "" {
+		desc += "\n +-- Label: " + e.label
+	}
+	if e.Border.enabled {
+		desc += fmt.Sprintf("\n +-- Border Enabled. Title: %s, Hint: %s", e.Border.title, e.Border.hint)
+	}
+	if len(e.animations) != 0 {
+		playing := 0
+		for _, anim := range e.animations {
+			if anim.IsPlaying() {
+				playing++
+			}
+		}
+		desc += fmt.Sprintf("\n +-- Animations: %d, (%d playing)", len(e.animations), playing)
+	}
+
+	return desc
 }
 
 // Init initializes the element, setting its size, as well as its position and depth relative to its parent. This must
@@ -430,10 +452,6 @@ func (e *Element) GetLabel() string {
 
 func (e *Element) IsLabelled() bool {
 	return e.label != ""
-}
-
-func (e *Element) getPosition() vec.Coord {
-	return e.position
 }
 
 func (e *Element) getDepth() int {

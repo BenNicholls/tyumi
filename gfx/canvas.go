@@ -1,6 +1,8 @@
 package gfx
 
 import (
+	"fmt"
+
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/vec"
@@ -38,6 +40,10 @@ func (c *Canvas) Init(size vec.Dims) {
 // Returns true if the canvas has been initialized and is non-zero in size
 func (c Canvas) Ready() bool {
 	return c.cells != nil && len(c.cells) != 0
+}
+
+func (c Canvas) String() string {
+	return fmt.Sprintf("Canvas with size %v, offset %v and default visuals %v", c.size, c.offset, c.defaultVisuals)
 }
 
 // Sets the default colours for a canvas, then does a reset of the canvas to apply them.

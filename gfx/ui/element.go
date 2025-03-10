@@ -247,10 +247,9 @@ func (e *Element) updateAnimations() {
 	for _, a := range e.animations {
 		if a.IsPlaying() {
 			a.Update()
-		}
-
-		if !a.IsPlaying() { //animation just finished
-			e.forceRedraw = true // make sure we reset just in case the animation left some garbage on the canvas
+			if !a.IsPlaying() { //animation just finished
+				e.forceRedraw = true // make sure we reset just in case the animation left some garbage on the canvas
+			}
 		}
 	}
 

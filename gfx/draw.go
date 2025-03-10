@@ -22,6 +22,11 @@ type Drawable interface {
 	Draw(dst_canvas *Canvas, offset vec.Coord, depth int)
 }
 
+// Defines anything that can report a set of visuals for drawing to a single cell.
+type VisualObject interface {
+	GetVisuals() Visuals
+}
+
 // Draw draws the canvas c to a destination canvas, offset by some Coord at depth z. This process will mark
 // any copied cells in c as clean.
 // TODO: this function should take in flags to determine how the canvas is copied
@@ -59,6 +64,11 @@ func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, visuals Visuals) {
 	}
 
 	c.setColours(pos, depth, visuals.Colours)
+}
+
+// Draws a single-celled object to the canvas.
+func (c *Canvas) DrawObject(pos vec.Coord, depth int, object VisualObject) {
+	c.DrawVisuals(pos, depth, object.GetVisuals())
 }
 
 // DrawNone sets the cell at pos to mode DRAW_NONE, which prevents it from being drawn.

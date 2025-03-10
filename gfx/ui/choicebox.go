@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"math/rand"
+
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
@@ -74,6 +76,15 @@ func (cb *ChoiceBox) Next() {
 
 	cb.selectChoice(util.CycleClamp(cb.currentChoiceIndex+1, 0, len(cb.choices)-1))
 	cb.arrowAnimations[1].Start()
+}
+
+// Selects a random choice from the choices available.
+func (cb *ChoiceBox) RandomizeChoice() {
+	cb.selectChoice(rand.Intn(len(cb.choices)))
+}
+
+func (cb *ChoiceBox) GetChoiceIndex() int {
+	return cb.currentChoiceIndex
 }
 
 func (cb *ChoiceBox) Render() {

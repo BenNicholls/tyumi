@@ -19,12 +19,13 @@ const (
 type state interface {
 	Update()
 	UpdateUI()
-	Shutdown()
 	Window() *ui.Window
 	InputEvents() *event.Stream
 	Events() *event.Stream
 	Ready() bool
 	IsBlocked() bool
+	
+	shutdown()
 }
 
 // State is the base implementation for Tyumi's game state object. States contain a window, where the programs UI is
@@ -70,7 +71,7 @@ func (s *State) InitCentered(size vec.Dims) {
 		log.Error("Cannot fit state window to console: console not initialized.")
 		return
 	}
-	
+
 	pos := vec.Coord{(mainConsole.Size().W- size.W)/2, (mainConsole.Size().H - size.H)/2}
 	s.init(size, pos, false)
 }
@@ -128,8 +129,21 @@ func (s *State) UpdateUI() {
 	return
 }
 
+func (s *State) shutdown() {
+	s.Shutdown()
+
+	s.events.Close()
+	s.inputEvents.Close()
+
+	// in theory states should be freed from memory after being shutdown so this is pointless, but on the off chance a
+	// reference is hanging around maybe this will help catch a bug.
+	s.ready = false 
+}
+
+// Shutdown is called when the state is no longer needed and should cleanly pack itself away (for example, when
+// switching to another state or closing the program). Override this function and use it to free resources, save things
+// to disk, whatever you need to do.
 func (s *State) Shutdown() {
-	//TODO MAYBE: de-listen for input events??
 	return
 }
 

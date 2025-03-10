@@ -1,5 +1,7 @@
 package event
 
+import "slices"
+
 var registeredEvents []eventInfo
 
 func init() {
@@ -15,13 +17,17 @@ type eventInfo struct {
 }
 
 func (e *eventInfo) addListener(stream *Stream) {
-	for _, listener := range e.listeners {
-		if listener == stream {
-			return
-		}
+	if slices.Contains(e.listeners, stream) {
+		return
 	}
 
 	e.listeners = append(e.listeners, stream)
+}
+
+func (e *eventInfo) removeListener(stream *Stream) {
+	e.listeners = slices.DeleteFunc(e.listeners, func(listener *Stream) bool {
+		return listener == stream
+	})
 }
 
 // Registers an event type with the event system and returns the assigned ID.

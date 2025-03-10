@@ -20,7 +20,7 @@ type EventPrototype struct {
 }
 
 func New(ID int) *EventPrototype {
-	if ID >= len(registeredEvents) || ID < 0 {
+	if !validID(ID) {
 		log.Warning("Attempted to create event with unregistered ID: ", ID)
 		return &EventPrototype{id: 0}
 	}
@@ -53,7 +53,7 @@ func (e *EventPrototype) setHandled() {
 
 // fire the event into the void. the event will be sent to all listening event streams
 func Fire(e Event) {
-	if e.ID() >= len(registeredEvents) || e.ID() < 0 {
+	if !validID(e.ID()) {
 		log.Error("Attempted to fire unregistered event with ID ", e.ID())
 		return
 	}
@@ -61,4 +61,8 @@ func Fire(e Event) {
 	for _, s := range registeredEvents[e.ID()].listeners {
 		s.Add(e)
 	}
+}
+
+func validID(id int) bool {
+	return id < len(registeredEvents) && id > 0
 }

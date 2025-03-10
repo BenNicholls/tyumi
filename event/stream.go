@@ -33,7 +33,7 @@ func (s *Stream) Add(e Event) {
 	}
 
 	if len(s.stream) == cap(s.stream) {
-		log.Warning("Event stream reached cap! No event added. Maybe you should make this bigger?!?!?")
+		log.Warning("Event stream full! Event not added. Either this means the stream is too small, or you've forgotten to close a stream that is no longer being processed.")
 		return
 	}
 
@@ -59,12 +59,31 @@ func (s *Stream) Next() Event {
 // Begins listening for the specified event(s).
 func (s *Stream) Listen(ids ...int) {
 	for _, id := range ids {
-		if id < 0 || id >= len(registeredEvents) {
+		if !validID(id) {
 			log.Warning("Attempted to listen for unregistered event ID: ", id)
 			continue
 		}
 		registeredEvents[id].addListener(s)
 	}
+}
+
+// StopListening will prevent the stream from receiving anymore of the specified events.
+func (s *Stream) StopListening(ids ...int) {
+	for id := range ids {
+		if !validID(id) {
+			continue
+		}
+		registeredEvents[id].removeListener(s)
+	}
+}
+
+// Closes an event stream, effectively de-listening for all listened events. Also removes any assigned event handler.
+func (s *Stream) Close() {
+	for i := range registeredEvents {
+		registeredEvents[i].removeListener(s)
+	}
+
+	s.handler = nil
 }
 
 // Processes all events in the stream with the provided event handler function (if there is one).

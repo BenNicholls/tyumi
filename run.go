@@ -82,10 +82,10 @@ func handleEvent(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_QUIT: //quit event, like from clicking the close window button on the window
 		running = false
-		currentState.Shutdown()
+		currentState.shutdown()
 		event_handled = true
 	case EV_CHANGESTATE:
-		currentState.Shutdown()
+		currentState.shutdown()
 		changeEvent := e.(*StateChangeEvent)
 		currentState = changeEvent.newState
 		event_handled = true

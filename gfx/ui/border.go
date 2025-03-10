@@ -20,7 +20,7 @@ type Border struct {
 	hint    string
 	colours col.Pair
 
-	styleFlag    borderStyleFlag
+	styleFlag   borderStyleFlag
 	customStyle *BorderStyle
 
 	//SCROLLBAR STUFF. for now, only vertical scrollbar for lists and the like.
@@ -220,7 +220,7 @@ func (e *Element) drawBorder() {
 		barSize := util.Clamp(util.RoundFloatToInt(float64(e.size.H)/float64(e.Border.scrollbarContentHeight)*float64(h)), 1, h-1)
 
 		// default to barposition at top ie. no scrolling
-		barPos := top                                                                       
+		barPos := top
 		if e.Border.scrollbarViewportPosition == e.Border.scrollbarContentHeight-e.size.H { // scrolling content is at bottom
 			barPos.Y += h - barSize
 		} else if e.Border.scrollbarViewportPosition != 0 { //scrolling content is somewhere in the middle. must ensure bar isn't at top or bottom.
@@ -234,39 +234,38 @@ func (e *Element) drawBorder() {
 	}
 }
 
-func (e *Element) linkBorder() {
-	if style := e.getBorderStyle(); style.DisableLink {
+func (e *Element) linkChildBorderWithElement(child vec.Bounded, other vec.Bounded) {
+	intersection := vec.FindIntersectionRect(child, other)
+	if intersection.Area() == 0 {
 		return
 	}
 
-	for cursor := range vec.EachCoordInPerimeter(e.Canvas) {
-		cell := e.GetCell(cursor)
-		switch cell.Mode {
-		case gfx.DRAW_GLYPH:
-			e.DrawLinkedGlyph(cursor, BorderDepth, cell.Glyph)
-		case gfx.DRAW_TEXT:
-			// these are some corner cases, needed because titles and hints are drawn on a higher layer than
-			// normal borders. so for borders to link to special title decorations and padding characters we have
-			// to manually check for them.
-			if cell.Chars[0] == gfx.TEXT_BORDER_DECO_LEFT || cell.Chars[0] == gfx.TEXT_BORDER_LR {
-				left := cursor.Step(vec.DIR_LEFT)
-				if e.InBounds(left) {
-					left_cell := e.GetCell(left)
-					if left_cell.Mode == gfx.DRAW_GLYPH {
-						linkedGlyph := e.CalcLinkedGlyph(left_cell.Glyph, left, BorderDepth+1)
-						e.DrawGlyph(left, BorderDepth, linkedGlyph)
-					}
-				}
-			} else if cell.Chars[1] == gfx.TEXT_BORDER_DECO_RIGHT || cell.Chars[1] == gfx.TEXT_BORDER_LR {
-				right := cursor.Step(vec.DIR_RIGHT)
-				if e.InBounds(right) {
-					right_cell := e.GetCell(right)
-					if right_cell.Mode == gfx.DRAW_GLYPH {
-						linkedGlyph := e.CalcLinkedGlyph(right_cell.Glyph, right, BorderDepth+1)
-						e.DrawGlyph(right, BorderDepth, linkedGlyph)
-					}
-				}
+	switch {
+	case intersection.Area() == 1:
+		e.linkBorderCell(intersection.Coord)
+	case intersection.W == 1 || intersection.H == 1:
+		corners := intersection.Corners()
+		e.linkBorderCell(corners[0])
+		e.linkBorderCell(corners[2])
+	default:
+		corners := intersection.Corners()
+		for _, corner := range corners {
+			if corner.IsInPerimeter(child) && corner.IsInPerimeter(other) {
+				e.linkBorderCell(corner)
 			}
 		}
+	}
+}
+
+func (e *Element) linkBorderCell(pos vec.Coord) {
+	if !e.InBounds(pos) {
+		return
+	}
+
+	if cell := e.GetCell(pos); cell.Mode == gfx.DRAW_GLYPH {
+		e.DrawLinkedGlyph(pos, BorderDepth, cell.Glyph)
+
+		//also need to try and link to border titles and decorations drawn at a higher level
+		e.DrawLinkedGlyph(pos, BorderDepth+1, e.GetCell(pos).Glyph)
 	}
 }

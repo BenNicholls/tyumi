@@ -55,6 +55,12 @@ func (c Coord) IsInside(b Bounded) bool {
 	return !(c.X < r.X || c.X >= r.X+r.W || c.Y < r.Y || c.Y >= r.Y+r.H)
 }
 
+// IsInPerimeter check if the coord lies in the perimeter of the bounded object b.
+func (c Coord) IsInPerimeter(b Bounded) bool {
+	r := b.Bounds()
+	return c.X == r.X || c.X == r.X+r.W-1 || c.Y == r.Y || c.Y == r.Y+r.H-1
+}
+
 func (c Coord) String() string {
 	return fmt.Sprintf("(X: %d, Y: %d)", c.X, c.Y)
 }

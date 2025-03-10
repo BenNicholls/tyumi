@@ -276,10 +276,6 @@ func (e *Element) prepareRender() {
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
 func (e *Element) finalizeRender() {
-	if e.Border.enabled && (e.Border.dirty || e.forceRedraw) {
-		e.linkBorder()
-	}
-
 	e.Updated = false
 	e.forceRedraw = false
 	e.Border.dirty = false
@@ -307,6 +303,10 @@ func (e *Element) drawChildren() {
 		if child.getCanvas().Dirty() || e.forceRedraw {
 			child.Draw(&e.Canvas)
 			if child.IsBordered() {
+				if style := child.getBorderStyle(); style.DisableLink {
+					continue
+				}
+
 				// attempt to link to siblings' borders
 				for sib_i, sibling := range e.GetChildren() {
 					// if we're doing a forced redraw of all children then we only need to link to siblings that have
@@ -321,74 +321,14 @@ func (e *Element) drawChildren() {
 						continue
 					}
 
-					intersection := vec.FindIntersectionRect(child, sibling)
-					if intersection.Area() == 0 {
-						continue
+					if style := sibling.getBorderStyle(); !style.DisableLink {
+						e.linkChildBorderWithElement(child, sibling)
 					}
+				}
 
-					//THERE ARE LIKE 20 WAYS RECTANGLES CAN OVERLAP. LET'S CHECK THEM ALL!
-					// Dear future Ben: i know what you're thinking. there must be a pattern here that we can use to
-					// simplify this monstrosity. trust me, you looked and couldn't see one that covered all 20+
-					// cases cleanly. maybe one exists, hell it probably does, but this appears to work and is fast.
-					// it just looks awful. so leave it alone and go make a game or something.
-					// - forever yours, Past Ben
-					switch {
-					case intersection.Area() == 1:
-						e.LinkCell(intersection.Coord)
-					case intersection.W == 1 || intersection.H == 1:
-						corners := intersection.Corners()
-						e.LinkCell(corners[0])
-						e.LinkCell(corners[2])
-					default:
-						corners := intersection.Corners()
-						c := child.Bounds()
-						s := sibling.Bounds()
-						switch {
-						case intersection.W == s.W || intersection.H == s.H:
-							for _, corner := range corners {
-								e.LinkCell(corner)
-							}
-						case c.X < s.X && c.Y < s.Y:
-							if c.X+c.W > s.X+s.W {
-								e.LinkCell(corners[2])
-								e.LinkCell(corners[3])
-							} else if c.Y+c.H > s.Y+s.H {
-								e.LinkCell(corners[1])
-								e.LinkCell(corners[2])
-							} else {
-								e.LinkCell(corners[1])
-								e.LinkCell(corners[3])
-							}
-						case c.X < s.X && c.Y > s.Y:
-							e.LinkCell(corners[0])
-							if c.X+c.W > s.X+s.W {
-								e.LinkCell(corners[1])
-							} else if c.Y+c.H >= s.Y+s.H {
-								e.LinkCell(corners[2])
-							} else {
-								e.LinkCell(corners[3])
-							}
-						case c.X > s.X && c.Y <= s.Y:
-							e.LinkCell(corners[0])
-							if c.Y+c.H > s.Y+s.H {
-								e.LinkCell(corners[3])
-							} else if c.X+c.W > s.X+s.W {
-								e.LinkCell(corners[2])
-							} else {
-								e.LinkCell(corners[1])
-							}
-						case c.X > s.X && c.Y > s.Y:
-							if c.X+c.W < s.X+s.W {
-								e.LinkCell(corners[2])
-								e.LinkCell(corners[3])
-							} else if c.Y+c.H < s.Y+s.H {
-								e.LinkCell(corners[1])
-								e.LinkCell(corners[2])
-							} else {
-								e.LinkCell(corners[1])
-								e.LinkCell(corners[3])
-							}
-						}
+				if child.getDepth() == BorderDepth && e.Border.enabled {
+					if style := e.getBorderStyle(); !style.DisableLink {
+						e.linkChildBorderWithElement(child, e.Canvas)
 					}
 				}
 			}

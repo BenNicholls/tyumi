@@ -54,6 +54,7 @@ func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, ju
 		tb.Element.Init(size, pos, depth)
 	}
 
+	tb.TreeNode.Init(tb)
 	tb.wrapText()
 }
 

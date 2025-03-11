@@ -24,9 +24,15 @@ type List struct {
 
 func NewList(size vec.Dims, pos vec.Coord, depth int) (l *List) {
 	l = new(List)
-	l.Element.Init(size, pos, depth)
-	l.Border.EnableScrollbar(0, 0)
+	l.Init(size, pos, depth)
+
 	return
+}
+
+func (l *List) Init(size vec.Dims, pos vec.Coord, depth int) {
+	l.Element.Init(size, pos, depth)
+	l.TreeNode.Init(l)
+	l.Border.EnableScrollbar(0, 0)
 }
 
 func (l *List) AddChild(child element) {

@@ -17,6 +17,8 @@ type Button struct {
 
 func (b *Button) Init(size vec.Dims, pos vec.Coord, depth int, text string, on_press func()) {
 	b.Textbox.Init(size, pos, depth, text, JUSTIFY_CENTER)
+	b.TreeNode.Init(b)
+	
 	b.OnPressCallback = on_press
 	pressPulse := gfx.NewPulseAnimation(b.DrawableArea(), 0, 20, col.Pair{col.WHITE, col.WHITE})
 	pressPulse.OneShot = true

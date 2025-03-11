@@ -24,6 +24,7 @@ type PageContainer struct {
 func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContainer) {
 	pc = new(PageContainer)
 	pc.Element.Init(size, pos, depth)
+	pc.TreeNode.Init(pc)
 
 	pc.tabRow = new(Element)
 	pc.tabRow.Init(vec.Dims{size.W, 2}, vec.Coord{0, 0}, BorderDepth)

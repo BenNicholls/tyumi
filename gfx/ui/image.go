@@ -18,6 +18,7 @@ type Image struct {
 func (i *Image) Init(pos vec.Coord, depth int, path string) {
 	i.image = gfx.ImportXPData(path)
 	i.Element.Init(i.image.Size(), pos, depth)
+	i.TreeNode.Init(i)
 }
 
 func (i *Image) Render() {

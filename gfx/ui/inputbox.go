@@ -30,6 +30,8 @@ func NewInputbox(size vec.Dims, pos vec.Coord, depth, input_length int) (ib *Inp
 // input will instead be limited to the width of the inputbox
 func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) {
 	ib.Textbox.Init(size, pos, depth, "", JUSTIFY_LEFT)
+	ib.TreeNode.Init(ib)
+
 	if input_length > 0 {
 		ib.inputLengthMax = input_length
 	} else {

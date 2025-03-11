@@ -23,8 +23,9 @@ type ChoiceBox struct {
 
 func (cb *ChoiceBox) Init(size vec.Dims, pos vec.Coord, depth int, choices ...string) {
 	cb.Textbox.Init(size, pos, depth, "No Choice", JUSTIFY_CENTER)
-	cb.currentChoiceIndex = -1
+	cb.TreeNode.Init(cb)
 
+	cb.currentChoiceIndex = -1
 	cb.choices = choices
 	if len(cb.choices) > 0 {
 		cb.selectChoice(0)

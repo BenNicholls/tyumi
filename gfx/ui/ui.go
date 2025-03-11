@@ -29,13 +29,8 @@ func SetDefaultFocusColour(colour uint32) {
 }
 
 // default borderstyle used by all ui elements
-var defaultBorderStyle BorderStyle
-
-// SetDefaultBorderStyle sets the default borderstyle used by all ui elements.
-// NOTE: this does not apply retroactively to elements already created.
-func SetDefaultBorderStyle(style BorderStyle) {
-	defaultBorderStyle = style
-}
+// NOTE: changing this does not apply retroactively to elements already created.
+var DefaultBorderStyle BorderStyle
 
 func init() {
 	defaultCanvasVisuals = gfx.Visuals{
@@ -45,7 +40,7 @@ func init() {
 	defaultFocusColour = col.PURPLE
 
 	createBorderStyles()
-	defaultBorderStyle = BorderStyles["Thin"]
+	DefaultBorderStyle = BorderStyles["Thin"]
 }
 
 // Retrieves a reference to the element in window with the supplied label. If the element is not found, or is not

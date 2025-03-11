@@ -148,7 +148,7 @@ func (e *Element) getBorderStyle() (style BorderStyle) {
 			style = *e.Border.customStyle
 		}
 	case BORDER_STYLE_DEFAULT:
-		style = defaultBorderStyle
+		style = DefaultBorderStyle
 	}
 
 	//find some colour to use, prioritizing current border, then the style, then falling back to the ui default
@@ -161,14 +161,14 @@ func (e *Element) getBorderStyle() (style BorderStyle) {
 		if style.Colours.Fore != col.NONE {
 			colours.Fore = style.Colours.Fore
 		} else {
-			colours.Fore = defaultBorderStyle.Colours.Fore
+			colours.Fore = DefaultBorderStyle.Colours.Fore
 		}
 	}
 	if colours.Back == col.NONE {
 		if style.Colours.Back != col.NONE {
 			colours.Back = style.Colours.Back
 		} else {
-			colours.Back = defaultBorderStyle.Colours.Back
+			colours.Back = DefaultBorderStyle.Colours.Back
 		}
 	}
 
@@ -194,21 +194,32 @@ func (e *Element) drawBorder() {
 
 	//decorate and draw title
 	if e.Border.title != "" {
-		decoratedTitle := style.DecorateText(e.Border.title)
-		if len([]rune(decoratedTitle))%2 == 1 {
-			decoratedTitle += string(style.TextDecorationPad)
+		decoratedTitle := style.DecorateText(e.Border.title, style.TitleJustification)
+		var offset vec.Coord
+		switch style.TitleJustification {
+		case JUSTIFY_LEFT:
+			offset.X = 1
+		case JUSTIFY_CENTER:
+			offset.X = (rect.W - len(decoratedTitle)/2) / 2
+		case JUSTIFY_RIGHT:
+			offset.X = rect.W - len([]rune(decoratedTitle))/2 - 1
 		}
-		e.DrawText(rect.Coord.Add(vec.Coord{1, 0}), BorderDepth+1, decoratedTitle, style.Colours, gfx.DRAW_TEXT_LEFT)
+		e.DrawText(rect.Coord.Add(offset), BorderDepth+1, decoratedTitle, style.Colours, gfx.DRAW_TEXT_LEFT)
 	}
 
 	//decorate and draw hint
 	if e.Border.hint != "" {
-		decoratedHint := style.DecorateText(e.Border.hint)
-		if len([]rune(decoratedHint))%2 == 1 {
-			decoratedHint = string(style.TextDecorationPad) + decoratedHint
+		decoratedHint := style.DecorateText(e.Border.hint, style.HintJustification)
+		var offset int
+		switch style.HintJustification {
+		case JUSTIFY_LEFT:
+			offset = 1
+		case JUSTIFY_CENTER:
+			offset = (rect.W - len(decoratedHint)/2) / 2
+		case JUSTIFY_RIGHT:
+			offset = rect.W - len([]rune(decoratedHint))/2 - 1
 		}
-		hintOffset := rect.W - len([]rune(decoratedHint))/2 - 1
-		e.DrawText(rect.Coord.Add(vec.Coord{hintOffset, e.Bounds().H - 1}), BorderDepth+1, decoratedHint, style.Colours, 0)
+		e.DrawText(rect.Coord.Add(vec.Coord{offset, rect.H - 1}), BorderDepth+1, decoratedHint, style.Colours, 0)
 	}
 
 	//draw scrollbar if necessary

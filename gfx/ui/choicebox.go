@@ -3,6 +3,7 @@ package ui
 import (
 	"math/rand"
 
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
@@ -10,6 +11,8 @@ import (
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
+
+var EV_CHOICE_CHANGED = event.Register("Choice Changed", event.SIMPLE)
 
 // Choicebox displays one element from a list, and allows the user to cycle through the options
 type ChoiceBox struct {
@@ -59,6 +62,7 @@ func (cb *ChoiceBox) selectChoice(index int) {
 
 	cb.currentChoiceIndex = index
 	cb.ChangeText(cb.choices[cb.currentChoiceIndex])
+	event.FireSimple(EV_CHOICE_CHANGED)
 }
 
 func (cb *ChoiceBox) Prev() {

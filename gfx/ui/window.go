@@ -3,11 +3,14 @@ package ui
 import (
 	"slices"
 
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
+
+var EV_FOCUS_CHANGED = event.Register("Focus Changed", event.SIMPLE)
 
 // Window acts as a root node for the UI system.
 type Window struct {
@@ -206,6 +209,7 @@ func (wnd *Window) onSubNodeFocused(subnode element) {
 	}
 
 	wnd.focusedElement = subnode
+	event.FireSimple(EV_FOCUS_CHANGED)
 }
 
 func (wnd *Window) onSubNodeDefocused(subnode element) {

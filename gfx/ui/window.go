@@ -127,6 +127,15 @@ func (wnd *Window) TabForward() {
 	}
 }
 
+// GetFocusedElementID retrieves the ID of the focused element. If no element is focused, returns 0
+func (wnd *Window) GetFocusedElementID() ElementID {
+	if wnd.focusedElement == nil {
+		return ElementID(0)
+	}
+
+	return wnd.focusedElement.ID()
+}
+
 func (wnd *Window) IsBlocked() bool {
 	return wnd.blockingAnimations > 0
 }

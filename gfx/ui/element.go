@@ -42,6 +42,7 @@ type element interface {
 	IsVisible() bool
 	IsBordered() bool
 	Size() vec.Dims
+	ID() ElementID
 
 	getCanvas() *gfx.Canvas
 	getWindow() *Window
@@ -64,6 +65,7 @@ type Element struct {
 	Updated bool   //indicates this object's state has changed and needs to be re-rendered.
 	Border  Border //the element's border data. use EnableBorder() to turn on
 
+	id          ElementID      //a unique ID for the element
 	position    vec.Coord      //position relative to parent
 	size        vec.Dims       //size of the drawable area of the element
 	depth       int            //depth for the UI system, relative to the element's parent.
@@ -106,6 +108,7 @@ func (e *Element) Init(size vec.Dims, pos vec.Coord, depth int) {
 	e.visible = true
 	e.Updated = true
 	e.TreeNode.Init(e)
+	e.id = generate_id()
 }
 
 // Size returns the size of the drawable area of the element.
@@ -510,4 +513,17 @@ func (e *Element) getWindow() *Window {
 	}
 
 	return parent.getWindow()
+}
+
+type ElementID int
+
+var id_counter int //counter for element ids
+func generate_id() ElementID {
+	id_counter += 1
+	return ElementID(id_counter)
+}
+
+// ID returns the unique id for this element. Use this for comparisons between arbitrary elements.
+func (e *Element) ID() ElementID {
+	return e.id
 }

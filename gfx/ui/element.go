@@ -18,6 +18,7 @@ type element interface {
 	Labelled
 
 	Update()
+	IsUpdated() bool
 	updateAnimations()
 
 	prepareRender()
@@ -34,10 +35,14 @@ type element interface {
 	MoveTo(vec.Coord)
 	Move(int, int)
 
+	Focus()
+	Defocus()
+	IsFocused() bool
+
 	IsVisible() bool
-	IsUpdated() bool
 	IsBordered() bool
 	Size() vec.Dims
+
 	getCanvas() *gfx.Canvas
 	getWindow() *Window
 	getBorderStyle() BorderStyle
@@ -63,6 +68,7 @@ type Element struct {
 	size        vec.Dims       //size of the drawable area of the element
 	depth       int            //depth for the UI system, relative to the element's parent.
 	visible     bool           //visibility, controlled via Show() and Hide()
+	focused     bool           //focus state. by default, only focused elements receive input
 	forceRedraw bool           //indicates this object needs to clear and render everything from zero
 	label       string         //an optional identifier for the element
 	animations  []gfx.Animator //animations on this element. these are updated once per frame while playing
@@ -429,6 +435,37 @@ func (e *Element) setVisible(v bool) {
 	}
 
 	e.forceParentRedraw()
+}
+
+// Focus focuses the element, obviously. This will also defocus any focused elements in the same window.
+func (e *Element) Focus() {
+	e.setFocus(true)
+}
+
+// Defocus removes focus from the element.
+func (e *Element) Defocus() {
+	e.setFocus(false)
+}
+
+func (e *Element) setFocus(focus bool) {
+	if e.focused == focus {
+		return
+	}
+
+	e.focused = focus
+	e.Border.dirty = true
+
+	if window := e.getWindow(); window != nil {
+		if focus {
+			window.onSubNodeFocused(e.GetSelf())
+		} else {
+			window.onSubNodeDefocused(e.GetSelf())
+		}
+	}
+}
+
+func (e *Element) IsFocused() bool {
+	return e.focused
 }
 
 // SetLabel labels the element. References to labelled elements are retrievable from their parent window using

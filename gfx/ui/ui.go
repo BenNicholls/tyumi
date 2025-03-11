@@ -19,6 +19,15 @@ func SetDefaultElementVisuals(vis gfx.Visuals) {
 	defaultCanvasVisuals = vis
 }
 
+// default colour for focused element borders
+var defaultFocusColour uint32
+
+// SetDefaultFocusColor sets the colour for focused elements. Right now this just applies to the border of elements,
+// but later on we'll use this for more advanced theming. Probably. Possibly. Oh get off my back.
+func SetDefaultFocusColour(colour uint32) {
+	defaultFocusColour = colour
+}
+
 // default borderstyle used by all ui elements
 var defaultBorderStyle BorderStyle
 
@@ -29,14 +38,14 @@ func SetDefaultBorderStyle(style BorderStyle) {
 }
 
 func init() {
-	createBorderStyles()
-
-	//define some defaults
-	defaultBorderStyle = BorderStyles["Thin"]
 	defaultCanvasVisuals = gfx.Visuals{
 		Mode:    gfx.DRAW_GLYPH,
 		Colours: col.Pair{col.WHITE, col.BLACK},
 	}
+	defaultFocusColour = col.PURPLE
+
+	createBorderStyles()
+	defaultBorderStyle = BorderStyles["Thin"]
 }
 
 // Retrieves a reference to the element in window with the supplied label. If the element is not found, or is not

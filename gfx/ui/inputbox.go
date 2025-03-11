@@ -45,10 +45,29 @@ func (ib *InputBox) ChangeText(text string) {
 	if ib.text == text {
 		return
 	}
-	
+
 	ib.Textbox.ChangeText(text)
 	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
 	fireCallbacks(ib.OnTextChanged)
+}
+
+func (ib *InputBox) Focus() {
+	if ib.focused {
+		return
+	}
+
+	ib.setFocus(true)
+	ib.cursor.Play()
+}
+
+func (ib *InputBox) Defocus() {
+	if !ib.focused {
+		return
+	}
+
+	ib.setFocus(false)
+	ib.cursor.Stop()
+	ib.Updated = true
 }
 
 func (ib *InputBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {

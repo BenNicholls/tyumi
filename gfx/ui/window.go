@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"slices"
+
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
@@ -12,7 +14,11 @@ type Window struct {
 	Element
 
 	labels             map[string]element
-	blockingAnimations int // number of running animations blocking updates
+	blockingAnimations int //number of running animations blocking updates
+
+	SendKeyEventsToUnfocused bool //if true, unhandled key events will be sent to all elements, not just the focused one.
+	focusedElement           element
+	tabbingOrder             []element
 }
 
 func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
@@ -68,13 +74,57 @@ func (wnd *Window) Render() {
 }
 
 func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
-	util.WalkSubTrees[element](wnd, func(element element) {
-		if !event_handled {
-			event_handled = element.HandleKeypress(key_event)
+	if key_event.Key == input.K_TAB && key_event.PressType == input.KEY_PRESSED && len(wnd.tabbingOrder) > 0 {
+		wnd.TabForward()
+		return
+	}
+
+	if wnd.SendKeyEventsToUnfocused {
+		util.WalkSubTrees[element](wnd, func(element element) {
+			if !event_handled {
+				event_handled = element.HandleKeypress(key_event)
+			}
+		}, ifVisible)
+	} else {
+		if wnd.focusedElement != nil && wnd.focusedElement.IsVisible() {
+			event_handled = wnd.focusedElement.HandleKeypress(key_event)
 		}
-	}, ifVisible)
+	}
 
 	return
+}
+
+// SetTabbingOrder sets the order for tabbing between elements. Any previously set tabbing order is not retained.
+func (wnd *Window) SetTabbingOrder(tabbed_elements ...element) {
+	wnd.tabbingOrder = nil
+
+	for _, e := range tabbed_elements {
+		if slices.Contains(wnd.tabbingOrder, e) {
+			continue
+		}
+
+		if window := e.getWindow(); window == wnd {
+			wnd.tabbingOrder = append(wnd.tabbingOrder, e)
+		}
+	}
+}
+
+// TabForward switches the window's currently focused element to the next element in the tabbing order (if there is
+// one). If no element is focused, or if the currently focused element is not in the tabbing order, the first element
+// in the tabbing order is focused instead.
+func (wnd *Window) TabForward() {
+	if len(wnd.tabbingOrder) == 0 {
+		return
+	}
+
+	if wnd.focusedElement == nil {
+		wnd.tabbingOrder[0].Focus()
+	} else if !slices.Contains(wnd.tabbingOrder, wnd.focusedElement) {
+		wnd.tabbingOrder[0].Focus()
+	} else {
+		i := slices.Index(wnd.tabbingOrder, wnd.focusedElement)
+		wnd.tabbingOrder[util.CycleClamp(i+1, 0, len(wnd.tabbingOrder)-1)].Focus()
+	}
 }
 
 func (wnd *Window) IsBlocked() bool {
@@ -109,16 +159,50 @@ func (wnd *Window) onSubNodeAdded(subNode element) {
 		if e.IsLabelled() {
 			wnd.addLabel(e.GetLabel(), e)
 		}
+
+		if e.IsFocused() {
+			if wnd.focusedElement == nil {
+				wnd.focusedElement = e
+			} else {
+				log.Warning("Focused element added to window that already has another focused element.")
+				e.Defocus()
+			}
+		}
 	})
 }
 
 func (wnd *Window) onSubNodeRemoved(subNode element) {
-	//find labelled subnodes of the removed element and remove them from the label map
 	util.WalkTree(subNode, func(e element) {
+		//find labelled subnodes of the removed element and remove them from the label map
 		if e.IsLabelled() {
 			wnd.removeLabel(e.GetLabel())
 		}
+
+		//remove subnode from tabbing order if necessary
+		if len(wnd.tabbingOrder) > 0 {
+			if i := slices.Index(wnd.tabbingOrder, e); i != -1 {
+				wnd.tabbingOrder = slices.Delete(wnd.tabbingOrder, i, i+1)
+			}
+		}
+
+		if wnd.focusedElement == e {
+			wnd.focusedElement = nil
+		}
 	})
+}
+
+func (wnd *Window) onSubNodeFocused(subnode element) {
+	if wnd.focusedElement != nil {
+		wnd.focusedElement.Defocus()
+	}
+
+	wnd.focusedElement = subnode
+}
+
+func (wnd *Window) onSubNodeDefocused(subnode element) {
+	if wnd.focusedElement == subnode {
+		wnd.focusedElement = nil
+	}
 }
 
 func (wnd *Window) onBlockingAnimationAdded() {

@@ -39,6 +39,16 @@ func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) 
 	ib.AddAnimation(&ib.cursor)
 }
 
+func (ib *InputBox) ChangeText(text string) {
+	if ib.text == text {
+		return
+	}
+	
+	ib.Textbox.ChangeText(text)
+	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
+	fireCallbacks(ib.OnTextChanged)
+}
+
 func (ib *InputBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
 	if event.PressType == input.KEY_RELEASED {
 		return
@@ -63,9 +73,7 @@ func (ib *InputBox) Insert(input string) {
 	}
 
 	ib.ChangeText(new_text)
-	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
-
-	fireCallbacks(ib.OnTextChanged, ib.OnTextInputted)
+	fireCallbacks(ib.OnTextInputted)
 }
 
 // Deletes the final character of the contents of the Inputbox
@@ -75,9 +83,7 @@ func (ib *InputBox) Delete() {
 	}
 
 	ib.ChangeText(ib.text[:len(ib.text)-1])
-	ib.cursor.MoveTo(len(ib.text)/2, 0, len(ib.text)%2)
-
-	fireCallbacks(ib.OnTextChanged, ib.OnTextDeleted)
+	fireCallbacks(ib.OnTextDeleted)
 }
 
 func (ib InputBox) InputtedText() string {

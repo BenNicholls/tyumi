@@ -18,7 +18,7 @@ type Button struct {
 func (b *Button) Init(size vec.Dims, pos vec.Coord, depth int, text string, on_press func()) {
 	b.Textbox.Init(size, pos, depth, text, JUSTIFY_CENTER)
 	b.TreeNode.Init(b)
-	
+
 	b.OnPressCallback = on_press
 	pressPulse := gfx.NewPulseAnimation(b.DrawableArea(), 0, 20, col.Pair{col.WHITE, col.WHITE})
 	pressPulse.OneShot = true
@@ -32,6 +32,19 @@ func NewButton(size vec.Dims, pos vec.Coord, depth int, text string, on_press fu
 	return
 }
 
+func (b *Button) Press() {
+	if b.OnPressCallback != nil {
+		b.OnPressCallback()
+	}
+
+	if b.OnPressAnimation != nil {
+		if !b.OnPressAnimation.IsPlaying() {
+			b.AddAnimation(b.OnPressAnimation)
+		}
+		b.OnPressAnimation.Start()
+	}
+}
+
 func (b *Button) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
 	if key_event.Handled() || key_event.PressType != input.KEY_PRESSED {
 		return
@@ -39,17 +52,8 @@ func (b *Button) HandleKeypress(key_event *input.KeyboardEvent) (event_handled b
 
 	switch key_event.Key {
 	case input.K_RETURN:
-		if b.OnPressCallback != nil {
-			b.OnPressCallback()
-			event_handled = true
-		}
-
-		if b.OnPressAnimation != nil {
-			if !b.OnPressAnimation.IsPlaying() {
-				b.AddAnimation(b.OnPressAnimation)
-			}
-			b.OnPressAnimation.Start()
-		}
+		b.Press()
+		event_handled = true
 	}
 
 	return

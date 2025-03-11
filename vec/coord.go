@@ -65,8 +65,20 @@ func (c Coord) String() string {
 	return fmt.Sprintf("(X: %d, Y: %d)", c.X, c.Y)
 }
 
+// DistanceTo returns the euclidean distance bewteen c1 and c2. For comparisons, consider using DistanceSqTo instead,
+// it will be much faster.
+func (c1 Coord) DistanceTo(c2 Coord) float64 {
+	return Vec2i(c1.Subtract(c2)).Mag()
+}
+
+// DistanceSqTo returns the euclidean distance between c1 and c2, squared. This is useful for comparing distances in
+// cases where the actual distance is not important, because this is much faster than calculating the real distance.
+func (c1 Coord) DistanceSqTo(c2 Coord) int {
+	return (c1.X-c2.X)*2 + (c1.Y-c2.Y)*2
+}
+
 // ManhattanDistance calculates the manhattan (or taxicab) distance on a square grid.
-func ManhattanDistance(c1, c2 Coord) int {
+func (c1 Coord) ManhattanDistanceTo(c2 Coord) int {
 	return util.Abs(c2.X-c1.X) + util.Abs(c2.Y-c1.Y)
 }
 

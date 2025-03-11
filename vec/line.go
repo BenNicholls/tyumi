@@ -15,13 +15,13 @@ type Line struct {
 // Length computes the precise cartesian length of the line. Consider using LengthSq() if you don't actually need the
 // absolute value and are just doing comparisons.
 func (l Line) Length() float64 {
-	return Vec2i(l.Start.Subtract(l.End)).Mag()
+	return l.Start.DistanceTo(l.End)
 }
 
 // LengthSq returns the length of the line squared. Good for comparison purposes in loops where a nasty sqrt() makes
 // you go :(
 func (l Line) LengthSq() int {
-	return (l.Start.X-l.End.X)*2 + (l.Start.Y-l.End.Y)*2
+	return l.Start.DistanceSqTo(l.End)
 }
 
 // EachCoord returns an iterator that produces Coords representing the line from start to end inclusive.

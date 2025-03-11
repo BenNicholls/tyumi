@@ -5,7 +5,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_ANIMATION_COMPLETE = event.Register("Animation Complete")
+var EV_ANIMATION_COMPLETE = event.Register("Animation Complete", event.SIMPLE)
 
 type AnimationEvent struct {
 	event.EventPrototype
@@ -15,7 +15,7 @@ type AnimationEvent struct {
 
 func fireAnimationCompleteEvent(label string) {
 	animEvent := AnimationEvent{
-		EventPrototype: *event.New(EV_ANIMATION_COMPLETE),
+		EventPrototype: event.New(EV_ANIMATION_COMPLETE),
 		Label:          label,
 	}
 	event.Fire(&animEvent)

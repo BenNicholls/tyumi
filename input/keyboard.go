@@ -25,7 +25,7 @@ type KeyboardEvent struct {
 
 func newKeyboardEvent(key Keycode, press_type KeyPressType, repeat bool) (kbe *KeyboardEvent) {
 	kbe = new(KeyboardEvent)
-	kbe.EventPrototype = *event.New(EV_KEYBOARD)
+	kbe.EventPrototype = event.New(EV_KEYBOARD)
 	kbe.Key = key
 	kbe.PressType = press_type
 	kbe.Repeat = repeat

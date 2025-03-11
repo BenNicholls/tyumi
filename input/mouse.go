@@ -14,7 +14,7 @@ type MouseMoveEvent struct {
 
 func newMouseMoveEvent(pos, delta vec.Coord) (mme *MouseMoveEvent) {
 	mme = new(MouseMoveEvent)
-	mme.EventPrototype = *event.New(EV_MOUSEMOVE)
+	mme.EventPrototype = event.New(EV_MOUSEMOVE)
 	mme.Position = pos
 	mme.Delta = delta
 	return
@@ -28,6 +28,6 @@ func FireMouseMoveEvent(pos, delta vec.Coord) {
 	if !EnableMouse {
 		return
 	}
-	
+
 	event.Fire(newMouseMoveEvent(pos, delta))
 }

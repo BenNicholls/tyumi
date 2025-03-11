@@ -6,7 +6,7 @@ import (
 	"github.com/bennicholls/tyumi/log"
 )
 
-var EV_QUIT = event.Register("Quit Event")
+var EV_QUIT = event.Register("Quit Event", event.SIMPLE)
 
 // Platform defines the API for the platform-specific code that Tyumi uses to interface with the system. It's split
 // into a number of subsystems, some of which are optional. At the moment, everything except the AudioSystem is required.

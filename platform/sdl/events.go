@@ -16,7 +16,7 @@ func (p *Platform) processEvents() {
 	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
 		switch e := sdlevent.(type) {
 		case *sdl.QuitEvent:
-			event.Fire(event.New(tyumi.EV_QUIT))
+			event.FireSimple(tyumi.EV_QUIT)
 			break //don't care about other input events if we're quitting
 		case *sdl.KeyboardEvent:
 			if key, ok := keycodemap[e.Keysym.Sym]; ok {

@@ -19,13 +19,13 @@ type EventPrototype struct {
 	handled bool
 }
 
-func New(ID int) *EventPrototype {
+func New(ID int) EventPrototype {
 	if !validID(ID) {
 		log.Warning("Attempted to create event with unregistered ID: ", ID)
-		return &EventPrototype{id: 0}
+		return EventPrototype{id: 0}
 	}
 
-	return &EventPrototype{id: ID}
+	return EventPrototype{id: ID}
 }
 
 func (e EventPrototype) ID() int {
@@ -63,6 +63,22 @@ func Fire(e Event) {
 	}
 }
 
-func validID(id int) bool {
-	return id < len(registeredEvents) && id > 0
+// fire a simple event into the void. Produces and error if the event was not registered as a simple event.
+func FireSimple(ID int) {
+	if !validID(ID) {
+		log.Error("Attempted to fire unregistered event with ID ", ID)
+		return
+	}
+
+	if registeredEvents[ID].eType != SIMPLE {
+		log.Error("Attempted to fire complex event with FireSimple(), id: ", ID)
+		return
+	}
+
+	simpleEvent := EventPrototype{id: ID}
+	Fire(&simpleEvent)
+}
+
+func validID(ID int) bool {
+	return ID < len(registeredEvents) && ID > 0
 }

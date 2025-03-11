@@ -8,7 +8,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_CHANGESTATE = event.Register("State Change Event")
+var EV_CHANGESTATE = event.Register("State Change Event", event.COMPLEX)
 var currentState state
 
 const (
@@ -239,7 +239,7 @@ func ChangeState(new_state state) {
 	}
 
 	event.Fire(&StateChangeEvent{
-		EventPrototype: *event.New(EV_CHANGESTATE),
+		EventPrototype: event.New(EV_CHANGESTATE),
 		newState:       new_state,
 	})
 }

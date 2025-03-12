@@ -22,6 +22,7 @@ func (b *Button) Init(size vec.Dims, pos vec.Coord, depth int, text string, on_p
 	b.OnPressCallback = on_press
 	pressPulse := gfx.NewPulseAnimation(b.DrawableArea(), 0, 20, col.Pair{col.WHITE, col.WHITE})
 	pressPulse.OneShot = true
+	pressPulse.Label = "Button Pressed"
 	b.OnPressAnimation = &pressPulse
 }
 

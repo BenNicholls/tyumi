@@ -14,6 +14,13 @@ type Image struct {
 	image gfx.Canvas
 }
 
+func NewImage(pos vec.Coord, depth int, path string) (i *Image) {
+	i = new(Image)
+	i.Init(pos, depth, path)
+
+	return
+}
+
 // loads the image at path. the image element will have the same size as the image.
 func (i *Image) Init(pos vec.Coord, depth int, path string) {
 	i.image = gfx.ImportXPData(path)

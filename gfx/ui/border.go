@@ -195,16 +195,16 @@ func (e *Element) drawBorder() {
 	//decorate and draw title
 	if e.Border.title != "" {
 		decoratedTitle := style.DecorateText(e.Border.title, style.TitleJustification)
-		var offset vec.Coord
+		var offset int
 		switch style.TitleJustification {
 		case JUSTIFY_LEFT:
-			offset.X = 1
+			offset = 0
 		case JUSTIFY_CENTER:
-			offset.X = (rect.W - len(decoratedTitle)/2) / 2
+			offset = (e.size.W - len(decoratedTitle)/2) / 2
 		case JUSTIFY_RIGHT:
-			offset.X = rect.W - len([]rune(decoratedTitle))/2 - 1
+			offset = e.size.W - len([]rune(decoratedTitle))/2 - 1
 		}
-		e.DrawText(rect.Coord.Add(offset), BorderDepth+1, decoratedTitle, style.Colours, gfx.DRAW_TEXT_LEFT)
+		e.DrawText(vec.Coord{offset, -1}, BorderDepth+1, decoratedTitle, style.Colours, gfx.DRAW_TEXT_LEFT)
 	}
 
 	//decorate and draw hint
@@ -213,13 +213,13 @@ func (e *Element) drawBorder() {
 		var offset int
 		switch style.HintJustification {
 		case JUSTIFY_LEFT:
-			offset = 1
+			offset = 0
 		case JUSTIFY_CENTER:
-			offset = (rect.W - len(decoratedHint)/2) / 2
+			offset = (e.size.W - len(decoratedHint)/2) / 2
 		case JUSTIFY_RIGHT:
-			offset = rect.W - len([]rune(decoratedHint))/2 - 1
+			offset = e.size.W - len([]rune(decoratedHint))/2
 		}
-		e.DrawText(rect.Coord.Add(vec.Coord{offset, rect.H - 1}), BorderDepth+1, decoratedHint, style.Colours, 0)
+		e.DrawText(vec.Coord{offset, rect.H - 2}, BorderDepth+1, decoratedHint, style.Colours, 0)
 	}
 
 	//draw scrollbar if necessary

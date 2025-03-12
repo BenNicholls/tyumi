@@ -33,6 +33,10 @@ func (v Vec2f) Mag() float64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }
 
+func (v Vec2f) NonZero() bool {
+	return v.X != 0 || v.Y != 0
+}
+
 func (v Vec2f) ToVec2i() Vec2i {
 	return Vec2i{util.RoundFloatToInt(v.X), util.RoundFloatToInt(v.Y)}
 }
@@ -112,6 +116,10 @@ func (v Vec2i) Scale(scale int) Vec2i {
 // Returns the magnitude of the vector. Note that this is a float and not an int.
 func (v Vec2i) Mag() float64 {
 	return v.ToVec2f().Mag()
+}
+
+func (v Vec2i) NonZero() bool {
+	return v.X != 0 || v.Y != 0
 }
 
 func (v Vec2i) ToVec2f() Vec2f {

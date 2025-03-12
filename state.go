@@ -30,9 +30,11 @@ type state interface {
 
 	OpenDialog(dialog)
 
+	Shutdown()
+
 	getActiveState() state
 	flushInputs()
-	shutdown()
+	cleanup()
 }
 
 // State is the base implementation for Tyumi's game state object. States contain a window, where the programs UI is
@@ -153,8 +155,8 @@ func (s *State) getActiveState() state {
 	}
 
 	if s.subState.Done() {
-		log.Debug("shutting down subtate")
-		s.subState.shutdown()
+		s.subState.Shutdown()
+		s.subState.cleanup()
 		s.subState = nil
 		return s
 	} else {
@@ -162,11 +164,15 @@ func (s *State) getActiveState() state {
 	}
 }
 
-func (s *State) shutdown() {
-	s.Shutdown()
-
+func (s *State) cleanup() {
 	s.events.Close()
 	s.inputEvents.Close()
+
+	if s.subState != nil {
+		s.subState.Shutdown()
+		s.subState.cleanup()
+		s.subState = nil
+	}
 
 	// in theory states should be freed from memory after being shutdown so this is pointless, but on the off chance a
 	// reference is hanging around maybe this will help catch a bug.

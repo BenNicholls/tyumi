@@ -83,13 +83,14 @@ func endFrame() {
 func handleEvent(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_QUIT: //quit event, like from clicking the close window button on the window
+		currentState.Shutdown()
+		currentState.cleanup()
 		running = false
-		currentState.shutdown()
 		event_handled = true
 	case EV_CHANGESTATE:
-		currentState.shutdown()
-		changeEvent := e.(*StateChangeEvent)
-		currentState = changeEvent.newState
+		currentState.Shutdown()
+		currentState.cleanup()
+		currentState = e.(*StateChangeEvent).newState
 		event_handled = true
 	}
 

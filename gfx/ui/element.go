@@ -7,6 +7,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
+	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -202,6 +203,11 @@ func (e *Element) CenterVertical() {
 // AddChild add a child element to this one. Child elements are composited together along with their parent to
 // produce the final visuals for the element.
 func (e *Element) AddChild(child element) {
+	if child.ID() == e.id {
+		log.Error("Tried to add an element as a child of itself! Why???")
+		return
+	}
+
 	e.TreeNode.AddChild(child)
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeAdded(child)
@@ -216,7 +222,13 @@ func (e *Element) AddChildren(children ...element) {
 }
 
 func (e *Element) RemoveChild(child element) {
+	oldChildCount := e.ChildCount()
 	e.TreeNode.RemoveChild(child)
+	if e.ChildCount() == oldChildCount {
+		log.Debug("Child not actually a child, no remove done.")
+		return
+	}
+
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeRemoved(child)
 	}

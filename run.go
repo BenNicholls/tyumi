@@ -37,35 +37,37 @@ func Run() {
 
 func beginFrame() {
 	frameTime = time.Now()
+	activeState = currentState.getActiveState()
 }
 
 // This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.
 func update() {
 	mainConsole.events.Process()
 
-	if !currentState.IsBlocked() {
-		currentState.InputEvents().Process()
-	} else {
-		currentState.InputEvents().Flush()
+	if !activeState.IsBlocked() {
+		activeState.InputEvents().Process()
 	}
 
-	if !currentState.IsBlocked() {
-		currentState.Update()
+	// make sure we don't accumulate a bunch of inputs in states that aren't being updated for whatever reason
+	currentState.flushInputs()
+
+	if !activeState.IsBlocked() {
+		activeState.Update()
 	}
 
-	currentState.Events().Process() //process any gameplay events from this frame.
+	activeState.Events().Process() //process any gameplay events from this frame.
 }
 
 // Updates any UI elements that need updating after the most recent tick in the current active state.
 func updateUI() {
-	currentState.UpdateUI()
-	currentState.Window().Update()
+	activeState.UpdateUI()
+	activeState.Window().Update()
 }
 
 // builds the frame and renders using the current platform's renderer.
 func render() {
-	currentState.Window().Render()
-	currentState.Window().Draw(&mainConsole.Canvas)
+	activeState.Window().Render()
+	activeState.Window().Draw(&mainConsole.Canvas)
 	if mainConsole.Dirty() {
 		renderer.Render()
 	}

@@ -10,6 +10,7 @@ import (
 
 var EV_CHANGESTATE = event.Register("State Change Event", event.COMPLEX)
 var currentState state
+var activeState state // the state being updated, checked each frame
 
 const (
 	FIT_CONSOLE int = 0 //window size flag
@@ -17,14 +18,20 @@ const (
 
 // A gameobject to be handled by Tyumi's state machine.
 type state interface {
+	Window() *ui.Window
+	Ready() bool
+
 	Update()
 	UpdateUI()
-	Window() *ui.Window
-	InputEvents() *event.Stream
-	Events() *event.Stream
-	Ready() bool
 	IsBlocked() bool
 
+	InputEvents() *event.Stream
+	Events() *event.Stream
+
+	OpenDialog(dialog)
+
+	getActiveState() state
+	flushInputs()
 	shutdown()
 }
 
@@ -34,6 +41,8 @@ type state interface {
 // and should contain your main game code.
 type State struct {
 	window *ui.Window
+
+	subState dialog
 
 	events       event.Stream  //for engine events, game events, etc. processed at the end of each tick
 	inputEvents  event.Stream  //for input events. processed at the start of each tick
@@ -129,6 +138,30 @@ func (s *State) UpdateUI() {
 	return
 }
 
+func (s *State) OpenDialog(subState dialog) {
+	if !subState.Ready() {
+		log.Error("Could not open dialog, dialog not initialized.")
+		return
+	}
+
+	s.subState = subState
+}
+
+func (s *State) getActiveState() state {
+	if s.subState == nil {
+		return s
+	}
+
+	if s.subState.Done() {
+		log.Debug("shutting down subtate")
+		s.subState.shutdown()
+		s.subState = nil
+		return s
+	} else {
+		return s.subState.getActiveState()
+	}
+}
+
 func (s *State) shutdown() {
 	s.Shutdown()
 
@@ -184,6 +217,14 @@ func (s *State) handleInput(event event.Event) (event_handled bool) {
 // handle the event again if you like though.
 func (s *State) SetInputHandler(handler event.Handler) {
 	s.inputHandler = handler
+}
+
+func (s *State) flushInputs() {
+	s.inputEvents.Flush()
+
+	if s.subState != nil {
+		s.subState.flushInputs()
+	}
 }
 
 func (s *State) Ready() bool {

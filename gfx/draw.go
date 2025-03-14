@@ -22,6 +22,12 @@ type Drawable interface {
 	Draw(dst_canvas *Canvas, offset vec.Coord, depth int)
 }
 
+// DrawableReporter defines drawable types that can report when they are dirty and need to be redrawn
+type DrawableReporter interface {
+	Drawable
+	Dirty() bool
+}
+
 // Defines anything that can report a set of visuals for drawing to a single cell.
 type VisualObject interface {
 	GetVisuals() Visuals

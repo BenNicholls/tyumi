@@ -141,15 +141,14 @@ func (l *List) SetPadding(padding int) {
 }
 
 func (l *List) Select(selection int) {
-	if l.selected == util.Clamp(selection, 0, l.ChildCount()-1) {
+	new_selection := util.Clamp(selection, 0, l.ChildCount()-1)
+	if l.selected == new_selection {
 		return
 	}
 
-	l.selected = util.Clamp(selection, 0, l.ChildCount()-1)
+	l.selected = new_selection
 	l.updateScrollPosition()
-
 	fireCallbacks(l.OnChangeSelection)
-
 	l.Updated = true
 }
 
@@ -199,12 +198,12 @@ func (l *List) Render() {
 	}
 }
 
-func (l *List) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
-	if event.PressType == input.KEY_RELEASED {
+func (l *List) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
+	if key_event.PressType == input.KEY_RELEASED {
 		return
 	}
 
-	switch event.Key {
+	switch key_event.Key {
 	case input.K_UP, input.K_PAGEUP:
 		l.Prev()
 		event_handled = true

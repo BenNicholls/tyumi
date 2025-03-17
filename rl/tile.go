@@ -34,6 +34,7 @@ func init() {
 
 type Tile struct {
 	tileType TileType
+	entity   *Entity
 }
 
 func (t Tile) GetTileType() TileType {
@@ -49,5 +50,19 @@ func (t *Tile) SetTileType(tileType TileType) {
 }
 
 func (t Tile) GetVisuals() gfx.Visuals {
-	return tileDataCache.GetData(t.tileType).GetVisuals()
+	vis := tileDataCache.GetData(t.tileType).GetVisuals()
+	if t.entity != nil {
+		entityVisuals := t.entity.GetVisuals()
+		vis.Glyph = entityVisuals.Glyph
+		vis.Colours.Fore = entityVisuals.Colours.Fore
+		if entityVisuals.Colours.Back != col.NONE {
+			vis.Colours.Back = entityVisuals.Colours.Back
+		}
+	}
+
+	return vis
+}
+
+func (t Tile) IsPassable() bool {
+	return t.entity == nil && tileDataCache.GetData(t.tileType).Passable
 }

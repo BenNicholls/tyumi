@@ -38,13 +38,9 @@ func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
 	return tm.tiles[pos.ToIndex(tm.size.W)]
 }
 
-// func (tm *TileMap) GetTilePtr(pos vec.Coord) (tile_ptr *Tile) {
-// 	if !pos.IsInside(tm) {
-// 		return
-// 	}
-
-// 	return &tm.tiles[pos.ToIndex(tm.size.W)]
-// }
+func (tm *TileMap) getTile(pos vec.Coord) (tile_ptr *Tile) {
+	return &tm.tiles[pos.ToIndex(tm.size.W)]
+}
 
 func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
 	if !pos.IsInside(tm) {
@@ -62,6 +58,33 @@ func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
 
 	tm.tiles[pos.ToIndex(tm.size.W)].SetTileType(tileType)
 	tm.dirty = true
+}
+
+func (tm *TileMap) AddEntity(entity *Entity, pos vec.Coord) {
+	if !pos.IsInside(tm) {
+		return
+	}
+
+	tile := tm.getTile(pos)
+	if !tile.IsPassable() {
+		return
+	}
+
+	entity.position = pos
+	tile.entity = entity
+	tm.dirty = true
+}
+
+func (tm *TileMap) RemoveEntity(pos vec.Coord) {
+	if !pos.IsInside(tm) {
+		return
+	}
+
+	if tile := tm.getTile(pos); tile.entity != nil {
+		tile.entity.position = vec.Coord{-1, -1}
+		tile.entity = nil
+		tm.dirty = true
+	}
 }
 
 func (tm TileMap) Dirty() bool {

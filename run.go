@@ -37,7 +37,10 @@ func Run() {
 
 func beginFrame() {
 	frameTime = time.Now()
-	activeState = currentState.getActiveState()
+	activeState = currentState
+	if activeSubState := currentState.getActiveSubState(); activeSubState != nil {
+		activeState = activeSubState
+	}
 }
 
 // This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.

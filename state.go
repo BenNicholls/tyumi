@@ -32,7 +32,7 @@ type state interface {
 
 	Shutdown()
 
-	getActiveState() state
+	getActiveSubState() state
 	flushInputs()
 	cleanup()
 }
@@ -149,18 +149,22 @@ func (s *State) OpenDialog(subState dialog) {
 	s.subState = subState
 }
 
-func (s *State) getActiveState() state {
+func (s *State) getActiveSubState() state {
 	if s.subState == nil {
-		return s
+		return nil
 	}
 
 	if s.subState.Done() {
 		s.subState.Shutdown()
 		s.subState.cleanup()
 		s.subState = nil
-		return s
+		return nil
 	} else {
-		return s.subState.getActiveState()
+		if subState := s.subState.getActiveSubState(); subState != nil {
+			return subState
+		} else {
+			return s.subState
+		}
 	}
 }
 

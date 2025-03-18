@@ -33,6 +33,17 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 	tmv.cameraOffset = vec.ZERO_COORD
 }
 
+func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {
+	tmv.tilemap = tilemap
+	tmv.Updated = true
+	tmv.Clear()
+}
+
+func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
+	tmv.cameraOffset = offset
+	tmv.Updated = true
+}
+
 func (tmv *TileMapView) Update() {
 	if tmv.tilemap.Dirty() {
 		tmv.Updated = true

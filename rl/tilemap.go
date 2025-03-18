@@ -95,6 +95,15 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	intersection := vec.FindIntersectionRect(dst_canvas, tm.Bounds().Translated(offset))
 	for cursor := range vec.EachCoordInArea(intersection) {
 		tile := tm.GetTile(cursor.Subtract(offset))
+		if tile.tileType == TILE_NONE {
+			continue
+		}
 		dst_canvas.DrawObject(cursor, 0, tile)
+	}
+}
+
+func (tm TileMap) CopyToTileMap(dst_map *TileMap, offset vec.Coord) {
+	for cursor := range vec.EachCoordInArea(tm) {
+		dst_map.SetTile(cursor.Add(offset), tm.GetTile(cursor))
 	}
 }

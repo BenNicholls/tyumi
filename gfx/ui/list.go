@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"slices"
+
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/util"
@@ -18,6 +20,8 @@ type List struct {
 	selected  int  //element that is currently selected. selected item will be ensured to be visible
 	highlight bool //toggle to highlight currently selected list item
 
+	items      []element
+
 	contentHeight int //total height of all list contents. used for viewport and scrollbar purposes
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
 }
@@ -33,45 +37,90 @@ func (l *List) Init(size vec.Dims, pos vec.Coord, depth int) {
 	l.Element.Init(size, pos, depth)
 	l.TreeNode.Init(l)
 	l.Border.EnableScrollbar(0, 0)
+	l.selected = -1
 }
 
-func (l *List) AddChild(child element) {
-	l.Element.AddChild(child)
-	l.calibrate()
-	l.Updated = true
-}
+// Insert adds elements to the list. Inserted elements will be added to the end of the list and automatically
+// positioned.
+func (l *List) Insert(items ...element) {
+	if l.Count() == 0 {
+		l.selected = 0
+	}
 
-func (l *List) AddChildren(children ...element) {
-	l.Element.AddChildren(children...)
-	l.calibrate()
-	l.Updated = true
-}
+	if l.items == nil {
+		l.items = make([]element, 0)
+	}
 
-func (l *List) RemoveChild(child element) {
-	l.Element.RemoveChild(child)
-	l.calibrate()
-}
-
-// AddTextItems adds simple textboxes to the list, one for each string passed.
-func (l *List) AddTextItems(justify Justification, items ...string) {
 	for _, item := range items {
-		l.AddChild(NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, justify))
+		l.items = append(l.items, item)
+		l.AddChild(item)
+	}
+	
+	l.calibrate()
+	l.Updated = true
+}
+
+// InsertText adds simple textboxes to the list, one for each string passed.
+func (l *List) InsertText(justify Justification, items ...string) {
+	for _, item := range items {
+		l.Insert(NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, justify))
+	}
+}
+
+// Remove removes a ui element from the list, if present.
+func (l *List) Remove(item element) {
+	itemIndex := slices.Index(l.items, item)
+	if itemIndex == -1 {
+		return
+	}
+
+	l.RemoveChild(item)
+	l.items = slices.Delete(l.items, itemIndex, itemIndex+1)
+	if itemIndex <= l.selected {
+		l.selected = l.selected - 1
+	}
+
+	l.calibrate()
+	l.Updated = true
+}
+
+// RemoveAll removes all list items.
+func (l *List) RemoveAll() {
+	if l.Count() == 0 {
+		return
+	}
+
+	for _, item := range l.items {
+		l.RemoveChild(item)
+	}
+
+	l.items = nil
+	l.selected = -1
+
+	l.contentHeight = 0
+	l.updateScrollPosition()
+	l.Updated = true
+}
+
+// Count returns the number of items in the list.
+func (l List) Count() int {
+	return len(l.items)
+}
 	}
 }
 
 // positions all the children elements so they are top to bottom, and the selected item is visible
 func (l *List) calibrate() {
 	l.contentHeight = 0
-	for _, child := range l.GetChildren() {
-		child.MoveTo(vec.Coord{0, l.contentHeight - l.scrollOffset})
-		if child.IsBordered() {
-			child.Move(0, 1)
+	for _, item := range l.items {
+		item.MoveTo(vec.Coord{0, l.contentHeight - l.scrollOffset})
+		if item.IsBordered() {
+			item.Move(0, 1)
 		}
-		l.contentHeight += child.Bounds().H + l.padding
+		l.contentHeight += item.Bounds().H + l.padding
 	}
 
 	l.contentHeight -= l.padding // remove the padding below the last item
-
 	l.updateScrollPosition()
 }
 
@@ -141,7 +190,12 @@ func (l *List) SetPadding(padding int) {
 }
 
 func (l *List) Select(selection int) {
-	new_selection := util.Clamp(selection, 0, l.ChildCount()-1)
+	if l.Count() == 0 {
+		l.selected = -1
+		return
+	}
+
+	new_selection := util.Clamp(selection, 0, l.Count()-1)
 	if l.selected == new_selection {
 		return
 	}
@@ -157,26 +211,30 @@ func (l List) GetSelectionIndex() int {
 }
 
 func (l *List) getSelected() element {
-	return l.GetChildren()[l.selected]
+	if l.Count() == 0 {
+		return nil
+	}
+
+	return l.items[l.selected]
 }
 
 // Selects the next item in the list, wrapping back around to the top if necessary.
 func (l *List) Next() {
-	if l.ChildCount() <= 1 {
+	if l.Count() <= 1 {
 		return
 	}
 
-	nextIndex := util.CycleClamp(l.selected+1, 0, l.ChildCount()-1)
+	nextIndex := util.CycleClamp(l.selected+1, 0, l.Count()-1)
 	l.Select(nextIndex)
 }
 
 // Selects the previous item in the list, wrapping back around to the bottom if necessary.
 func (l *List) Prev() {
-	if l.ChildCount() <= 1 {
+	if l.Count() <= 1 {
 		return
 	}
 
-	prevIndex := util.CycleClamp(l.selected-1, 0, l.ChildCount()-1)
+	prevIndex := util.CycleClamp(l.selected-1, 0, l.Count()-1)
 	l.Select(prevIndex)
 }
 
@@ -191,7 +249,7 @@ func (l *List) prepareRender() {
 func (l *List) Render() {
 	//render highlight for selected item.
 	//TODO: different options for how the selected item is highlighted. currently just inverts the colours
-	if l.highlight {
+	if l.highlight && l.Count() > 0 {
 		selected_area := l.getSelected().Bounds()
 		highlight_area := vec.FindIntersectionRect(selected_area, l.DrawableArea())
 		l.Canvas.DrawEffect(gfx.InvertEffect, highlight_area)

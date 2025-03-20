@@ -23,6 +23,12 @@ type PageContainer struct {
 
 func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContainer) {
 	pc = new(PageContainer)
+	pc.Init(size, pos, depth)
+
+	return
+}
+
+func (pc *PageContainer) Init(size vec.Dims, pos vec.Coord, depth int) {
 	pc.Element.Init(size, pos, depth)
 	pc.TreeNode.Init(pc)
 
@@ -34,8 +40,6 @@ func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContaine
 
 	pc.pages = make([]*Page, 0)
 	pc.currentPageIndex = -1 //no pages in container, so no selection
-
-	return
 }
 
 // creates and adds a new page to the pagecontainer, and returns a reference to the new page for the user to populate
@@ -109,6 +113,10 @@ func (pc *PageContainer) getSelectedPage() *Page {
 	return pc.pages[pc.currentPageIndex]
 }
 
+func (pc PageContainer) GetPageIndex() int {
+	return pc.currentPageIndex
+}
+
 func (pc *PageContainer) Render() {
 	//blank out border below selected page's tab
 	selectedTab := pc.getSelectedPage().tab
@@ -156,7 +164,7 @@ func newPage(page_size vec.Dims, title string) (p *Page) {
 	}
 	p = new(Page)
 	p.title = title
-	p.Init(page_size, vec.Coord{0, 3}, 0)
+	p.Init(page_size, vec.Coord{0, 3}, BorderDepth)
 
 	p.tab = NewTextbox(vec.Dims{FIT_TEXT, 1}, vec.Coord{1, 1}, 5, title, JUSTIFY_LEFT)
 	p.tab.EnableBorder()

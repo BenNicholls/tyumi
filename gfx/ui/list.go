@@ -20,6 +20,7 @@ type List struct {
 	selected  int  //element that is currently selected. selected item will be ensured to be visible
 	highlight bool //toggle to highlight currently selected list item
 
+	emptyLabel *Textbox
 	items      []element
 
 	contentHeight int //total height of all list contents. used for viewport and scrollbar purposes
@@ -45,6 +46,9 @@ func (l *List) Init(size vec.Dims, pos vec.Coord, depth int) {
 func (l *List) Insert(items ...element) {
 	if l.Count() == 0 {
 		l.selected = 0
+		if l.emptyLabel != nil {
+			l.emptyLabel.Hide()
+		}
 	}
 
 	if l.items == nil {
@@ -80,6 +84,10 @@ func (l *List) Remove(item element) {
 		l.selected = l.selected - 1
 	}
 
+	if l.emptyLabel != nil && l.Count() == 0 {
+		l.emptyLabel.Show()
+	}
+
 	l.calibrate()
 	l.Updated = true
 }
@@ -96,6 +104,9 @@ func (l *List) RemoveAll() {
 
 	l.items = nil
 	l.selected = -1
+	if l.emptyLabel != nil {
+		l.emptyLabel.Show()
+	}
 
 	l.contentHeight = 0
 	l.updateScrollPosition()
@@ -106,6 +117,25 @@ func (l *List) RemoveAll() {
 func (l List) Count() int {
 	return len(l.items)
 }
+
+// SetEmptyText creates a label that is shown in the list when the list contains no items.
+func (l *List) SetEmptyText(text string) {
+	if l.emptyLabel == nil {
+		if text == "" {
+			return
+		}
+
+		l.emptyLabel = NewTextbox(vec.Dims{l.size.W - 2, FIT_TEXT}, vec.ZERO_COORD, 1, text, JUSTIFY_CENTER)
+		l.AddChild(l.emptyLabel)
+		l.emptyLabel.Center()
+	} else {
+		if text != "" {
+			l.emptyLabel.ChangeText(text)
+			l.emptyLabel.Center()
+		} else {
+			l.RemoveChild(l.emptyLabel)
+			l.emptyLabel = nil
+		}
 	}
 }
 

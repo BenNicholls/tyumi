@@ -15,10 +15,11 @@ import (
 type PageContainer struct {
 	Element
 
-	tabRow *Element //TODO: this could be some kind of container type that does horizontal layouting? is that a word?
+	OnPageChanged func()
 
 	pages            []*Page
-	currentPageIndex int //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
+	currentPageIndex int      //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
+	tabRow           *Element //TODO: this could be some kind of container type that does horizontal layouting? is that a word?
 }
 
 func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContainer) {
@@ -107,6 +108,7 @@ func (pc *PageContainer) selectPage(page_index int) {
 	new_page.activate()
 	pc.AddChild(new_page)
 	pc.Updated = true
+	fireCallbacks(pc.OnPageChanged)
 }
 
 func (pc *PageContainer) getSelectedPage() *Page {

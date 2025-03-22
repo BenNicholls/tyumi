@@ -55,6 +55,7 @@ func update() {
 	currentState.flushInputs()
 
 	if !activeState.IsBlocked() {
+		activeState.processTimers()
 		activeState.Update()
 	}
 

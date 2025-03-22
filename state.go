@@ -1,6 +1,8 @@
 package tyumi
 
 import (
+	"slices"
+
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/input"
@@ -23,6 +25,7 @@ type state interface {
 
 	Update()
 	UpdateUI()
+	processTimers()
 	IsBlocked() bool
 
 	InputEvents() *event.Stream
@@ -45,6 +48,7 @@ type State struct {
 	window *ui.Window
 
 	subState dialog
+	timers   []Timer
 
 	events       event.Stream  //for engine events, game events, etc. processed at the end of each tick
 	inputEvents  event.Stream  //for input events. processed at the start of each tick
@@ -124,6 +128,7 @@ func (s *State) init(size vec.Dims, pos vec.Coord, bordered bool) {
 
 	//setup automatic listening for input events.
 	s.inputEvents.Listen(input.EV_KEYBOARD, input.EV_MOUSEBUTTON, input.EV_MOUSEMOVE)
+	s.timers = make([]Timer, 0)
 	s.ready = true
 }
 
@@ -265,6 +270,29 @@ func SetInitialMainState(s state) {
 	}
 
 	currentState = s
+}
+
+// CreateTimer creates a timer. After duration ticks, the function f is run and the timer is destroyed.
+func (s *State) CreateTimer(duration int, f func()) {
+	if f == nil || duration <= 0 {
+		return
+	}
+
+	s.timers = append(s.timers, Timer{TimerFunction: f, Ticks: duration})
+}
+
+func (s *State) processTimers() {
+	if len(s.timers) == 0 {
+		return
+	}
+
+	for i := range s.timers {
+		s.timers[i].Process()
+	}
+
+	s.timers = slices.DeleteFunc(s.timers, func(timer Timer) bool {
+		return timer.Done()
+	})
 }
 
 type StateChangeEvent struct {

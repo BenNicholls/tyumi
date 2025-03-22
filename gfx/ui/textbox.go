@@ -39,6 +39,13 @@ func NewTextbox(size vec.Dims, pos vec.Coord, depth int, text string, justify Ju
 	return tb
 }
 
+// Creates a textbox, defaulting to centered text and enabling the default border.
+func NewTitleTextbox(size vec.Dims, pos vec.Coord, depth int, text string) (tb *Textbox) {
+	tb = new(Textbox)
+	tb.InitTitle(size, pos, depth, text)
+	return
+}
+
 func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, justify Justification) {
 	tb.text = text
 	tb.justify = justify
@@ -46,9 +53,9 @@ func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, ju
 
 	if size.W == FIT_TEXT {
 		tb.fit_width = true
-		tb.Element.Init(vec.Dims{1,1}, pos, depth)
+		tb.Element.Init(vec.Dims{1, 1}, pos, depth)
 	} else if size.H == FIT_TEXT {
-		tb.Element.Init(vec.Dims{size.W,1}, pos, depth)
+		tb.Element.Init(vec.Dims{size.W, 1}, pos, depth)
 		tb.fit_height = true
 	} else {
 		tb.Element.Init(size, pos, depth)
@@ -56,6 +63,11 @@ func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, ju
 
 	tb.TreeNode.Init(tb)
 	tb.wrapText()
+}
+
+func (tb *Textbox) InitTitle(size vec.Dims, pos vec.Coord, depth int, text string) {
+	tb.Init(size, pos, depth, text, JUSTIFY_CENTER)
+	tb.EnableBorder()
 }
 
 func (tb *Textbox) SetTextMode(text_mode gfx.TextMode) {

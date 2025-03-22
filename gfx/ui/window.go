@@ -84,7 +84,7 @@ func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled
 
 	if wnd.SendKeyEventsToUnfocused {
 		util.WalkSubTrees[element](wnd, func(element element) {
-			if !event_handled {
+			if !event_handled && element.acceptsInput() {
 				event_handled = element.HandleKeypress(key_event)
 			}
 		}, ifVisible)

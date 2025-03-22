@@ -31,6 +31,7 @@ type element interface {
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
 	isRedrawing() bool
 
+	acceptsInput() bool
 	HandleKeypress(*input.KeyboardEvent) (event_handled bool)
 
 	MoveTo(vec.Coord)
@@ -63,8 +64,9 @@ type element interface {
 type Element struct {
 	gfx.Canvas
 	util.TreeNode[element]
-	Updated bool   //indicates this object's state has changed and needs to be re-rendered.
-	Border  Border //the element's border data. use EnableBorder() to turn on
+	Updated     bool   //indicates this object's state has changed and needs to be re-rendered.
+	Border      Border //the element's border data. use EnableBorder() to turn on
+	AcceptInput bool   // if true, the element will be sent inputs when in a window with SendKeyEventsToUnfocused = true
 
 	id          ElementID      //a unique ID for the element
 	position    vec.Coord      //position relative to parent
@@ -259,6 +261,10 @@ func (e *Element) HandleKeypress(event *input.KeyboardEvent) (event_handled bool
 }
 
 // -------------------
+
+func (e *Element) acceptsInput() bool {
+	return e.AcceptInput || e.IsFocused()
+}
 
 func (e *Element) IsUpdated() bool {
 	return e.Updated

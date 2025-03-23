@@ -50,10 +50,10 @@ type State struct {
 	subState dialog
 	timers   []Timer
 
-	events       event.Stream  //for engine events, game events, etc. processed at the end of each tick
-	inputEvents  event.Stream  //for input events. processed at the start of each tick
-	inputHandler event.Handler //user-provided input handling function. runs AFTER the UI has had a chance to process input.
-	keypressInputHandler func (key_event *input.KeyboardEvent) bool
+	events               event.Stream  //for engine events, game events, etc. processed at the end of each tick
+	inputEvents          event.Stream  //for input events. processed at the start of each tick
+	inputHandler         event.Handler //user-provided input handling function. runs AFTER the UI has had a chance to process input.
+	keypressInputHandler func(key_event *input.KeyboardEvent) bool
 
 	ready bool // indicates the state has been successfully initialized
 }
@@ -220,12 +220,12 @@ func (s *State) handleInput(event event.Event) (event_handled bool) {
 		key_event := event.(*input.KeyboardEvent)
 		event_handled = s.window.HandleKeypress(key_event)
 		if s.keypressInputHandler != nil && key_event.PressType == input.KEY_PRESSED {
-			event_handled = event_handled || s.keypressInputHandler(event.(*input.KeyboardEvent))
+			event_handled = s.keypressInputHandler(key_event) || event_handled
 		}
 	}
 
 	if s.inputHandler != nil {
-		event_handled = event_handled || s.inputHandler(event)
+		event_handled = s.inputHandler(event) || event_handled
 	}
 
 	return
@@ -243,7 +243,7 @@ func (s *State) SetInputHandler(handler event.Handler) {
 // each tick(). This handler is called only for key press events (not key releases) after the UI has had a chance to
 // handle the input. If the UI handles the event then event.Handled() will be true. You can still choose to ignore that
 // and handle the event again if you like though.
-func (s *State) SetKeypressHandler(keypress_handler func (keyboard_event *input.KeyboardEvent) bool) {
+func (s *State) SetKeypressHandler(keypress_handler func(keyboard_event *input.KeyboardEvent) bool) {
 	s.keypressInputHandler = keypress_handler
 }
 

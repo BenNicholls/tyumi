@@ -90,6 +90,14 @@ func (tb *Textbox) ChangeText(txt string) {
 	tb.Updated = true
 }
 
+func (tb *Textbox) AppendText(txt string) {
+	if txt == "" {
+		return
+	}
+
+	tb.ChangeText(tb.text + txt)
+}
+
 func (tb *Textbox) wrapText() {
 	size := tb.size
 	switch tb.getTextMode() {

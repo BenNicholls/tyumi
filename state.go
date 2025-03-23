@@ -53,6 +53,7 @@ type State struct {
 	events       event.Stream  //for engine events, game events, etc. processed at the end of each tick
 	inputEvents  event.Stream  //for input events. processed at the start of each tick
 	inputHandler event.Handler //user-provided input handling function. runs AFTER the UI has had a chance to process input.
+	keypressInputHandler func (key_event *input.KeyboardEvent) bool
 
 	ready bool // indicates the state has been successfully initialized
 }
@@ -216,7 +217,11 @@ func (s *State) SetEventHandler(handler event.Handler) {
 func (s *State) handleInput(event event.Event) (event_handled bool) {
 	switch event.ID() {
 	case input.EV_KEYBOARD:
-		event_handled = s.window.HandleKeypress(event.(*input.KeyboardEvent))
+		key_event := event.(*input.KeyboardEvent)
+		event_handled = s.window.HandleKeypress(key_event)
+		if s.keypressInputHandler != nil && key_event.PressType == input.KEY_PRESSED {
+			event_handled = event_handled || s.keypressInputHandler(event.(*input.KeyboardEvent))
+		}
 	}
 
 	if s.inputHandler != nil {
@@ -227,11 +232,19 @@ func (s *State) handleInput(event event.Event) (event_handled bool) {
 }
 
 // Sets the function for handling inputs to the state object. Inputs are collected, distributed and then
-// processed at the beginning of each tick(). This handler is called after the UI has had a chance to handle
-// the input. If the UI handles the input, event.Handled() will be true. You can still choose to ignore that and
-// handle the event again if you like though.
+// processed at the beginning of each tick(). This handler is called after the UI and any more specific input handlers
+// have had a chance to handle the input. If another handler handles the event then event.Handled() will be true. You
+// can still choose to ignore that and handle the event again if you like though.
 func (s *State) SetInputHandler(handler event.Handler) {
 	s.inputHandler = handler
+}
+
+// Sets the function for handling keypresses. Inputs are collected, distributed and then processed at the beginning of
+// each tick(). This handler is called only for key press events (not key releases) after the UI has had a chance to
+// handle the input. If the UI handles the event then event.Handled() will be true. You can still choose to ignore that
+// and handle the event again if you like though.
+func (s *State) SetKeypressHandler(keypress_handler func (keyboard_event *input.KeyboardEvent) bool) {
+	s.keypressInputHandler = keypress_handler
 }
 
 func (s *State) flushInputs() {

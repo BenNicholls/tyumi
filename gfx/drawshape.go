@@ -18,7 +18,7 @@ func (c *Canvas) DrawFilledRect(area vec.Rect, depth int, brush Visuals, inner_b
 		}
 	} else {
 		for cursor := range vec.EachCoordInArea(area) {
-			if cursor.X == area.X || cursor.Y == area.Y || cursor.X == area.X+area.W-1 || cursor.Y == area.Y+area.H-1 {
+			if cursor.IsInPerimeter(area) {
 				c.DrawVisuals(cursor, depth, brush)
 			} else {
 				c.DrawVisuals(cursor, depth, inner_brush[0])
@@ -79,14 +79,14 @@ func (c *Canvas) DrawBox(box vec.Rect, depth int, line LineType, colours col.Pai
 	}
 
 	style := LineStyles[line]
-	
+
 	//draw corners
 	corners := box.Corners()
 	c.DrawVisuals(corners[0], depth, NewGlyphVisuals(style.Glyphs[LINK_DR], colours))
 	c.DrawVisuals(corners[1], depth, NewGlyphVisuals(style.Glyphs[LINK_DL], colours))
 	c.DrawVisuals(corners[2], depth, NewGlyphVisuals(style.Glyphs[LINK_UL], colours))
 	c.DrawVisuals(corners[3], depth, NewGlyphVisuals(style.Glyphs[LINK_UR], colours))
-	
+
 	//draw sides
 	brush := NewGlyphVisuals(GLYPH_NONE, colours)
 	if box.W > 2 {

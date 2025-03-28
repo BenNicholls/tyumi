@@ -236,12 +236,9 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	}
 
 	for _, area := range areas {
-		for cursor := range vec.EachCoordInArea(area) {
-			if !c.InBounds(cursor) { //need to check to make sure user-provided areas are in bounds.
-				continue
-			}
-			cell := c.getCell(cursor)
-			if depth == -1 || c.getDepth(cursor) <= depth {
+		for cursor := range vec.EachCoordInIntersection(c, area) {
+			if depth < 0 || c.getDepth(cursor) <= depth {
+				cell := c.getCell(cursor)
 				cell.SetVisuals(c.defaultVisuals)
 				c.setDepth(cursor, -1)
 			}

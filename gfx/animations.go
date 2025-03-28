@@ -55,7 +55,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 // fade from there. Otherwise uses whatever colours are on the canvas.
 type FadeAnimation struct {
 	Animation
-	
+
 	ToColours   col.Pair
 	FromColours col.Pair
 }
@@ -81,7 +81,7 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colour
 }
 
 func (fa *FadeAnimation) Render(c *Canvas) {
-	for cursor := range vec.EachCoordInArea(vec.FindIntersectionRect(c, fa.Area)) {
+	for cursor := range vec.EachCoordInIntersection(c, fa.Area) {
 		dst_cell := c.getCell(cursor)
 		if dst_cell.Mode == DRAW_NONE {
 			continue

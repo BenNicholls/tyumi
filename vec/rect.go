@@ -51,6 +51,26 @@ func EachCoordInArea(b Bounded) iter.Seq[Coord] {
 	}
 }
 
+// Returns an iterator producing a sequence of all Coords that are contained within the intersection of all provided
+// bounded areas.
+func EachCoordInIntersection(areas ...Bounded) iter.Seq[Coord] {
+	switch len(areas) {
+	case 0:
+		return EachCoordInArea(Rect{ZERO_COORD, Dims{0, 0}})
+	case 1:
+		return EachCoordInArea(areas[0])
+	default:
+		intersection := areas[0].Bounds()
+		for i := 1; i < len(areas); i++ {
+			if intersection.Area() == 0 {
+				break
+			}
+			intersection = FindIntersectionRect(intersection, areas[i])
+		}
+		return EachCoordInArea(intersection)
+	}
+}
+
 // Returns an iterator producing a sequence of all coords in the perimeter of a bounded area.
 func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 	return func(yield func(Coord) bool) {

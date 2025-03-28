@@ -92,8 +92,7 @@ func (tm TileMap) Dirty() bool {
 }
 
 func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
-	intersection := vec.FindIntersectionRect(dst_canvas, tm.Bounds().Translated(offset))
-	for cursor := range vec.EachCoordInArea(intersection) {
+	for cursor := range vec.EachCoordInIntersection(dst_canvas, tm.Bounds().Translated(offset)) {
 		tile := tm.GetTile(cursor.Subtract(offset))
 		if tile.tileType == TILE_NONE {
 			continue

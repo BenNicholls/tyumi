@@ -37,8 +37,7 @@ type VisualObject interface {
 // any copied cells in c as clean.
 // TODO: this function should take in flags to determine how the canvas is copied
 func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
-	drawArea := vec.FindIntersectionRect(dst_canvas, c.Bounds().Translated(offset))
-	for dstCursor := range vec.EachCoordInArea(drawArea) {
+	for dstCursor := range vec.EachCoordInIntersection(dst_canvas, c.Bounds().Translated(offset)) {
 		if dst_canvas.getDepth(dstCursor) > depth { //skip cell if it wouldn't be drawn to the destination canvas
 			continue
 		}

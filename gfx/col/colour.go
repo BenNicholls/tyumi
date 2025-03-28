@@ -35,6 +35,10 @@ func RGB(colour uint32) (r, g, b uint8) {
 	return
 }
 
+func IsTransparent(colour uint32) bool {
+	return (colour >> 24) != 0x000000FF
+}
+
 // Lineraly interpolates the colour between colour1 and colour2 over (steps) number of steps, returning the (val)th value.
 // NOTE: this completely disregards transparent colours, except for NONE. If lerping to NONE, it just doesn't do it and
 // returns the other colour.

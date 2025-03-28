@@ -52,23 +52,12 @@ func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
 	c.dirty = false
 }
 
-// THINK: this checks/sets the depth 3-4 times i think. hmmm.
 func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, visuals Visuals) {
 	if !c.InBounds(pos) {
 		return
 	}
 
-	switch visuals.Mode {
-	case DRAW_GLYPH:
-		c.setGlyph(pos, depth, visuals.Glyph)
-	case DRAW_TEXT:
-		c.setText(pos, depth, visuals.Chars[0], visuals.Chars[1])
-	case DRAW_NONE:
-		c.setBlank(pos)
-		return // if we are not drawing this cell we can skip setting the colours below
-	}
-
-	c.setColours(pos, depth, visuals.Colours)
+	c.setCell(pos, depth, visuals)
 }
 
 // Draws a single-celled object to the canvas.

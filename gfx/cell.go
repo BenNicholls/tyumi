@@ -67,17 +67,20 @@ func (c *Cell) SetGlyph(glyph Glyph) {
 }
 
 func (c *Cell) SetText(char1, char2 uint8) {
+	if char1 == TEXT_DEFAULT {
+		char1 = c.Chars[0]
+	}
+
+	if char2 == TEXT_DEFAULT {
+		char2 = c.Chars[1]
+	}
+
 	if char1 == c.Chars[0] && char2 == c.Chars[1] && c.Mode == DRAW_TEXT {
 		return
 	}
 
 	c.Mode = DRAW_TEXT
-	if char1 != TEXT_DEFAULT {
-		c.Chars[0] = char1
-	}
-	if char2 != TEXT_DEFAULT {
-		c.Chars[1] = char2
-	}
+	c.Chars[0], c.Chars[1] = char1, char2
 	c.Dirty = true
 }
 
@@ -99,6 +102,9 @@ func (c *Cell) SetBlank() {
 	}
 
 	c.Mode = DRAW_NONE
+	c.Glyph = GLYPH_NONE
+	c.Chars = [2]uint8{0, 0}
+	c.Colours = col.Pair{col.WHITE, col.BLACK}
 	c.Dirty = true
 }
 
@@ -114,9 +120,12 @@ func (c *Cell) SetVisuals(visuals Visuals) {
 
 // Re-inits a cell back to default blankness.
 func (c *Cell) Clear() {
-	if c.Mode == DRAW_GLYPH {
+	switch c.Mode {
+	case DRAW_GLYPH:
 		c.SetGlyphCell(GLYPH_NONE, col.Pair{col.WHITE, col.BLACK})
-	} else {
+	case DRAW_TEXT:
 		c.SetTextCell(TEXT_NONE, TEXT_NONE, col.Pair{col.WHITE, col.BLACK})
+	case DRAW_NONE: //draw_none cells are assumed to have been already cleared
+		return
 	}
 }

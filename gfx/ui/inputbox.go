@@ -129,8 +129,8 @@ func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor InputCursor
 func (cursor *InputCursorAnimation) MoveTo(x, y, charNum int) {
 	cursor.BlinkAnimation.MoveTo(vec.Coord{x, y})
 	if charNum%2 == 0 {
-		cursor.Vis.ChangeChars(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT)
+		cursor.Vis.SetText(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT)
 	} else {
-		cursor.Vis.ChangeChars(gfx.TEXT_DEFAULT, gfx.TEXT_BORDER_UD)
+		cursor.Vis.SetText(gfx.TEXT_DEFAULT, gfx.TEXT_BORDER_UD)
 	}
 }

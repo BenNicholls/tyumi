@@ -37,23 +37,27 @@ func NewTextVisuals(char1, char2 uint8, colours col.Pair) (visuals Visuals) {
 }
 
 // Changes the glyph. Also enables glyph drawmode.
-func (v *Visuals) ChangeGlyph(glyph Glyph) {
+func (v *Visuals) SetGlyph(glyph Glyph) {
 	v.Glyph = glyph
 	v.Mode = DRAW_GLYPH
 }
 
 // Changes the characters. Also enables text drawmode.
-func (v *Visuals) ChangeChars(char1, char2 uint8) {
+func (v *Visuals) SetText(char1, char2 uint8) {
 	v.Chars[0] = char1
 	v.Chars[1] = char2
 	v.Mode = DRAW_TEXT
+}
+
+func (v Visuals) IsTransparent() bool {
+	return v.Mode == DRAW_NONE || col.IsTransparent(v.Colours.Back)
 }
 
 func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
 	dst_canvas.DrawVisuals(offset, depth, v)
 }
 
-// A glyph to be displayed. tyumi fonts are based on the old codepage 437 fonts from ancient terminal applications,
+// A glyph to be displayed. Tyumi fonts are based on the old codepage 437 fonts from ancient terminal applications,
 // which had a whopping 256 characters to choose from.
 type Glyph uint8
 

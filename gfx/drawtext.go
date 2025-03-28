@@ -35,7 +35,7 @@ func (c *Canvas) DrawText(pos vec.Coord, depth int, text string, colours col.Pai
 		if mode == TEXTMODE_DEFAULT {
 			mode = DefaultTextMode
 		}
-	}	
+	}
 
 	switch mode {
 	case TEXTMODE_FULL:
@@ -67,8 +67,7 @@ func (c *Canvas) DrawHalfWidthText(pos vec.Coord, depth int, text string, colour
 			continue
 		}
 
-		c.setText(cursor, depth, uint8(textRunes[i]), uint8(textRunes[i+1]))
-		c.setColours(cursor, depth, colours)
+		c.setCell(cursor, depth, NewTextVisuals(uint8(textRunes[i]), uint8(textRunes[i+1]), colours))
 	}
 }
 
@@ -76,7 +75,6 @@ func (c *Canvas) DrawHalfWidthText(pos vec.Coord, depth int, text string, colour
 // respecting depth.
 func (c *Canvas) DrawFullWidthText(pos vec.Coord, depth int, text string, colours col.Pair) {
 	for i, textRune := range []rune(text) {
-		c.setGlyph(pos.StepN(vec.DIR_RIGHT, i), depth, Glyph(textRune))
-		c.setColours(pos.StepN(vec.DIR_RIGHT, i), depth, colours)
+		c.setCell(pos.StepN(vec.DIR_RIGHT, i), depth, NewGlyphVisuals(Glyph(textRune), colours))
 	}
 }

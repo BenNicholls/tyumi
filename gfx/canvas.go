@@ -12,11 +12,11 @@ import (
 // All canvas drawing options are z-depth sensitive. They will never draw a lower z value cell over a higher one.
 // The clear function can be used to set a region of a canvas back to -1 z level so you can redraw over it.
 type Canvas struct {
-	cells    []Cell
-	depthmap []int
-	dirty    bool //true if any cells in the Canvas are dirty and need to be drawn out. TODO: replace this with a dirty bitset
+	cells            []Cell
+	depthmap         []int
+	dirty            bool //true if any cells in the Canvas are dirty and need to be drawn out. TODO: replace this with a dirty bitset
+	transparentCells int  //number of cells with some sort of transparency. if >0, the whole canvas is reported as transparent
 
-	//width, height int
 	size   vec.Dims
 	offset vec.Coord //coordinate of the top-left corner. generally (0,0)
 
@@ -34,6 +34,7 @@ func (c *Canvas) Init(size vec.Dims) {
 		Mode:    DRAW_GLYPH,
 		Colours: col.Pair{col.WHITE, col.BLACK},
 	}
+
 	c.Resize(size)
 }
 
@@ -79,6 +80,7 @@ func (c *Canvas) Resize(new_size vec.Dims) {
 	c.size = new_size
 	c.cells = make([]Cell, c.size.Area())
 	c.depthmap = make([]int, c.size.Area())
+	c.transparentCells = c.size.Area()
 	c.Clear()
 }
 
@@ -148,79 +150,90 @@ func (c *Canvas) setDepth(pos vec.Coord, depth int) {
 	c.depthmap[c.cellIndex(pos)] = depth
 }
 
-func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour uint32) {
-	if c.getDepth(pos) > depth {
+// sets the visuals for the cell, respecting depth. if depth = -1, previous depth value is ignored.
+func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
+	if c.getDepth(pos) > depth && depth != -1 {
 		return
 	}
 
-	if colour == COL_DEFAULT {
-		colour = c.defaultVisuals.Colours.Fore
-	}
-	cell := c.getCell(pos)
-	cell.SetForeColour(colour)
-	c.dirty = c.dirty || cell.Dirty
 	c.setDepth(pos, depth)
+
+	cell := c.getCell(pos)
+	if vis.Colours.Fore == COL_DEFAULT {
+		vis.Colours.Fore = c.defaultVisuals.Colours.Fore
+	} else if vis.Colours.Fore == col.NONE {
+		vis.Colours.Fore = cell.Colours.Fore
+	}
+	if vis.Colours.Back == COL_DEFAULT {
+		vis.Colours.Back = c.defaultVisuals.Colours.Back
+	} else if vis.Colours.Back == col.NONE {
+		vis.Colours.Back = cell.Colours.Back
+	}
+	if cell.Visuals == vis {
+		return
+	}
+
+	transparent_before := cell.IsTransparent()
+	cell.Visuals = vis
+	cell.Dirty = true
+	if transparent_after := cell.IsTransparent(); transparent_after != transparent_before {
+		if transparent_after {
+			c.transparentCells += 1
+		} else {
+			c.transparentCells -= 1
+		}
+	}
+	c.dirty = true
+}
+
+func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour uint32) {
+	v := c.getCell(pos).Visuals
+	v.Colours.Fore = colour
+	c.setCell(pos, depth, v)
 }
 
 func (c *Canvas) setBackColour(pos vec.Coord, depth int, colour uint32) {
-	if c.getDepth(pos) > depth {
-		return
-	}
-
-	if colour == COL_DEFAULT {
-		colour = c.defaultVisuals.Colours.Back
-	}
-	cell := c.getCell(pos)
-	cell.SetBackColour(colour)
-	c.dirty = c.dirty || cell.Dirty
-	c.setDepth(pos, depth)
+	v := c.getCell(pos).Visuals
+	v.Colours.Back = colour
+	c.setCell(pos, depth, v)
 }
 
 func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
-	c.setForeColour(pos, depth, colours.Fore)
-	c.setBackColour(pos, depth, colours.Back)
+	v := c.getCell(pos).Visuals
+	v.Colours = colours
+	c.setCell(pos, depth, v)
 }
 
 func (c *Canvas) setGlyph(pos vec.Coord, depth int, glyph Glyph) {
-	if c.getDepth(pos) > depth {
-		return
-	}
-
-	cell := c.getCell(pos)
-	cell.SetGlyph(glyph)
-	c.dirty = c.dirty || cell.Dirty
-	c.setDepth(pos, depth)
+	v := c.getCell(pos).Visuals
+	v.Mode = DRAW_GLYPH
+	v.Glyph = glyph
+	c.setCell(pos, depth, v)
 }
 
 func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 uint8) {
-	if c.getDepth(pos) > depth {
-		return
-	}
-
-	cell := c.getCell(pos)
-	cell.SetText(char1, char2)
-	c.dirty = c.dirty || cell.Dirty
-	c.setDepth(pos, depth)
+	v := c.getCell(pos).Visuals
+	v.Mode = DRAW_TEXT
+	v.Chars[0], v.Chars[1] = char1, char2
+	c.setCell(pos, depth, v)
 }
 
 // Changes a single character on the canvas at position (x,y) in text mode.
 func (c *Canvas) setChar(pos vec.Coord, depth int, char uint8, char_pos TextCellPosition) {
-	if c.getDepth(pos) > depth {
-		return
+	v := c.getCell(pos).Visuals
+	v.Mode = DRAW_TEXT
+	switch char_pos {
+	case DRAW_TEXT_LEFT:
+		v.Chars[0] = char
+	case DRAW_TEXT_RIGHT:
+		v.Chars[1] = char
 	}
-
-	cell := c.getCell(pos)
-	cell.SetChar(char, char_pos)
-	c.dirty = c.dirty || cell.Dirty
-	c.setDepth(pos, depth)
+	c.setCell(pos, depth, v)
 }
 
 // sets a cell at pos to DRAW_NONE
 func (c *Canvas) setBlank(pos vec.Coord) {
-	cell := c.getCell(pos)
-	cell.SetBlank()
-	c.dirty = c.dirty || cell.Dirty
-	c.setDepth(pos, -1) // not sure if this makes sense...
+	c.setCell(pos, -1, Visuals{Mode: DRAW_NONE})
 }
 
 // Clear resets portions of the canvas. If no areas are provided, it resets the entire canvas. The appearance
@@ -238,9 +251,7 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	for _, area := range areas {
 		for cursor := range vec.EachCoordInIntersection(c, area) {
 			if depth < 0 || c.getDepth(cursor) <= depth {
-				cell := c.getCell(cursor)
-				cell.SetVisuals(c.defaultVisuals)
-				c.setDepth(cursor, -1)
+				c.setCell(cursor, -1, c.defaultVisuals)
 			}
 		}
 	}
@@ -253,6 +264,10 @@ func (c Canvas) Dirty() bool {
 	return c.dirty
 }
 
+func (c Canvas) Transparent() bool {
+	return c.transparentCells > 0
+}
+
 func (c Canvas) DefaultColours() col.Pair {
 	return c.defaultVisuals.Colours
 }
@@ -260,29 +275,14 @@ func (c Canvas) DefaultColours() col.Pair {
 // Returns a copy of a region of the canvas. If the area is not in the canvas, copy will be empty.
 func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 	copy.Init(area.Dims)
-	copy.defaultVisuals = c.defaultVisuals
 
 	if !vec.Intersects(c, area) {
 		return
 	}
 
-	for cursor := range vec.EachCoordInArea(area) {
-		if !c.InBounds(cursor) {
-			continue
-		}
-
-		cell := c.getCell(cursor)
-		depth := c.getDepth(cursor)
-		copy_cursor := cursor.Subtract(area.Coord)
-		copy.setColours(copy_cursor, depth, cell.Colours)
-		switch cell.Mode {
-		case DRAW_GLYPH:
-			copy.setGlyph(copy_cursor, depth, cell.Glyph)
-		case DRAW_TEXT:
-			copy.setText(copy_cursor, depth, cell.Chars[0], cell.Chars[1])
-		case DRAW_NONE:
-			copy.setBlank(copy_cursor)
-		}
+	copy.SetDefaultVisuals(c.defaultVisuals)
+	for cursor := range vec.EachCoordInIntersection(c, area) {
+		copy.setCell(cursor.Subtract(area.Coord), c.getDepth(cursor), c.getCell(cursor).Visuals)
 	}
 
 	return

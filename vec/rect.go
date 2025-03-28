@@ -51,6 +51,7 @@ func EachCoordInArea(b Bounded) iter.Seq[Coord] {
 	}
 }
 
+// Returns an iterator producing a sequence of all coords in the perimeter of a bounded area.
 func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 	return func(yield func(Coord) bool) {
 		r := b.Bounds()
@@ -79,7 +80,7 @@ func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 		sides[0] = Line{r.Coord, corners[1].Step(DIR_LEFT)}     // top
 		sides[1] = Line{corners[1], corners[2].Step(DIR_UP)}    // right
 		sides[2] = Line{corners[2], corners[3].Step(DIR_RIGHT)} // bottom
-		sides[3] = Line{corners[3], r.Coord.Step(DIR_DOWN)}
+		sides[3] = Line{corners[3], r.Coord.Step(DIR_DOWN)}     // right
 		for _, side := range sides {
 			for coord := range side.EachCoord() {
 				if !yield(coord) {
@@ -92,22 +93,26 @@ func EachCoordInPerimeter(b Bounded) iter.Seq[Coord] {
 
 // FindIntersectionRect calculates the intersection of two rectangularly-bound objects. if no intersection
 // returns Rect{0,0,0,0}
-func FindIntersectionRect(r1, r2 Bounded) (r Rect) {
-	if !Intersects(r1, r2) {
+func FindIntersectionRect(b1, b2 Bounded) (r Rect) {
+	if !Intersects(b1, b2) {
 		return
 	}
 
-	b1, b2 := r1.Bounds(), r2.Bounds()
-	r.X, r.Y = max(b1.X, b2.X), max(b1.Y, b2.Y)
-	r.W, r.H = min(b1.X+b1.W, b2.X+b2.W)-r.X, min(b1.Y+b1.H, b2.Y+b2.H)-r.Y
+	r1, r2 := b1.Bounds(), b2.Bounds()
+	r.X, r.Y = max(r1.X, r2.X), max(r1.Y, r2.Y)
+	r.W, r.H = min(r1.X+r1.W, r2.X+r2.W)-r.X, min(r1.Y+r1.H, r2.Y+r2.H)-r.Y
 
 	return
 }
 
 // Intersects returns true if the two provided Bounded areas intersect
-func Intersects(r1, r2 Bounded) bool {
-	b1, b2 := r1.Bounds(), r2.Bounds()
-	if b1.X >= b2.X+b2.W || b2.X >= b1.X+b1.W || b1.Y >= b2.Y+b2.H || b2.Y >= b1.Y+b1.H {
+func Intersects(b1, b2 Bounded) bool {
+	r1, r2 := b1.Bounds(), b2.Bounds()
+	if r1.Area() == 0 || r2.Area() == 0 { // zero-sized rects cannot intersect with anything
+		return false
+	}
+
+	if r1.X >= r2.X+r2.W || r2.X >= r1.X+r1.W || r1.Y >= r2.Y+r2.H || r2.Y >= r1.Y+r1.H {
 		return false
 	}
 

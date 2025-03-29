@@ -169,6 +169,14 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 	} else if vis.Colours.Back == col.NONE {
 		vis.Colours.Back = cell.Colours.Back
 	}
+	if vis.Mode == DRAW_TEXT {
+		if vis.Chars[0] == TEXT_DEFAULT {
+			vis.Chars[0] = cell.Chars[0]
+		}
+		if vis.Chars[1] == TEXT_DEFAULT {
+			vis.Chars[1] = cell.Chars[1]
+		}
+	}
 	if cell.Visuals == vis {
 		return
 	}

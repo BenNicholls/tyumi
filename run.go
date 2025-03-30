@@ -11,8 +11,6 @@ var running bool
 
 // This is the gameloop
 func Run() {
-	defer log.WriteToDisk()
-
 	if !isInitialized() {
 		log.Error("Tyumi must shut down now. Bye Bye.")
 		return

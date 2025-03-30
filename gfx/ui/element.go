@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
@@ -35,23 +36,28 @@ type element interface {
 	HandleKeypress(*input.KeyboardEvent) (event_handled bool)
 
 	MoveTo(vec.Coord)
-	Move(int, int)
+	Move(dx, dy int)
 
 	Focus()
 	Defocus()
 	IsFocused() bool
 
+	// some other getters
 	IsVisible() bool
 	IsTransparent() bool
 	IsBordered() bool
 	Size() vec.Dims
 	ID() ElementID
 
+	// internal getters
 	getCanvas() *gfx.Canvas
 	getWindow() *Window
 	getBorderStyle() BorderStyle
 	getDepth() int
 	getAnimations() []gfx.Animator
+
+	// debug functions
+	dumpUI(dir_name string, depth int)
 }
 
 // Element is the base implementation for any UI Element handled by Tyumi's UI system. More complex UI elements can
@@ -530,6 +536,22 @@ func (e *Element) getWindow() *Window {
 	}
 
 	return parent.getWindow()
+}
+
+func (e *Element) dumpUI(dir_name string, depth int) {
+	if !strings.HasSuffix(dir_name, "/") {
+		dir_name += "/"
+	}
+
+	if parent := e.GetParent(); parent != nil {
+		e.ExportToXP(fmt.Sprintf("%s[%d] - PID %d ID %d", dir_name, depth, parent.ID(), e.ID()))
+	} else {
+		e.ExportToXP(fmt.Sprintf("%s[%d] - %d", dir_name, depth, e.ID()))
+	}
+
+	for _, child := range e.GetChildren() {
+		child.dumpUI(dir_name, depth+1)
+	}
 }
 
 type ElementID int

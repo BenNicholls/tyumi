@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"os"
 	"slices"
 
 	"github.com/bennicholls/tyumi/event"
@@ -141,6 +142,25 @@ func (wnd *Window) GetFocusedElementID() ElementID {
 
 func (wnd *Window) IsBlocked() bool {
 	return wnd.blockingAnimations > 0
+}
+
+// Dumps every UI element in the window to an .xp file in the provided directory. If the directory does not exist it
+// will be created. If it already exists, you can set clean_directory = true to have the directory's contents deleted
+// before the dump.
+// The files created have names in the following format:
+// [Depth] - Parent ID (if there is one) - Element ID.xp
+// NOTE: in a running Tyumi program in debug mode, pressing F10 triggers this on the the current state as well as any
+// open dialogs.
+func (wnd *Window) DumpUI(dir_name string, clean_directory bool) {
+	if clean_directory {
+		if dir_name == "" {
+			log.Error("Cannot clean dump UI directory, no directory name provided (I'm assuming you don't want to delete everything in the current directory!!!). Dump aborted!")
+			return
+		}
+		os.RemoveAll(dir_name)
+	}
+	os.Mkdir(dir_name, os.ModeDir)
+	wnd.dumpUI(dir_name, 0)
 }
 
 // returns this window so subelements can find this. how a window would find a parent window remains a topic

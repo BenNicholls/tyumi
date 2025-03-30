@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 )
 
@@ -18,6 +19,9 @@ func Run() {
 
 	events = event.NewStream(250, handleEvent)
 	events.Listen(EV_QUIT, EV_CHANGESTATE)
+	if debug {
+		events.Listen(input.EV_KEYBOARD)
+	}
 
 	for running = true; running; {
 		beginFrame()
@@ -94,6 +98,26 @@ func handleEvent(e event.Event) (event_handled bool) {
 		currentState.cleanup()
 		currentState = e.(*StateChangeEvent).newState
 		event_handled = true
+	}
+
+	if debug {
+		if e.ID() == input.EV_KEYBOARD {
+			key_event := e.(*input.KeyboardEvent)
+			if key_event.PressType == input.KEY_RELEASED {
+				return
+			}
+			switch key_event.Key {
+			case input.K_F9:
+				log.Info("Taking Screenshot! Saving to 'screenshot.xp'.")
+				mainConsole.ExportToXP("screenshot.xp")
+			case input.K_F10:
+				log.Info("Dumping UI of current state! Saving files to directory 'uidump'")
+				currentState.Window().DumpUI("uidump", true)
+				if activeState != currentState {
+					activeState.Window().DumpUI("uidump", false)
+				}
+			}
+		}
 	}
 
 	return

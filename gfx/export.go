@@ -17,7 +17,7 @@ func (c Canvas) ExportToXP(path string) {
 		case DRAW_GLYPH:
 			cellData.Glyph = uint32(cell.Glyph)
 		case DRAW_TEXT:
-			cellData.Glyph = uint32(GLYPH_QUESTION)
+			cellData.Glyph = uint32(cell.Chars[0])
 		case DRAW_NONE:
 			cellData.Clear()
 		}

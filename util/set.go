@@ -1,0 +1,123 @@
+package util
+
+import "iter"
+
+// Set is a container that holds elements of a type E. Elements can be added and removed, and duplicate adds are no-ops.
+type Set[E comparable] struct {
+	elements map[E]bool
+}
+
+func (s Set[E]) Count() int {
+	return len(s.elements)
+}
+
+func (s *Set[E]) Add(elems ...E) {
+	if len(elems) == 0 {
+		return
+	}
+
+	if s.elements == nil {
+		s.elements = make(map[E]bool)
+	}
+
+	for _, elem := range elems {
+		s.elements[elem] = true
+	}
+}
+
+func (s Set[E]) Contains(elem E) bool {
+	if len(s.elements) == 0 {
+		return false
+	}
+
+	_, ok := s.elements[elem]
+	return ok
+}
+
+func (s Set[E]) ContainsAll(elems ...E) bool {
+	if len(s.elements) == 0 || len(s.elements) < len(elems) {
+		return false
+	}
+
+	for _, elem := range elems {
+		if _, ok := s.elements[elem]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s Set[E]) ContainsAny(elems ...E) bool {
+	if len(s.elements) == 0 {
+		return false
+	}
+
+	for _, elem := range elems {
+		if _, ok := s.elements[elem]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *Set[E]) Remove(elems ...E) {
+	if len(s.elements) == 0 {
+		return
+	}
+
+	for _, elem := range elems {
+		delete(s.elements, elem)
+	}
+}
+
+func (s *Set[E]) RemoveSet(s2 Set[E]) {
+	if len(s.elements) == 0 || len(s2.elements) == 0 {
+		return
+	}
+
+	for elem := range s2.elements {
+		s.Remove(elem)
+	}
+}
+
+func (s Set[E]) Intersection(s2 Set[E]) (intersection Set[E]) {
+	if len(s.elements) == 0 || len(s2.elements) == 0 {
+		return
+	}
+
+	for elem := range s.elements {
+		if s2.Contains(elem) {
+			intersection.Add(elem)
+		}
+	}
+
+	return
+}
+
+func (s Set[E]) Union(s2 Set[E]) (union Set[E]) {
+	if len(s.elements) == 0 && len(s2.elements) == 0 {
+		return
+	}
+
+	for elem := range s.elements {
+		union.Add(elem)
+	}
+
+	for elem := range s2.elements {
+		union.Add(elem)
+	}
+
+	return
+}
+
+func (s Set[E]) EachElement() iter.Seq[E] {
+	return func(yield func(E) bool) {
+		for elem := range s.elements {
+			if !yield(elem) {
+				return
+			}
+		}
+	}
+}

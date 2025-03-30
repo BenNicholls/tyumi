@@ -272,7 +272,7 @@ func (c Canvas) Dirty() bool {
 	return c.dirty
 }
 
-func (c Canvas) Transparent() bool {
+func (c Canvas) IsTransparent() bool {
 	return c.transparentCells > 0
 }
 

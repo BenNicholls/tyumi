@@ -42,6 +42,7 @@ type element interface {
 	IsFocused() bool
 
 	IsVisible() bool
+	IsTransparent() bool
 	IsBordered() bool
 	Size() vec.Dims
 	ID() ElementID
@@ -263,7 +264,7 @@ func (e *Element) HandleKeypress(event *input.KeyboardEvent) (event_handled bool
 // -------------------
 
 func (e *Element) acceptsInput() bool {
-	return e.AcceptInput || e.IsFocused()
+	return e.AcceptInput || e.focused
 }
 
 func (e *Element) IsUpdated() bool {
@@ -391,10 +392,8 @@ func (e *Element) AddAnimation(animation gfx.Animator) {
 	}
 
 	//check for duplicate add
-	for _, anim := range e.animations {
-		if animation == anim {
-			return
-		}
+	if slices.Contains(e.animations, animation) {
+		return
 	}
 
 	e.animations = append(e.animations, animation)

@@ -6,14 +6,14 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-type TextCellPosition int
+type TextCellPosition uint8
 
 const (
 	DRAW_TEXT_LEFT  TextCellPosition = 0
 	DRAW_TEXT_RIGHT TextCellPosition = 1
 )
 
-type TextMode int
+type TextMode uint8
 
 const (
 	TEXTMODE_DEFAULT TextMode = iota

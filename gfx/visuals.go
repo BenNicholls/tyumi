@@ -12,28 +12,24 @@ import (
 type Visuals struct {
 	Mode    DrawMode
 	Glyph   Glyph
-	Colours col.Pair
 	Chars   [2]uint8
+	Colours col.Pair
 }
 
-func NewGlyphVisuals(glyph Glyph, colours col.Pair) (visuals Visuals) {
-	visuals = Visuals{
+func NewGlyphVisuals(glyph Glyph, colours col.Pair) Visuals {
+	return Visuals{
 		Mode:    DRAW_GLYPH,
 		Glyph:   glyph,
 		Colours: colours,
 	}
-
-	return
 }
 
-func NewTextVisuals(char1, char2 uint8, colours col.Pair) (visuals Visuals) {
-	visuals = Visuals{
+func NewTextVisuals(char1, char2 uint8, colours col.Pair) Visuals {
+	return Visuals{
 		Mode:    DRAW_TEXT,
 		Colours: colours,
 		Chars:   [2]uint8{char1, char2},
 	}
-
-	return
 }
 
 // Changes the glyph. Also enables glyph drawmode.

@@ -46,14 +46,14 @@ type Animator interface {
 type Animation struct {
 	OneShot       bool //indicates animation should play once and then be deleted
 	Repeat        bool //animation repeats when finished
-	Area          vec.Rect
-	Depth         int  //depth value of the animation
-	Duration      int  //duration of animation in ticks
 	Backwards     bool //play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
-	Label         string
 	Blocking      bool //whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
 	AlwaysUpdates bool //if true, indicates this animation updates every frame
 	Updated       bool //indicates to whatever is drawing the animation that it's going to render this frame
+	Area          vec.Rect
+	Depth         int  //depth value of the animation
+	Duration      int  //duration of animation in ticks
+	Label         string
 
 	ticks   int  //incremented each update
 	enabled bool //animation is playing

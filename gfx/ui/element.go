@@ -350,44 +350,79 @@ func (e *Element) Draw(dst_canvas *gfx.Canvas) {
 }
 
 func (e *Element) drawChildren() {
-	for i, child := range e.GetChildren() {
+	if e.ChildCount() == 0 {
+		return
+	}
+
+	// collect opaque and transparent children. if a transparent child is dirty, we trigger a redraw
+	// NOTE TO FUTURE BEN: this has to be done here and NOT in prepareRender() because a child might become transparent
+	// between the prepare render phase and this one.
+	var opaque []element
+	var transparent []element
+
+	for _, child := range e.GetChildren() {
 		if !child.IsVisible() {
 			continue
 		}
 
-		if child.getCanvas().Dirty() || e.forceRedraw {
-			child.Draw(&e.Canvas)
-			if child.IsBordered() {
-				if style := child.getBorderStyle(); style.DisableLink {
-					continue
-				}
-
-				// attempt to link to siblings' borders
-				for sib_i, sibling := range e.GetChildren() {
-					// if we're doing a forced redraw of all children then we only need to link to siblings that have
-					// already been drawn. subsequently drawn elements will then link to this one. so we can break
-					// when we get to this element
-					if e.forceRedraw && sib_i == i {
-						break
-					}
-
-					//figure out if we should be linking to this sibling whatsoever. lots of things to consider
-					if child == sibling || !sibling.IsBordered() || sibling.getDepth() != child.getDepth() || !sibling.IsVisible() {
-						continue
-					}
-
-					if style := sibling.getBorderStyle(); !style.DisableLink {
-						e.linkChildBorderWithElement(child, sibling)
+		if e.forceRedraw || child.getCanvas().Dirty() {
+			if child.IsTransparent() {
+				transparent = append(transparent, child)
+				if !e.forceRedraw {
+					e.forceRedraw = true
+					e.Clear()
+					if e.Border.enabled {
+						e.drawBorder()
 					}
 				}
-
-				if child.getDepth() == BorderDepth && e.Border.enabled {
-					if style := e.getBorderStyle(); !style.DisableLink {
-						e.linkChildBorderWithElement(child, e.Canvas)
-					}
-				}
+			} else {
+				opaque = append(opaque, child)
 			}
 		}
+	}
+
+	// sort draw lists and combine. opaque children can be drawn high to low to prevent overdraw, but transparent ones
+	// must be drawn low to high like Bob Ross would.
+	slices.SortStableFunc(opaque, reversedepthsort)
+	slices.SortStableFunc(transparent, depthsort)
+	drawlist := append(opaque, transparent...)
+
+	// precompute cells that will need to be relinked once dirty elements are drawn. this needs to be done
+	// beforehand because linking must be done after drawing, but drawing sets canvases as clean. we need to know which
+	// canvases are dirty to do this properly.
+	var borderLinks util.Set[vec.Coord]
+	for _, child := range drawlist {
+		if !child.IsBordered() {
+			continue
+		}
+
+		if style := child.getBorderStyle(); style.DisableLink {
+			continue
+		}
+
+		// link child to relevant siblings
+		for _, sibling := range e.GetChildren() {
+			if child == sibling || !sibling.IsBordered() || sibling.getDepth() != child.getDepth() || !sibling.IsVisible() {
+				continue
+			}
+
+			if style := sibling.getBorderStyle(); !style.DisableLink {
+				borderLinks = borderLinks.Union(e.calcBorderLinkCoords(child, sibling))
+			}
+		}
+
+		// link child to parent
+		if child.getDepth() == BorderDepth && e.IsBordered() {
+			borderLinks = borderLinks.Union(e.calcBorderLinkCoords(child, e.Canvas))
+		}
+	}
+
+	for _, child := range drawlist {
+		child.Draw(&e.Canvas)
+	}
+
+	for coord := range borderLinks.EachElement() {
+		e.linkBorderCell(coord, e.GetDepth(coord))
 	}
 }
 
@@ -565,4 +600,26 @@ func generate_id() ElementID {
 // ID returns the unique id for this element. Use this for comparisons between arbitrary elements.
 func (e *Element) ID() ElementID {
 	return e.id
+}
+
+// sorting function for use in drawChildren(). low to high.
+func depthsort(c1, c2 element) int {
+	if d1, d2 := c1.getDepth(), c2.getDepth(); d1 < d2 {
+		return -1
+	} else if d2 < d1 {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+// sorting function for use in drawChildren(). high to low.
+func reversedepthsort(c1, c2 element) int {
+	if d1, d2 := c1.getDepth(), c2.getDepth(); d1 < d2 {
+		return 1
+	} else if d2 < d1 {
+		return -1
+	} else {
+		return 0
+	}
 }

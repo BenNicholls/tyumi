@@ -249,38 +249,41 @@ func (e *Element) drawBorder() {
 	}
 }
 
-func (e *Element) linkChildBorderWithElement(child vec.Bounded, other vec.Bounded) {
-	intersection := vec.FindIntersectionRect(child, other)
+func (e *Element) calcBorderLinkCoords(child1, child2 vec.Bounded) (coords util.Set[vec.Coord]) {
+	intersection := vec.FindIntersectionRect(child1, child2)
 	if intersection.Area() == 0 {
 		return
 	}
 
 	switch {
 	case intersection.Area() == 1:
-		e.linkBorderCell(intersection.Coord)
+		coords.Add(intersection.Coord)
 	case intersection.W == 1 || intersection.H == 1:
 		corners := intersection.Corners()
-		e.linkBorderCell(corners[0])
-		e.linkBorderCell(corners[2])
+		coords.Add(corners[0])
+		coords.Add(corners[2])
 	default:
 		corners := intersection.Corners()
 		for _, corner := range corners {
-			if corner.IsInPerimeter(child) && corner.IsInPerimeter(other) {
-				e.linkBorderCell(corner)
+			if corner.IsInPerimeter(child1) && corner.IsInPerimeter(child2) {
+				coords.Add(corner)
 			}
 		}
 	}
+
+	return
 }
 
-func (e *Element) linkBorderCell(pos vec.Coord) {
+func (e *Element) linkBorderCell(pos vec.Coord, depth int) {
 	if !e.InBounds(pos) {
 		return
 	}
 
 	if cell := e.GetCell(pos); cell.Mode == gfx.DRAW_GLYPH {
-		e.DrawLinkedGlyph(pos, BorderDepth, cell.Glyph)
-
-		//also need to try and link to border titles and decorations drawn at a higher level
-		e.DrawLinkedGlyph(pos, BorderDepth+1, e.GetCell(pos).Glyph)
+		e.DrawLinkedGlyph(pos, depth, cell.Glyph)
+		if depth == BorderDepth {
+			//also need to try and link to border titles and decorations drawn at a higher level
+			e.DrawLinkedGlyph(pos, BorderDepth+1, e.GetCell(pos).Glyph)
+		}
 	}
 }

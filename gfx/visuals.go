@@ -46,7 +46,7 @@ func (v *Visuals) SetText(char1, char2 uint8) {
 }
 
 func (v Visuals) IsTransparent() bool {
-	return v.Mode == DRAW_NONE || col.IsTransparent(v.Colours.Back)
+	return v.Mode == DRAW_NONE || v.Colours.Back.IsTransparent()
 }
 
 func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {

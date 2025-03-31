@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	COL_DEFAULT uint32 = 0x00000001 //pass this in cases where you want a canvas to use the default colours
+	COL_DEFAULT col.Colour = 0x00000001 //pass this in cases where you want a canvas to use the default colours
 )
 
 type DrawMode uint8

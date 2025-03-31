@@ -8,11 +8,11 @@ const (
 )
 
 // Blends 2 colours c1 and c2. c1 is the active colour (it's on "top").
-func Blend(c1, c2 uint32, mode BlendMode) uint32 {
-	r1, g1, b1, a1 := RGBA(c1)
-	r2, g2, b2, a2 := RGBA(c2)
+func Blend(c1, c2 Colour, mode BlendMode) Colour {
+	r1, g1, b1, a1 := c1.RGBA()
+	r2, g2, b2, a2 := c2.RGBA()
 
-	var r, g, b, a int
+	var r, g, b, a int // these need to be ints because the blend calculations can overflow a uint8 during internediate steps
 
 	switch mode {
 	case BLEND_MULTIPLY:
@@ -27,5 +27,5 @@ func Blend(c1, c2 uint32, mode BlendMode) uint32 {
 		a = 255 - int(255-a1)*int(255-a2)/255
 	}
 
-	return Make(a, r, g, b)
+	return Make(uint8(a), uint8(r), uint8(g), uint8(b))
 }

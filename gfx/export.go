@@ -12,7 +12,7 @@ func (c Canvas) ExportToXP(path string) {
 
 	for i, cell := range c.cells {
 		cellData := reximage.CellData{}
-		cellData.SetColoursARGB(cell.Colours.Fore, cell.Colours.Back)
+		cellData.SetColoursARGB(uint32(cell.Colours.Fore), uint32(cell.Colours.Back))
 		switch cell.Mode {
 		case DRAW_GLYPH:
 			cellData.Glyph = uint32(cell.Glyph)

@@ -4,68 +4,83 @@ package col
 
 import "github.com/bennicholls/tyumi/util"
 
-// Make returns a uint32 colour in ARGB formed from provided int components
-func Make(a, r, g, b int) (colour uint32) {
-	colour = uint32((a % 256) << 24)
-	colour |= uint32(r%256) << 16
-	colour |= uint32(g%256) << 8
-	colour |= uint32(b % 256)
+// Colour is an ARGB8888 encoded colour.
+type Colour uint32
+
+// Make returns an ARGB8888 colour formed from provided uint8 components.
+func Make(a, r, g, b uint8) (colour Colour) {
+	colour = Colour(a) << 24
+	colour |= Colour(r) << 16
+	colour |= Colour(g) << 8
+	colour |= Colour(b)
 
 	return
 }
 
-// Takes r,g,b ints and creates a colour with alpha 255 in ARGB format.
-func MakeOpaque(r, g, b int) uint32 {
+// Make returns an ARGB8888 colour formed from provided uint8 components, with alpha set to 255 (0xFF)
+func MakeOpaque(r, g, b uint8) Colour {
 	return Make(255, r, g, b)
 }
 
-// RGBA returns the RGBA components of an ARGB8888 formatted uint32 colour.
-func RGBA(colour uint32) (r, g, b, a uint8) {
-	b = uint8(colour & 0x000000FF)
-	g = uint8((colour >> 8) & 0x000000FF)
-	r = uint8((colour >> 16) & 0x000000FF)
-	a = uint8(colour >> 24)
-
-	return
+// Returns the Alpha component of a colour.
+func (c Colour) A() uint8 {
+	return uint8(c >> 24)
 }
 
-// RGB returns the RGB components of an ARGB8888 formatted uint32 colour.
-func RGB(colour uint32) (r, g, b uint8) {
-	r, g, b, _ = RGBA(colour)
-	return
+// Returns the Red component of a colour.
+func (c Colour) R() uint8 {
+	return uint8((c >> 16) & 0xFF)
 }
 
-func IsTransparent(colour uint32) bool {
-	return (colour >> 24) != 0x000000FF
+// Returns the Green component of a colour.
+func (c Colour) G() uint8 {
+	return uint8((c >> 8) & 0xFF)
 }
 
-// Lineraly interpolates the colour between colour1 and colour2 over (steps) number of steps, returning the (val)th value.
+// Returns the Blue component of a colour.
+func (c Colour) B() uint8 {
+	return uint8(c & 0xFF)
+}
+
+// RGBA returns the RGBA components of an ARGB8888 formatted colour.
+func (c Colour) RGBA() (r, g, b, a uint8) {
+	return c.R(), c.G(), c.B(), c.A()
+}
+
+// RGB returns the RGB components of an ARGB8888 formatted colour.
+func (c Colour) RGB() (r, g, b uint8) {
+	return c.R(), c.G(), c.B()
+}
+
+func (c Colour) IsTransparent() bool {
+	return c.A() != 0xFF
+}
+
+// Lineraly interpolates the colour between c and c2 over (steps) number of steps, returning the (val)th value.
 // NOTE: this completely disregards transparent colours, except for NONE. If lerping to NONE, it just doesn't do it and
 // returns the other colour.
-func Lerp(colour1, colour2 uint32, val, steps int) uint32 {
-	if colour1 == NONE {
-		return colour2
-	} else if colour2 == NONE {
-		return colour1
+func (c Colour) Lerp(c2 Colour, val, steps int) Colour {
+	if c == NONE {
+		return c2
+	} else if c2 == NONE {
+		return c
 	}
 
-	r1, g1, b1 := RGB(colour1)
-	r2, g2, b2 := RGB(colour2)
-	return MakeOpaque(util.Lerp(int(r1), int(r2), val, steps), util.Lerp(int(g1), int(g2), val, steps), util.Lerp(int(b1), int(b2), val, steps))
+	return MakeOpaque(util.Lerp(c.R(), c2.R(), val, steps), util.Lerp(c.G(), c2.G(), val, steps), util.Lerp(c.B(), c2.B(), val, steps))
 }
 
 // A Pair of colours, fore and back
 type Pair struct {
-	Fore uint32
-	Back uint32
+	Fore Colour
+	Back Colour
 }
 
 // Linearly interpolates between p and p2 over (steps) number of steps, returning the (val)th value.
 func (p Pair) Lerp(p2 Pair, val, steps int) Pair {
-	return Pair{Lerp(p.Fore, p2.Fore, val, steps), Lerp(p.Back, p2.Back, val, steps)}
+	return Pair{p.Fore.Lerp(p2.Fore, val, steps), p.Back.Lerp(p2.Back, val, steps)}
 }
 
-type Palette []uint32
+type Palette []Colour
 
 // Adds the palette p2 to the end of p.
 func (p *Palette) Add(p2 Palette) {
@@ -79,14 +94,11 @@ func (p *Palette) Add(p2 Palette) {
 // Generate a palette with num items, passing from colour c1 to c2. The colours are
 // lineraly interpolated evenly from one to the next. Gradient is NOT circular.
 // TODO: Circular palette function?
-func GenerateGradient(num int, c1, c2 uint32) (p Palette) {
+func GenerateGradient(num int, c1, c2 Colour) (p Palette) {
 	p = make(Palette, num)
 
-	r1, g1, b1 := RGB(c1)
-	r2, g2, b2 := RGB(c2)
-
 	for i := range p {
-		p[i] = MakeOpaque(util.Lerp(int(r1), int(r2), i, len(p)), util.Lerp(int(g1), int(g2), i, len(p)), util.Lerp(int(b1), int(b2), i, len(p)))
+		p[i] = c1.Lerp(c2, i, num)
 	}
 
 	p[num-1] = c2 //fix end of palette rounding lerp stuff.

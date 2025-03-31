@@ -23,7 +23,7 @@ func (c *Cell) SetTextCell(char1, char2 uint8, colours col.Pair) {
 	c.SetColours(colours)
 }
 
-func (c *Cell) SetForeColour(colour uint32) {
+func (c *Cell) SetForeColour(colour col.Colour) {
 	if colour == c.Colours.Fore || colour == col.NONE {
 		return
 	}
@@ -34,7 +34,7 @@ func (c *Cell) SetForeColour(colour uint32) {
 	}
 }
 
-func (c *Cell) SetBackColour(colour uint32) {
+func (c *Cell) SetBackColour(colour col.Colour) {
 	if colour == c.Colours.Back || colour == col.NONE {
 		return
 	}

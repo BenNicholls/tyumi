@@ -26,9 +26,9 @@ type Renderer struct {
 	frames int // frames rendered. NOTE: this can differ from engine.tick since the renderer may not render every tick
 
 	//store render colours so we don't have to set them for every renderer.Copy()
-	backDrawColour      uint32
-	foreDrawColourText  uint32
-	foreDrawColourGlyph uint32
+	backDrawColour      col.Colour
+	foreDrawColourText  col.Colour
+	foreDrawColourGlyph col.Colour
 
 	console *gfx.Canvas
 
@@ -133,7 +133,7 @@ func (r *Renderer) loadTexture(path string) (*sdl.Texture, error) {
 		return nil, errors.New("Failed to load image")
 	}
 
-	image.SetColorKey(true, col.KEY)
+	image.SetColorKey(true, uint32(col.KEY))
 	texture, err := r.renderer.CreateTextureFromSurface(image)
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to create texture: ", sdl.GetError())
@@ -228,7 +228,7 @@ func (r *Renderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, colours 
 	//change backcolour if it is different from previous draw
 	if colours.Back != r.backDrawColour {
 		r.backDrawColour = colours.Back
-		r.renderer.SetDrawColor(col.RGBA(r.backDrawColour))
+		r.renderer.SetDrawColor(r.backDrawColour.RGBA())
 	}
 
 	if r.showChanges {
@@ -267,10 +267,9 @@ func (r *Renderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, colours 
 	}
 }
 
-func (r *Renderer) setTextureColour(tex *sdl.Texture, colour uint32) {
-	red, green, blue, alpha := col.RGBA(colour)
-	tex.SetColorMod(red, green, blue)
-	tex.SetAlphaMod(alpha)
+func (r *Renderer) setTextureColour(tex *sdl.Texture, colour col.Colour) {
+	tex.SetColorMod(colour.R(), colour.G(), colour.B())
+	tex.SetAlphaMod(colour.A())
 }
 
 func (r *Renderer) ForceRedraw() {

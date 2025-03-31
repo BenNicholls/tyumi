@@ -20,11 +20,11 @@ func SetDefaultElementVisuals(vis gfx.Visuals) {
 }
 
 // default colour for focused element borders
-var defaultFocusColour uint32
+var defaultFocusColour col.Colour
 
 // SetDefaultFocusColor sets the colour for focused elements. Right now this just applies to the border of elements,
 // but later on we'll use this for more advanced theming. Probably. Possibly. Oh get off my back.
-func SetDefaultFocusColour(colour uint32) {
+func SetDefaultFocusColour(colour col.Colour) {
 	defaultFocusColour = colour
 }
 

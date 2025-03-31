@@ -194,13 +194,13 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 	c.dirty = true
 }
 
-func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour uint32) {
+func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour col.Colour) {
 	v := c.getCell(pos).Visuals
 	v.Colours.Fore = colour
 	c.setCell(pos, depth, v)
 }
 
-func (c *Canvas) setBackColour(pos vec.Coord, depth int, colour uint32) {
+func (c *Canvas) setBackColour(pos vec.Coord, depth int, colour col.Colour) {
 	v := c.getCell(pos).Visuals
 	v.Colours.Back = colour
 	c.setCell(pos, depth, v)

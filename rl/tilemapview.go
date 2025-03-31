@@ -44,12 +44,26 @@ func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
 	tmv.Updated = true
 }
 
+func (tmv TileMapView) GetCameraOffset() vec.Coord {
+	return tmv.cameraOffset
+}
+
+// DrawTilemapObject draws an object to a position defined in tilemap-space.
+func (tmv *TileMapView) DrawTilemapObject(object gfx.Drawable, tilemap_position vec.Coord, depth int) {
+	object.Draw(&tmv.Canvas, tilemap_position.Add(tmv.cameraOffset), depth)
+	tmv.Updated = true
+}
+
 func (tmv *TileMapView) Update() {
-	if tmv.tilemap.Dirty() {
+	if tmv.tilemap != nil && tmv.tilemap.Dirty() {
 		tmv.Updated = true
 	}
 }
 
 func (tmv *TileMapView) Render() {
+	if tmv.tilemap == nil {
+		return
+	}
+	
 	tmv.tilemap.Draw(&tmv.Canvas, tmv.cameraOffset, 0)
 }

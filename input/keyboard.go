@@ -39,6 +39,10 @@ func FireKeyPressEvent(key Keycode) {
 
 // Emits keyrelease event.
 func FireKeyReleaseEvent(key Keycode) {
+	if SuppressKeyUpEvents {
+		return
+	}
+	
 	event.Fire(newKeyboardEvent(key, KEY_RELEASED, false))
 }
 

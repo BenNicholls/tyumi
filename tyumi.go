@@ -52,8 +52,8 @@ func isInitialized() bool {
 		return false
 	}
 
-	if currentState == nil {
-		log.Error("Cannot run Tyumi, no MainState set! Run SetInitialMainState() first.")
+	if currentScene == nil {
+		log.Error("Cannot run Tyumi, no initial scene set! Run SetInitialScene() first.")
 		return false
 	}
 

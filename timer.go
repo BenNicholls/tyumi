@@ -4,7 +4,7 @@ package tyumi
 // Once the duration has lapsed the function will be run and it will be done; subsequent calls to Process() will do
 // nothing. Use Done() to check for when the timer can be safely disposed of.
 //
-// You can use CreateTimer() on a state object to make timers that are automatically managed and deleted.
+// You can use CreateTimer() on a scene object to make timers that are automatically managed and deleted.
 type Timer struct {
 	TimerFunction func()
 	Ticks         int // ticks until timer ends

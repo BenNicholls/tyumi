@@ -7,16 +7,16 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// A dialog is a state that can report when it is done and can be shutdown.
+// A dialog is a scene that can report when it is done and can be shutdown.
 type dialog interface {
-	state
+	scene
 
 	Done() bool
 }
 
 // MessageDialog is a dialog that displays a simple message and an okay button.
 type MessageDialog struct {
-	State
+	Scene
 
 	okayButton ui.Button
 	done       bool
@@ -30,7 +30,7 @@ func NewMessageDialog(title, message string) (md *MessageDialog) {
 }
 
 func (md *MessageDialog) Init(title, message string) {
-	md.State.InitCentered(vec.Dims{mainConsole.Size().W / 2, 12})
+	md.Scene.InitCentered(vec.Dims{mainConsole.Size().W / 2, 12})
 	md.Window().EnableBorder()
 
 	messageText := ui.NewTextbox(vec.Dims{md.Window().Size().W, ui.FIT_TEXT}, vec.Coord{0, 1}, 0, message, ui.JUSTIFY_CENTER)

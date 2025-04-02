@@ -177,7 +177,7 @@ func (wnd *Window) IsBlocked() bool {
 // before the dump.
 // The files created have names in the following format:
 // [Depth] - Parent ID (if there is one) - Element ID.xp
-// NOTE: in a running Tyumi program in debug mode, pressing F10 triggers this on the the current state as well as any
+// NOTE: in a running Tyumi program in debug mode, pressing F10 triggers this on the the current scene as well as any
 // open dialogs.
 func (wnd *Window) DumpUI(dir_name string, clean_directory bool) {
 	if clean_directory {
@@ -194,8 +194,6 @@ func (wnd *Window) DumpUI(dir_name string, clean_directory bool) {
 // returns this window so subelements can find this. how a window would find a parent window remains a topic
 // of active and fruitless discussion. thankfully i haven't thought about nesting windows yet so it doesn't keep
 // me up at night
-// THINK: i think dialogs are going to be subwindows? they might be substates though, so maybe nesting windows won't
-// be a thing
 func (wnd *Window) getWindow() *Window {
 	return wnd
 }

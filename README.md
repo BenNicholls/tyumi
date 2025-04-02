@@ -10,7 +10,7 @@ Tyumi is currently in early stages of development. As it stands the "roguelike" 
 
 The API is liable to change drastically as I flesh out Tyumi's capabilites, but for simple games you can target the latest 0.x release (currently 0.1). Version 0.1 has the following features (in varying states of maturity):
 
-- **Game engine** with simple game loop. Compose your game around a Tyumi.State object and Tyumi will run it!
+- **Game engine** with simple game loop. Compose your game around a Tyumi.Scene object and Tyumi will run it!
 - **SDL2 based platform** implementation for rendering, audio, and input events [package platform/sdl]
 - **2D cell-based canvas with drawing functions**. Canvas cells are square and support both full-width glyph drawing as well as half-width glyph drawing for writing denser text. [package gfx]
 - **Animation system**, for making things flash and move and just generally fun to look at.
@@ -31,11 +31,11 @@ go get github.com/bennicholls/tyumi@v0.1
 
 At the moment the only supported platform for Tyumi is based on [go-sdl2](https://github.com/veandco/go-sdl2), so you'll need to follow the instructions there to set up your dev environment for sdl2 correctly. Eventually other platforms will be added but for now this is what we have.
 
-If you're feeling particularly brave you can track the master branch here instead, but I'm not sure I'd recommend it. Tyumi is something of an organic creature at the moment and I change things at a whim sometimes. 
+If you're feeling particularly brave you can track the master branch here instead, but I'm not sure I'd recommend it. Tyumi is something of an organic creature at the moment and I change things at a whim sometimes.
 
 ### Examples
 
-Want to see a Tyumi game in action? Check out [Tytris](https://github.com/bennicholls/tytris), a tetris clone I put together to show off Tyumi's features as of v0.1. 
+Want to see a Tyumi game in action? Check out [Tytris](https://github.com/bennicholls/tytris), a tetris clone I put together to show off Tyumi's features as of v0.1.
 
 Once the API is more nailed down I'll write up some little example apps, maybe a tutorial?
 

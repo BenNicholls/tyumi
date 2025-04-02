@@ -18,7 +18,7 @@ func Run() {
 	}
 
 	events = event.NewStream(250, handleEvent)
-	events.Listen(EV_QUIT, EV_CHANGESTATE)
+	events.Listen(EV_QUIT, EV_CHANGESCENE)
 	if debug {
 		events.Listen(input.EV_KEYBOARD)
 	}
@@ -39,9 +39,9 @@ func Run() {
 
 func beginFrame() {
 	frameTime = time.Now()
-	activeState = currentState
-	if activeSubState := currentState.getActiveSubState(); activeSubState != nil {
-		activeState = activeSubState
+	activeScene = currentScene
+	if activeSubScene := currentScene.getActiveSubScene(); activeSubScene != nil {
+		activeScene = activeSubScene
 	}
 }
 
@@ -49,31 +49,31 @@ func beginFrame() {
 func update() {
 	mainConsole.events.Process()
 
-	if !activeState.IsBlocked() {
-		activeState.InputEvents().Process()
+	if !activeScene.IsBlocked() {
+		activeScene.InputEvents().Process()
 	}
 
-	// make sure we don't accumulate a bunch of inputs in states that aren't being updated for whatever reason
-	currentState.flushInputs()
+	// make sure we don't accumulate a bunch of inputs in scenes that aren't being updated for whatever reason
+	currentScene.flushInputs()
 
-	if !activeState.IsBlocked() {
-		activeState.processTimers()
-		activeState.Update()
+	if !activeScene.IsBlocked() {
+		activeScene.processTimers()
+		activeScene.Update()
 	}
 
-	activeState.Events().Process() //process any gameplay events from this frame.
+	activeScene.Events().Process() //process any gameplay events from this frame.
 }
 
-// Updates any UI elements that need updating after the most recent tick in the current active state.
+// Updates any UI elements that need updating after the most recent tick in the current active scene.
 func updateUI() {
-	activeState.UpdateUI()
-	activeState.Window().Update()
+	activeScene.UpdateUI()
+	activeScene.Window().Update()
 }
 
 // builds the frame and renders using the current platform's renderer.
 func render() {
-	activeState.Window().Render()
-	activeState.Window().Draw(&mainConsole.Canvas)
+	activeScene.Window().Render()
+	activeScene.Window().Draw(&mainConsole.Canvas)
 	if mainConsole.Dirty() {
 		renderer.Render()
 	}
@@ -89,14 +89,14 @@ func endFrame() {
 func handleEvent(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_QUIT: //quit event, like from clicking the close window button on the window
-		currentState.Shutdown()
-		currentState.cleanup()
+		currentScene.Shutdown()
+		currentScene.cleanup()
 		running = false
 		event_handled = true
-	case EV_CHANGESTATE:
-		currentState.Shutdown()
-		currentState.cleanup()
-		currentState = e.(*StateChangeEvent).newState
+	case EV_CHANGESCENE:
+		currentScene.Shutdown()
+		currentScene.cleanup()
+		currentScene = e.(*SceneChangeEvent).newScene
 		event_handled = true
 	}
 
@@ -111,10 +111,10 @@ func handleEvent(e event.Event) (event_handled bool) {
 				log.Info("Taking Screenshot! Saving to 'screenshot.xp'.")
 				mainConsole.ExportToXP("screenshot.xp")
 			case input.K_F10:
-				log.Info("Dumping UI of current state! Saving files to directory 'uidump'")
-				currentState.Window().DumpUI("uidump", true)
-				if activeState != currentState {
-					activeState.Window().DumpUI("uidump", false)
+				log.Info("Dumping UI of current scene! Saving files to directory 'uidump'")
+				currentScene.Window().DumpUI("uidump", true)
+				if activeScene != currentScene {
+					activeScene.Window().DumpUI("uidump", false)
 				}
 			}
 		}

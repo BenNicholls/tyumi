@@ -99,16 +99,20 @@ func (am *ActionMap) AddKeyAction(trigger ActionKeyTrigger) {
 	am.keyTriggers[trigger.Key].Add(trigger)
 }
 
-// Disable an action from firing, even when its trigger is detected. The triggers are not removed from the actionmap,
+// Disable actions from firing, even when their triggers are detected. The triggers are not removed from the actionmap,
 // and can be re-enabled using EnableAction
-func (am *ActionMap) DisableAction(action ActionID) {
-	am.disabled.Add(action)
+func (am *ActionMap) DisableAction(actions ...ActionID) {
+	for _, action := range actions {
+		am.disabled.Add(action)
+	}
 }
 
-// Enable an action to fire when its trigger is detected. Since actions default to being enabled, this function should
+// Enable actions to fire when their triggers are detected. Since actions default to being enabled, this function should
 // only be used to re-enable actions that you've disabled temporarily for whatever reason.
-func (am *ActionMap) EnableAction(action ActionID) {
-	am.disabled.Remove(action)
+func (am *ActionMap) EnableAction(actions ...ActionID) {
+	for _, action := range actions {
+		am.disabled.Remove(action)
+	}
 }
 
 // EnableAll clears the list of disabled actions.

@@ -7,6 +7,12 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+var ACTION_INPUT_DELETE = input.RegisterAction("Delete Text")
+
+func init() {
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_INPUT_DELETE, input.K_BACKSPACE)
+}
+
 // Inputbox is a textbox that can accept and display keyboard input
 type InputBox struct {
 	Textbox
@@ -78,12 +84,20 @@ func (ib *InputBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bo
 	if text := event.Text(); text != "" {
 		ib.Insert(text)
 		event_handled = true
-	} else if event.Key == input.K_BACKSPACE {
-		ib.Delete()
-		event_handled = true
 	}
 
 	return
+}
+
+func (ib *InputBox) HandleAction(action input.ActionID) (action_handled bool) {
+	switch action {
+	case ACTION_INPUT_DELETE:
+		ib.Delete()
+	default:
+		return
+	}
+
+	return true
 }
 
 // Appends the provided string to the contents of the inputbox.

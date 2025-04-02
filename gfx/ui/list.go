@@ -9,6 +9,14 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+var ACTION_LIST_NEXT = input.RegisterAction("Select Next List Element")
+var ACTION_LIST_PREV = input.RegisterAction("Select Previous List Element")
+
+func init() {
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_LIST_NEXT, input.K_DOWN)
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_LIST_PREV, input.K_UP)
+}
+
 // A List is a container that renders it's children elements from top to bottom, like you would expect a list to do. If
 // the size of the content is too large a scrollbar is activated, like magic.
 type List struct {
@@ -59,7 +67,7 @@ func (l *List) Insert(items ...element) {
 		l.items = append(l.items, item)
 		l.AddChild(item)
 	}
-	
+
 	l.calibrate()
 	l.Updated = true
 }
@@ -286,19 +294,15 @@ func (l *List) Render() {
 	}
 }
 
-func (l *List) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
-	if key_event.PressType == input.KEY_RELEASED {
-		return
-	}
-
-	switch key_event.Key {
-	case input.K_UP, input.K_PAGEUP:
-		l.Prev()
-		event_handled = true
-	case input.K_DOWN, input.K_PAGEDOWN:
+func (l *List) HandleAction(action input.ActionID) (action_handled bool) {
+	switch action {
+	case ACTION_LIST_NEXT:
 		l.Next()
-		event_handled = true
+	case ACTION_LIST_PREV:
+		l.Prev()
+	default:
+		return false
 	}
 
-	return
+	return true
 }

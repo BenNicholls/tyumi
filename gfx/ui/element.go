@@ -34,6 +34,7 @@ type element interface {
 
 	acceptsInput() bool
 	HandleKeypress(*input.KeyboardEvent) (event_handled bool)
+	HandleAction(action input.ActionID) (action_handled bool)
 
 	MoveTo(vec.Coord)
 	Move(dx, dy int)
@@ -264,6 +265,11 @@ func (e *Element) Render() {
 
 // Handles keypresses. Override this to implement key input handling.
 func (e *Element) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
+	return
+}
+
+// Handles Actions. Override this to implement action handling.
+func (e *Element) HandleAction(action input.ActionID) (action_handled bool) {
 	return
 }
 

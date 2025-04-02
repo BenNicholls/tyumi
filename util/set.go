@@ -82,6 +82,14 @@ func (s *Set[E]) RemoveSet(s2 Set[E]) {
 	}
 }
 
+func (s *Set[E]) RemoveAll() {
+	if len(s.elements) == 0 {
+		return
+	}
+
+	s.elements = make(map[E]bool)
+}
+
 func (s Set[E]) Intersection(s2 Set[E]) (intersection Set[E]) {
 	if len(s.elements) == 0 || len(s2.elements) == 0 {
 		return

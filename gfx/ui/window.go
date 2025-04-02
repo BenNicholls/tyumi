@@ -13,6 +13,13 @@ import (
 
 var EV_FOCUS_CHANGED = event.Register("Focus Changed", event.SIMPLE)
 
+var ACTION_FOCUS_NEXT = input.RegisterAction("Tab To Next Focusable Element")
+
+func init() {
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_FOCUS_NEXT, input.K_TAB)
+	input.DefaultActionMap.DisableAction(ACTION_FOCUS_NEXT)
+}
+
 // Window acts as a root node for the UI system.
 type Window struct {
 	Element
@@ -20,9 +27,9 @@ type Window struct {
 	labels             map[string]element
 	blockingAnimations int //number of running animations blocking updates
 
-	SendKeyEventsToUnfocused bool //if true, unhandled key events will be sent to all elements, not just the focused one.
-	focusedElement           element
-	tabbingOrder             []element
+	SendEventsToUnfocused bool //if true, unhandled input events will be sent to all elements, not just the focused one.
+	focusedElement        element
+	tabbingOrder          []element
 }
 
 func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
@@ -78,12 +85,7 @@ func (wnd *Window) Render() {
 }
 
 func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
-	if key_event.Key == input.K_TAB && key_event.PressType == input.KEY_PRESSED && len(wnd.tabbingOrder) > 0 {
-		wnd.TabForward()
-		return
-	}
-
-	if wnd.SendKeyEventsToUnfocused {
+	if wnd.SendEventsToUnfocused {
 		util.WalkSubTrees[element](wnd, func(element element) {
 			if !event_handled && element.acceptsInput() {
 				event_handled = element.HandleKeypress(key_event)
@@ -98,6 +100,26 @@ func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled
 	return
 }
 
+func (wnd *Window) HandleAction(action input.ActionID) (action_handled bool) {
+	if action == ACTION_FOCUS_NEXT && len(wnd.tabbingOrder) > 0 {
+		wnd.TabForward()
+		return true
+	}
+
+	if wnd.SendEventsToUnfocused {
+		util.WalkSubTrees[element](wnd, func(element element) {
+			if !action_handled && element.acceptsInput() {
+				action_handled = element.HandleAction(action)
+			}
+		}, ifVisible)
+	} else {
+		if wnd.focusedElement != nil && wnd.focusedElement.IsVisible() {
+			action_handled = wnd.focusedElement.HandleAction(action)
+		}
+	}
+	return false
+}
+
 // SetTabbingOrder sets the order for tabbing between elements. Any previously set tabbing order is not retained.
 func (wnd *Window) SetTabbingOrder(tabbed_elements ...element) {
 	wnd.tabbingOrder = nil
@@ -110,6 +132,12 @@ func (wnd *Window) SetTabbingOrder(tabbed_elements ...element) {
 		if window := e.getWindow(); window == wnd {
 			wnd.tabbingOrder = append(wnd.tabbingOrder, e)
 		}
+	}
+
+	if len(wnd.tabbingOrder) > 0 {
+		input.DefaultActionMap.EnableAction(ACTION_FOCUS_NEXT)
+	} else {
+		input.DefaultActionMap.DisableAction(ACTION_FOCUS_NEXT)
 	}
 }
 

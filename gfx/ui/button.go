@@ -7,6 +7,12 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+var ACTION_BUTTON_PRESS = input.RegisterAction("Button Press")
+
+func init() {
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_BUTTON_PRESS, input.K_RETURN)
+}
+
 // A handy text button that performs an action when pressed. Also plays an animation (defaults to a quick pulse).
 type Button struct {
 	Textbox
@@ -46,16 +52,13 @@ func (b *Button) Press() {
 	}
 }
 
-func (b *Button) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
-	if key_event.Handled() || key_event.PressType != input.KEY_PRESSED {
-		return
-	}
-
-	switch key_event.Key {
-	case input.K_RETURN:
+func (b *Button) HandleAction(action input.ActionID) (action_handled bool) {
+	switch action {
+	case ACTION_BUTTON_PRESS:
 		b.Press()
-		event_handled = true
+	default:
+		return false
 	}
 
-	return
+	return true
 }

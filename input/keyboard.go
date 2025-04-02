@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -13,6 +14,8 @@ type KeyPressType int
 const (
 	KEY_PRESSED KeyPressType = iota
 	KEY_RELEASED
+
+	KEYPRESS_EITHER // only used for defining allowable presstypes for actions.
 )
 
 type KeyboardEvent struct {
@@ -23,18 +26,34 @@ type KeyboardEvent struct {
 	Repeat    bool //will be true if this is the key is being held down
 }
 
-func newKeyboardEvent(key Keycode, press_type KeyPressType, repeat bool) (kbe *KeyboardEvent) {
-	kbe = new(KeyboardEvent)
-	kbe.EventPrototype = event.New(EV_KEYBOARD)
-	kbe.Key = key
-	kbe.PressType = press_type
-	kbe.Repeat = repeat
+func fireKeyboardEvent(key_event KeyboardEvent) {
+	event.Fire(&key_event)
+	key_event.fireActions()
+}
+
+func (kbe KeyboardEvent) fireActions() {
+	var triggeredActions util.Set[ActionID]
+	if triggerSet, ok := DefaultActionMap.keyTriggers[kbe.Key]; ok {
+		for trigger := range triggerSet.EachElement() {
+			if trigger.TriggeredBy(kbe) {
+				triggeredActions.Add(trigger.Action)
+			}
+		}
+	}
+
+	for action := range triggeredActions.EachElement() {
+		fireActionEvent(action)
+	}
+
 	return
 }
 
 // Emits keypress event.
 func FireKeyPressEvent(key Keycode) {
-	event.Fire(newKeyboardEvent(key, KEY_PRESSED, false))
+	fireKeyboardEvent(KeyboardEvent{
+		EventPrototype: event.New(EV_KEYBOARD),
+		Key:            key,
+	})
 }
 
 // Emits keyrelease event.
@@ -42,8 +61,12 @@ func FireKeyReleaseEvent(key Keycode) {
 	if SuppressKeyUpEvents {
 		return
 	}
-	
-	event.Fire(newKeyboardEvent(key, KEY_RELEASED, false))
+
+	fireKeyboardEvent(KeyboardEvent{
+		EventPrototype: event.New(EV_KEYBOARD),
+		Key:            key,
+		PressType:      KEY_RELEASED,
+	})
 }
 
 // Emits key repeated event. The KeyPressType of repeat events is always KEY_PRESSED.
@@ -52,7 +75,11 @@ func FireKeyRepeatEvent(key Keycode) {
 		return
 	}
 
-	event.Fire(newKeyboardEvent(key, KEY_PRESSED, true))
+	fireKeyboardEvent(KeyboardEvent{
+		EventPrototype: event.New(EV_KEYBOARD),
+		Key:            key,
+		Repeat:         true,
+	})
 }
 
 // If the keyboard event represents a direction, returns a vec.Direction (or vec.DIR_NONE if not). Currently only does

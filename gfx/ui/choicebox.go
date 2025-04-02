@@ -14,6 +14,14 @@ import (
 
 var EV_CHOICE_CHANGED = event.Register("Choice Changed", event.SIMPLE)
 
+var ACTION_CHOICE_NEXT = input.RegisterAction("Select Next Choice")
+var ACTION_CHOICE_PREV = input.RegisterAction("Select Previous Choice")
+
+func init() {
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_CHOICE_NEXT, input.K_RIGHT)
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_CHOICE_PREV, input.K_LEFT)
+}
+
 // Choicebox displays one element from a list, and allows the user to cycle through the options
 type ChoiceBox struct {
 	Textbox
@@ -99,19 +107,15 @@ func (cb *ChoiceBox) Render() {
 	cb.DrawVisuals(vec.Coord{cb.Size().W - 1, 0}, 1, cb.arrowVisuals[1])
 }
 
-func (cb *ChoiceBox) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
-	if event.PressType == input.KEY_RELEASED {
-		return
-	}
-
-	switch event.Key {
-	case input.K_RIGHT:
+func (cb *ChoiceBox) HandleAction(action input.ActionID) (action_handled bool) {
+	switch action {
+	case ACTION_CHOICE_NEXT:
 		cb.Next()
-		event_handled = true
-	case input.K_LEFT:
+	case ACTION_CHOICE_PREV:
 		cb.Prev()
-		event_handled = true
+	default:
+		return false
 	}
 
-	return
+	return true
 }

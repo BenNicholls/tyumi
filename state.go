@@ -50,9 +50,10 @@ type State struct {
 	subState dialog
 	timers   []Timer
 
-	events               event.Stream  //for engine events, game events, etc. processed at the end of each tick
-	inputEvents          event.Stream  //for input events. processed at the start of each tick
-	inputHandler         event.Handler //user-provided input handling function. runs AFTER the UI has had a chance to process input.
+	events               event.Stream        //for engine events, game events, etc. processed at the end of each tick
+	inputEvents          event.Stream        //for input events. processed at the start of each tick
+	inputHandler         event.Handler       //user-provided input handling function. runs AFTER the UI has had a chance to process input.
+	actionHandler        input.ActionHandler //user-provided action handling function. runs AFTER the UI has had a chance to process input.
 	keypressInputHandler func(key_event *input.KeyboardEvent) bool
 
 	ready bool // indicates the state has been successfully initialized
@@ -128,7 +129,7 @@ func (s *State) init(size vec.Dims, pos vec.Coord, bordered bool) {
 	s.inputEvents = event.NewStream(100, s.handleInput)
 
 	//setup automatic listening for input events.
-	s.inputEvents.Listen(input.EV_KEYBOARD, input.EV_MOUSEBUTTON, input.EV_MOUSEMOVE)
+	s.inputEvents.Listen(input.EV_ACTION, input.EV_KEYBOARD, input.EV_MOUSEBUTTON, input.EV_MOUSEMOVE)
 	s.timers = make([]Timer, 0)
 	s.ready = true
 }
@@ -214,23 +215,6 @@ func (s *State) SetEventHandler(handler event.Handler) {
 	s.events.AddHandler(handler)
 }
 
-func (s *State) handleInput(event event.Event) (event_handled bool) {
-	switch event.ID() {
-	case input.EV_KEYBOARD:
-		key_event := event.(*input.KeyboardEvent)
-		event_handled = s.window.HandleKeypress(key_event)
-		if s.keypressInputHandler != nil && key_event.PressType == input.KEY_PRESSED {
-			event_handled = s.keypressInputHandler(key_event) || event_handled
-		}
-	}
-
-	if s.inputHandler != nil {
-		event_handled = s.inputHandler(event) || event_handled
-	}
-
-	return
-}
-
 // Sets the function for handling inputs to the state object. Inputs are collected, distributed and then
 // processed at the beginning of each tick(). This handler is called after the UI and any more specific input handlers
 // have had a chance to handle the input. If another handler handles the event then event.Handled() will be true. You
@@ -245,6 +229,37 @@ func (s *State) SetInputHandler(handler event.Handler) {
 // and handle the event again if you like though.
 func (s *State) SetKeypressHandler(keypress_handler func(keyboard_event *input.KeyboardEvent) bool) {
 	s.keypressInputHandler = keypress_handler
+}
+
+// Sets the function for handling action events. Inputs are collected, distributed and then processed at the beginning of
+// each tick(). This handler is called only for events that trigger actions. It runs after the UI has had a chance to
+// handle the action. If the UI handles the action then event.Handled() will be true. You can still choose to ignore that
+// and handle the action again if you like though.
+func (s *State) SetActionHandler(action_handler input.ActionHandler) {
+	s.actionHandler = action_handler
+}
+
+func (s *State) handleInput(event event.Event) (event_handled bool) {
+	switch event.ID() {
+	case input.EV_ACTION:
+		action_event := event.(*input.ActionEvent)
+		event_handled = s.window.HandleAction(action_event.Action)
+		if s.actionHandler != nil {
+			event_handled = s.actionHandler(action_event.Action) || event_handled
+		}
+	case input.EV_KEYBOARD:
+		key_event := event.(*input.KeyboardEvent)
+		event_handled = s.window.HandleKeypress(key_event)
+		if s.keypressInputHandler != nil && key_event.PressType == input.KEY_PRESSED {
+			event_handled = s.keypressInputHandler(key_event) || event_handled
+		}
+	}
+
+	if s.inputHandler != nil {
+		event_handled = s.inputHandler(event) || event_handled
+	}
+
+	return
 }
 
 func (s *State) flushInputs() {

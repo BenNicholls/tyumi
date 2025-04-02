@@ -8,6 +8,12 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+var ACTION_PAGE_NEXT = input.RegisterAction("Next Page")
+
+func init() {
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_PAGE_NEXT, input.K_TAB)
+}
+
 // PageContainer contains multiple pages and displays them one at a time, with a familiar tab interface at the top
 // for swapping pages.
 // NOTE: Pages are stored in the container but only the selected page is ever a proper child of the container node.
@@ -136,18 +142,15 @@ func (pc *PageContainer) Render() {
 	pc.DrawVisuals(cursor, BorderDepth, brush)
 }
 
-func (pc *PageContainer) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
-	if event.PressType == input.KEY_RELEASED {
+func (pc *PageContainer) HandleAction(action input.ActionID) (action_handled bool) {
+	switch action {
+	case ACTION_PAGE_NEXT:
+		pc.NextPage()
+	default:
 		return
 	}
 
-	switch event.Key {
-	case input.K_TAB:
-		pc.NextPage()
-		event_handled = true
-	}
-
-	return
+	return true
 }
 
 // Page is the content for a tab in a PageContainer. Size is defined and controlled by the PageContainer.

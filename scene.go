@@ -7,6 +7,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -45,6 +46,8 @@ type scene interface {
 // overriding the virtual functions defined here. Most important is the Update() function, which runs once per-tick
 // and should contain your main game code.
 type Scene struct {
+	util.StateMachine
+
 	window *ui.Window
 
 	subScene dialog

@@ -39,6 +39,9 @@ type Animator interface {
 	IsBlocking() bool
 	IsUpdated() bool
 
+	JustStopped() bool
+	Finish()
+
 	GetDuration() int
 }
 
@@ -50,14 +53,15 @@ type Animation struct {
 	Blocking      bool //whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
 	AlwaysUpdates bool //if true, indicates this animation updates every frame
 	Updated       bool //indicates to whatever is drawing the animation that it's going to render this frame
-	Area          vec.Rect
 	Depth         int  //depth value of the animation
 	Duration      int  //duration of animation in ticks
 	Label         string
 
-	ticks   int  //incremented each update
-	enabled bool //animation is playing
-	reset   bool //indicates animation should reset and start over.
+	area        vec.Rect
+	ticks       int  //incremented each update
+	enabled     bool //animation is playing
+	reset       bool //indicates animation should reset and start over.
+	justStopped bool //indicates animation has stopped recently. use Finish() to clear this flag.
 }
 
 func (a *Animation) Update() {
@@ -82,6 +86,7 @@ func (a *Animation) Update() {
 			fireAnimationCompleteEvent(a.Label)
 		}
 		a.enabled = false
+		a.justStopped = true
 		a.reset = true
 	}
 }
@@ -106,12 +111,26 @@ func (a Animation) IsUpdated() bool {
 	return a.AlwaysUpdates || a.Updated
 }
 
-func (a *Animation) MoveTo(pos vec.Coord) {
-	if a.Area.Coord == pos {
+func (a *Animation) SetArea(area vec.Rect) {
+	a.MoveTo(area.Coord)
+	a.Resize(area.Dims)
+}
+
+func (a *Animation) Resize(size vec.Dims) {
+	if a.area.Dims == size {
 		return
 	}
 
-	a.Area.MoveTo(pos.X, pos.Y)
+	a.area.Dims = size
+	a.Updated = true
+}
+
+func (a *Animation) MoveTo(pos vec.Coord) {
+	if a.area.Coord == pos {
+		return
+	}
+
+	a.area.Coord = pos
 	a.Updated = true
 }
 
@@ -129,6 +148,7 @@ func (a *Animation) Play() {
 // Pauses a playing animation.
 func (a *Animation) Pause() {
 	a.enabled = false
+	a.justStopped = true
 }
 
 // Stops an animation and resets it.
@@ -138,11 +158,12 @@ func (a *Animation) Stop() {
 	}
 
 	a.enabled = false
+	a.justStopped = true
 	a.reset = true
 }
 
 func (a Animation) Bounds() vec.Rect {
-	return a.Area
+	return a.area
 }
 
 func (a Animation) GetDuration() int {
@@ -161,6 +182,16 @@ func (a Animation) GetTicks() int {
 // GetProgress returns a value from [0,1] indicating the progress of the animation
 func (a Animation) GetProgress() float64 {
 	return float64(a.ticks) / float64(a.Duration)
+}
+
+// Returns true if the animation has stopped recently.
+func (a Animation) JustStopped() bool {
+	return a.justStopped
+}
+
+// Finish clears the justStopped flag.
+func (a *Animation) Finish() {
+	a.justStopped = false
 }
 
 // AnimationChain is a container for multiple animations. Playing the chain will play all of the

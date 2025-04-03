@@ -17,7 +17,7 @@ type BlinkAnimation struct {
 func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba BlinkAnimation) {
 	ba = BlinkAnimation{
 		Animation: Animation{
-			Area:     vec.Rect{pos, size},
+			area:     vec.Rect{pos, size},
 			Depth:    depth,
 			Repeat:   true,
 			Duration: rate,
@@ -44,7 +44,7 @@ func (ba *BlinkAnimation) Update() {
 
 func (ba *BlinkAnimation) Render(c *Canvas) {
 	if ba.blinking {
-		for cursor := range vec.EachCoordInArea(ba.Area) {
+		for cursor := range vec.EachCoordInArea(ba) {
 			c.DrawVisuals(cursor, ba.Depth, ba.Vis)
 		}
 	}
@@ -65,7 +65,7 @@ type FadeAnimation struct {
 func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colours col.Pair, start_colours ...col.Pair) (fa FadeAnimation) {
 	fa = FadeAnimation{
 		Animation: Animation{
-			Area:          area,
+			area:          area,
 			Depth:         depth,
 			Duration:      duration_frames,
 			AlwaysUpdates: true,
@@ -81,7 +81,7 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colour
 }
 
 func (fa *FadeAnimation) Render(c *Canvas) {
-	for cursor := range vec.EachCoordInIntersection(c, fa.Area) {
+	for cursor := range vec.EachCoordInIntersection(c, fa) {
 		dst_cell := c.getCell(cursor)
 		if dst_cell.Mode == DRAW_NONE {
 			continue
@@ -123,7 +123,7 @@ type PulseAnimation struct {
 // Creates a pulse animation. duration_frames is the duration of the entire cycle: start -> fade to pulse colour -> fade back
 func NewPulseAnimation(area vec.Rect, depth int, duration_frames int, pulse_colours col.Pair) (pa PulseAnimation) {
 	pa.Animation = Animation{
-		Area:          area,
+		area:          area,
 		Depth:         depth,
 		Duration:      duration_frames,
 		AlwaysUpdates: true,
@@ -146,6 +146,11 @@ func (pa *PulseAnimation) Update() {
 		pa.fade.Start()
 	}
 	pa.fade.Update()
+}
+
+func (pa *PulseAnimation) SetArea(area vec.Rect) {
+	pa.Animation.SetArea(area)
+	pa.fade.SetArea(area)
 }
 
 func (pa *PulseAnimation) Render(canvas *Canvas) {

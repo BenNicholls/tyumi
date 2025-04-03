@@ -72,14 +72,14 @@ type element interface {
 type Element struct {
 	gfx.Canvas
 	util.TreeNode[element]
-	Updated     bool   //indicates this object's state has changed and needs to be re-rendered.
 	Border      Border //the element's border data. use EnableBorder() to turn on
-	AcceptInput bool   // if true, the element will be sent inputs when in a window with SendKeyEventsToUnfocused = true
+	Updated     bool   //indicates this object's state has changed and needs to be re-rendered.
+	AcceptInput bool   // if true, the element will be sent inputs when in a window with SendEventsToUnfocused = true
 
-	id          ElementID      //a unique ID for the element
 	position    vec.Coord      //position relative to parent
 	size        vec.Dims       //size of the drawable area of the element
 	depth       int            //depth for the UI system, relative to the element's parent.
+	id          ElementID      //a unique ID for the element
 	visible     bool           //visibility, controlled via Show() and Hide()
 	focused     bool           //focus state. by default, only focused elements receive input
 	forceRedraw bool           //indicates this object needs to clear and render everything from zero
@@ -287,9 +287,11 @@ func (e *Element) updateAnimations() {
 	for _, a := range e.animations {
 		if a.IsPlaying() {
 			a.Update()
-			if !a.IsPlaying() { //animation just finished
-				e.forceRedraw = true // make sure we reset just in case the animation left some garbage on the canvas
-			}
+		}
+
+		if a.JustStopped() {
+			// if animation has stopped, trigger a redraw to clean up anything the animation might have left on the canvas
+			e.forceRedraw = true
 		}
 	}
 
@@ -337,6 +339,10 @@ func (e *Element) prepareRender() {
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
 func (e *Element) finalizeRender() {
+	for _, anim := range e.animations {
+		anim.Finish()
+	}
+
 	e.Updated = false
 	e.forceRedraw = false
 	e.Border.dirty = false

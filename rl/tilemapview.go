@@ -39,6 +39,20 @@ func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {
 	tmv.Clear()
 }
 
+func (tmv *TileMapView) CenterTileMap() {
+	offset := vec.Coord{(tmv.tilemap.Bounds().W - tmv.Bounds().W)/2, (tmv.tilemap.Bounds().H - tmv.Bounds().H)/2}
+	tmv.SetCameraOffset(offset)
+}
+
+func (tmv *TileMapView) CenterOnTileMapCoord(tilemap_pos vec.Coord) {
+	offset := tilemap_pos.Subtract(vec.Coord{tmv.Bounds().W/2, tmv.Bounds().H/2})
+	tmv.SetCameraOffset(offset)
+}
+
+func (tmv TileMapView) MapCoordToViewCoord(map_coord vec.Coord) vec.Coord {
+	return map_coord.Subtract(tmv.cameraOffset)
+}
+
 func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
 	tmv.cameraOffset = offset
 	tmv.Updated = true
@@ -64,6 +78,6 @@ func (tmv *TileMapView) Render() {
 	if tmv.tilemap == nil {
 		return
 	}
-	
-	tmv.tilemap.Draw(&tmv.Canvas, tmv.cameraOffset, 0)
+
+	tmv.tilemap.Draw(&tmv.Canvas, tmv.cameraOffset.Scale(-1), 0)
 }

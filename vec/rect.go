@@ -38,6 +38,12 @@ func (r Rect) Corners() (corners [4]Coord) {
 	return
 }
 
+// Returns the center of the rect. Since we're all integers 'round these parts this won't be exact unless both width
+// and height are odd numbers, so be aware.
+func (r Rect) Center() Coord {
+	return Coord{r.X + r.W/2, r.Y + r.H/2}
+}
+
 // Returns an iterator producing a sequence of all Coords within the Rect r, starting in the top-left corner and
 // proceeding to the right, going line by line (like how you'd read)
 func EachCoordInArea(b Bounded) iter.Seq[Coord] {

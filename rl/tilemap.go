@@ -99,6 +99,8 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 		}
 		dst_canvas.DrawObject(cursor, 0, tile)
 	}
+
+	tm.dirty = false
 }
 
 func (tm TileMap) CopyToTileMap(dst_map *TileMap, offset vec.Coord) {

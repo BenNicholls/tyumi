@@ -371,6 +371,20 @@ func (e *Element) drawChildren() {
 		return
 	}
 
+	if !e.forceRedraw {
+		//check for transparent dirty children. if we find one, trigger a redraw
+		for _, child := range e.GetChildren() {
+			if child.IsVisible() && child.IsTransparent() && child.getCanvas().Dirty() {
+				e.forceRedraw = true
+				e.Clear()
+				if e.Border.enabled {
+					e.drawBorder()
+				}
+				break
+			}
+		}
+	}
+
 	// collect opaque and transparent children. if a transparent child is dirty, we trigger a redraw
 	// NOTE TO FUTURE BEN: this has to be done here and NOT in prepareRender() because a child might become transparent
 	// between the prepare render phase and this one.
@@ -385,13 +399,6 @@ func (e *Element) drawChildren() {
 		if e.forceRedraw || child.getCanvas().Dirty() {
 			if child.IsTransparent() {
 				transparent = append(transparent, child)
-				if !e.forceRedraw {
-					e.forceRedraw = true
-					e.Clear()
-					if e.Border.enabled {
-						e.drawBorder()
-					}
-				}
 			} else {
 				opaque = append(opaque, child)
 			}

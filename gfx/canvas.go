@@ -280,6 +280,10 @@ func (c Canvas) DefaultColours() col.Pair {
 	return c.defaultVisuals.Colours
 }
 
+func (c Canvas) DefaultVisuals() Visuals {
+	return c.defaultVisuals
+}
+
 // Returns a copy of a region of the canvas. If the area is not in the canvas, copy will be empty.
 func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 	copy.Init(area.Dims)

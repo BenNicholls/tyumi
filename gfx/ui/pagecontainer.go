@@ -126,6 +126,10 @@ func (pc PageContainer) GetPageIndex() int {
 }
 
 func (pc *PageContainer) Render() {
+	if len(pc.pages) == 0 {
+		return
+	}
+
 	//blank out border below selected page's tab
 	selectedTab := pc.getSelectedPage().tab
 	cursor := selectedTab.Bounds().Coord

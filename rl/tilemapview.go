@@ -53,6 +53,10 @@ func (tmv TileMapView) MapCoordToViewCoord(map_coord vec.Coord) vec.Coord {
 	return map_coord.Subtract(tmv.cameraOffset)
 }
 
+func (tmv *TileMapView) MoveCamera(dx, dy int) {
+	tmv.SetCameraOffset(tmv.cameraOffset.Add(vec.Coord{dx, dy}))
+}
+
 func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
 	tmv.cameraOffset = offset
 	tmv.Updated = true

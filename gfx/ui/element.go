@@ -151,6 +151,11 @@ func (e *Element) SetDefaultColours(colours col.Pair) {
 	e.Updated = true
 }
 
+func (e *Element) SetDefaultVisuals(vis gfx.Visuals) {
+	e.Canvas.SetDefaultVisuals(vis)
+	e.Updated = true
+}
+
 // Returns the bounding box of the element wrt its parent.
 // Use Canvas.Bounds() to get the bounds of the underlying canvas for drawing to
 func (e *Element) Bounds() vec.Rect {
@@ -487,7 +492,8 @@ func (e *Element) Show() {
 	e.setVisible(true)
 }
 
-// Hide hides the element, preventing it and its children (if any) from receiving input, or being updated/rendered.
+// Hide hides the element, preventing it and its children (if any) from receiving input, or being updated/rendered. If
+// the element is focused, it loses focus.
 func (e *Element) Hide() {
 	e.setVisible(false)
 }
@@ -505,6 +511,8 @@ func (e *Element) setVisible(v bool) {
 	e.visible = v
 	if e.visible {
 		e.Updated = true
+	} else {
+		e.setFocus(false)
 	}
 
 	e.forceParentRedraw()

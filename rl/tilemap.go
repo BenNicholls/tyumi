@@ -95,9 +95,10 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	for cursor := range vec.EachCoordInIntersection(dst_canvas, tm.Bounds().Translated(offset)) {
 		tile := tm.GetTile(cursor.Subtract(offset))
 		if tile.tileType == TILE_NONE {
-			continue
+			dst_canvas.DrawVisuals(cursor, 0, dst_canvas.DefaultVisuals())
+		} else {
+			dst_canvas.DrawObject(cursor, 0, tile)
 		}
-		dst_canvas.DrawObject(cursor, 0, tile)
 	}
 
 	tm.dirty = false

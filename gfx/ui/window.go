@@ -168,6 +168,10 @@ func (wnd *Window) GetFocusedElementID() ElementID {
 	return wnd.focusedElement.ID()
 }
 
+func (wnd *Window) HasFocusedElement() bool {
+	return wnd.focusedElement != nil 
+}
+
 func (wnd *Window) IsBlocked() bool {
 	return wnd.blockingAnimations > 0
 }

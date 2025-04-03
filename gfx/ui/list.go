@@ -276,6 +276,14 @@ func (l *List) Prev() {
 	l.Select(prevIndex)
 }
 
+func (l *List) ScrollToTop() {
+	l.Select(0)
+}
+
+func (l *List) ScrollToBottom() {
+	l.Select(l.Count()-1)
+}
+
 func (l *List) prepareRender() {
 	if l.Updated {
 		l.forceRedraw = true

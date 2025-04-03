@@ -75,6 +75,10 @@ func (c *Canvas) DrawHalfWidthText(pos vec.Coord, depth int, text string, colour
 // respecting depth.
 func (c *Canvas) DrawFullWidthText(pos vec.Coord, depth int, text string, colours col.Pair) {
 	for i, textRune := range []rune(text) {
-		c.setCell(pos.StepN(vec.DIR_RIGHT, i), depth, NewGlyphVisuals(Glyph(textRune), colours))
+		cursor := pos.StepN(vec.DIR_RIGHT, i)
+		if !c.InBounds(cursor) {
+			break
+		}
+		c.setCell(cursor, depth, NewGlyphVisuals(Glyph(textRune), colours))
 	}
 }

@@ -16,16 +16,13 @@ func init() {
 
 // PageContainer contains multiple pages and displays them one at a time, with a familiar tab interface at the top
 // for swapping pages.
-// NOTE: Pages are stored in the container but only the selected page is ever a proper child of the container node.
-// this means that unselected pages will never be rendered, updated, or receive input.
 type PageContainer struct {
 	Element
 
 	OnPageChanged func()
 
 	pages            []*Page
-	currentPageIndex int      //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
-	tabRow           *Element //TODO: this could be some kind of container type that does horizontal layouting? is that a word?
+	currentPageIndex int //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
 }
 
 func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContainer) {
@@ -38,12 +35,6 @@ func NewPageContainer(size vec.Dims, pos vec.Coord, depth int) (pc *PageContaine
 func (pc *PageContainer) Init(size vec.Dims, pos vec.Coord, depth int) {
 	pc.Element.Init(size, pos, depth)
 	pc.TreeNode.Init(pc)
-
-	pc.tabRow = new(Element)
-	pc.tabRow.Init(vec.Dims{size.W, 2}, vec.Coord{0, 0}, BorderDepth)
-	pc.tabRow.SetupBorder("", "")
-	pc.tabRow.Border.SetStyle(BORDER_STYLE_INHERIT)
-	pc.AddChild(pc.tabRow)
 
 	pc.pages = make([]*Page, 0)
 	pc.currentPageIndex = -1 //no pages in container, so no selection
@@ -77,15 +68,15 @@ func (pc *PageContainer) PrevPage() {
 }
 
 func (pc *PageContainer) addPage(page *Page) {
-	pc.pages = append(pc.pages, page)
-
 	//find position for next tab
 	x := 1
-	for _, tab := range pc.tabRow.GetChildren() {
-		x += tab.Size().W + 1
+	for _, page := range pc.pages {
+		x += page.tab.Size().W + 1
 	}
 	page.tab.MoveTo(vec.Coord{x, 1})
-	pc.tabRow.AddChild(page.tab)
+	pc.AddChild(page.tab)
+	pc.AddChild(page)
+	pc.pages = append(pc.pages, page)
 
 	if len(pc.pages) == 1 { //first page added
 		pc.selectPage(0)
@@ -104,28 +95,28 @@ func (pc *PageContainer) selectPage(page_index int) {
 
 	//remove previous selected page if there is one (index -1 means no page selected)
 	if pc.currentPageIndex >= 0 {
-		old_page := pc.getSelectedPage()
-		old_page.deactivate()
-		pc.RemoveChild(old_page)
+		pc.getSelectedPage().deactivate()
 	}
 
 	pc.currentPageIndex = page_index
-	new_page := pc.getSelectedPage()
-	new_page.activate()
-	pc.AddChild(new_page)
-	pc.Updated = true
+	pc.getSelectedPage().activate()
 	fireCallbacks(pc.OnPageChanged)
 }
 
 func (pc *PageContainer) getSelectedPage() *Page {
+	if len(pc.pages) == 0 {
+		return nil
+	}
+
 	return pc.pages[pc.currentPageIndex]
 }
 
+// Retrives the index for the current page. If there are no pages, returns -1.
 func (pc PageContainer) GetPageIndex() int {
 	return pc.currentPageIndex
 }
 
-func (pc *PageContainer) Render() {
+func (pc *PageContainer) renderIfDirty() {
 	if len(pc.pages) == 0 {
 		return
 	}
@@ -162,9 +153,7 @@ func (pc *PageContainer) HandleAction(action input.ActionID) (action_handled boo
 type Page struct {
 	Element
 
-	tab    *Textbox //textbox for the tab in the pagecontainer
-	title  string
-	active bool //whether this page is selected (currently not used... this feels necessary but I can't think of why just yet)
+	tab *Textbox //textbox for the tab in the pagecontainer
 }
 
 func newPage(page_size vec.Dims, title string) (p *Page) {
@@ -172,8 +161,9 @@ func newPage(page_size vec.Dims, title string) (p *Page) {
 		title = " "
 	}
 	p = new(Page)
-	p.title = title
 	p.Init(page_size, vec.Coord{0, 3}, BorderDepth)
+	p.EnableBorder()
+	p.Border.SetStyle(BORDER_STYLE_INHERIT)
 
 	p.tab = NewTextbox(vec.Dims{FIT_TEXT, 1}, vec.Coord{1, 1}, 5, title, JUSTIFY_LEFT)
 	p.tab.EnableBorder()
@@ -185,13 +175,13 @@ func newPage(page_size vec.Dims, title string) (p *Page) {
 }
 
 func (p *Page) activate() {
-	p.active = true
 	p.tab.EnableBorder()
+	p.Show()
 }
 
 func (p *Page) deactivate() {
-	p.active = false
 	p.tab.DisableBorder()
+	p.Hide()
 }
 
 // No-op. Pages cannot be moved relative to their container.

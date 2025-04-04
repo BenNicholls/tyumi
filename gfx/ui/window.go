@@ -72,6 +72,9 @@ func (wnd *Window) Render() {
 	//render all visible subnodes
 	util.WalkSubTrees[element](wnd, func(element element) {
 		element.drawChildren()
+		if element.getCanvas().Dirty() {
+			element.renderIfDirty()
+		}
 		if element.IsUpdated() || element.isRedrawing() {
 			element.Render()
 		}

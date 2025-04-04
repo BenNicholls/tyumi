@@ -24,6 +24,7 @@ type element interface {
 	updateAnimations()
 
 	prepareRender()
+	renderIfDirty()
 	Render()
 	Draw(dst_canvas *gfx.Canvas)
 	renderAnimations()
@@ -347,6 +348,11 @@ func (e *Element) prepareRender() {
 	if e.Border.enabled && (e.Border.dirty || e.forceRedraw) {
 		e.drawBorder()
 	}
+}
+
+// this is called during rendering if you want code run in the case a child-draw occurs and dirties the canvas.
+func (e *Element) renderIfDirty() {
+	return
 }
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?

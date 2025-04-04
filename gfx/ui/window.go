@@ -76,7 +76,11 @@ func (wnd *Window) Render() {
 			element.Render()
 		}
 		element.renderAnimations()
-		element.finalizeRender() // does this need to go in a seperate walk??
+	}, ifVisible)
+
+	// finalize render. cleans up flags etc.
+	util.WalkSubTrees[element](wnd, func(element element) {
+		element.finalizeRender()
 	}, ifVisible)
 
 	wnd.drawChildren()
@@ -169,7 +173,7 @@ func (wnd *Window) GetFocusedElementID() ElementID {
 }
 
 func (wnd *Window) HasFocusedElement() bool {
-	return wnd.focusedElement != nil 
+	return wnd.focusedElement != nil
 }
 
 func (wnd *Window) IsBlocked() bool {

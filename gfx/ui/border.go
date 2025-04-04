@@ -28,6 +28,9 @@ type Border struct {
 	scrollbarContentHeight    int  //total height of scrolling content
 	scrollbarViewportPosition int  //position of the viewed content
 
+	internalLinks             util.Set[vec.Coord]
+	internalLinksRecalculated bool // true if the internallinks have been changed this frame. cleared during finalizerender()
+
 	dirty bool
 }
 
@@ -126,6 +129,10 @@ func (e *Element) setBorder(bordered bool) {
 
 func (e *Element) IsBordered() bool {
 	return e.Border.enabled
+}
+
+func (e *Element) getBorder() *Border {
+	return &e.Border
 }
 
 // Creates and enables a border for the element. Title will be shown in the top left, and hint will be shown in the
@@ -249,6 +256,71 @@ func (e *Element) drawBorder() {
 	}
 }
 
+// computes the borders to link this frame from a list of elements that need to be linked (this is the drawlist for the
+// current frame). Also recomputes the list of internal links if necessary, which are the cells in this element's border
+// (if it has one) that were linked by its children. The internal link set is needed so we can pass this data to parents
+// without them having to crawl the entire subtree.
+func (e *Element) computeBorderLinks(elements_to_link []element) (borderLinks util.Set[vec.Coord]) {
+	if e.forceRedraw {
+		e.Border.internalLinksRecalculated = true
+	}
+
+	var newInternalLinks util.Set[vec.Coord]
+
+	for _, child := range elements_to_link {
+		if !child.IsBordered() {
+			continue
+		}
+
+		if style := child.getBorderStyle(); style.DisableLink {
+			continue
+		}
+
+		// link child to relevant siblings
+		for _, sibling := range e.GetChildren() {
+			if child == sibling || !sibling.IsBordered() || sibling.getDepth() != child.getDepth() || !sibling.IsVisible() {
+				continue
+			}
+
+			if style := sibling.getBorderStyle(); !style.DisableLink {
+				borderLinks.AddSet(e.calcBorderLinkCoords(child, sibling))
+				for coord := range sibling.getBorder().internalLinks.EachElement() {
+					link := coord.Add(sibling.getPosition())
+					if link.IsInPerimeter(child) {
+						borderLinks.Add(link)
+					}
+				}
+			}
+		}
+
+		// if we're bordered, recompute internal border links for child
+		if e.Border.enabled && e.Border.internalLinksRecalculated {
+			if child.getDepth() == BorderDepth {
+				newInternalLinks.AddSet(e.calcBorderLinkCoords(child, e.Canvas))
+				for coord := range child.getBorder().internalLinks.EachElement() {
+					link := coord.Add(child.getPosition())
+					if link.IsInPerimeter(e.Canvas) {
+						newInternalLinks.Add(link)
+					}
+				}
+			}
+		}
+	}
+
+	// if the newly computed internal links are the same as the cached ones, kill the flag. otherwise update the cache.
+	if e.Border.enabled && e.Border.internalLinksRecalculated {
+		if newInternalLinks.Equals(e.Border.internalLinks) {
+			e.Border.internalLinksRecalculated = false
+		} else {
+			e.Border.internalLinks = newInternalLinks
+		}
+	}
+
+	borderLinks.AddSet(e.Border.internalLinks)
+
+	return
+}
+
 func (e *Element) calcBorderLinkCoords(child1, child2 vec.Bounded) (coords util.Set[vec.Coord]) {
 	intersection := vec.FindIntersectionRect(child1, child2)
 	if intersection.Area() == 0 {
@@ -283,7 +355,8 @@ func (e *Element) linkBorderCell(pos vec.Coord, depth int) {
 		e.DrawLinkedGlyph(pos, depth, cell.Glyph)
 		if depth == BorderDepth {
 			//also need to try and link to border titles and decorations drawn at a higher level
-			e.DrawLinkedGlyph(pos, BorderDepth+1, e.GetCell(pos).Glyph)
+			textLinkedGlyph := e.CalcLinkedGlyph(e.GetCell(pos).Glyph, pos, BorderDepth+1)
+			e.DrawGlyph(pos, BorderDepth, textLinkedGlyph)
 		}
 	}
 }

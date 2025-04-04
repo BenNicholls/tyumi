@@ -53,8 +53,10 @@ type element interface {
 	// internal getters
 	getCanvas() *gfx.Canvas
 	getWindow() *Window
+	getBorder() *Border
 	getBorderStyle() BorderStyle
 	getDepth() int
+	getPosition() vec.Coord
 	getAnimations() []gfx.Animator
 
 	// debug functions
@@ -118,6 +120,7 @@ func (e *Element) Init(size vec.Dims, pos vec.Coord, depth int) {
 	e.depth = depth
 	e.visible = true
 	e.Updated = true
+	e.forceRedraw = true
 	e.TreeNode.Init(e)
 	e.id = generate_id()
 }
@@ -167,6 +170,10 @@ func (e *Element) Bounds() vec.Rect {
 
 func (e *Element) DrawableArea() vec.Rect {
 	return e.size.Bounds()
+}
+
+func (e *Element) getPosition() vec.Coord {
+	return e.position
 }
 
 func (e *Element) MoveTo(pos vec.Coord) {
@@ -350,7 +357,10 @@ func (e *Element) finalizeRender() {
 
 	e.Updated = false
 	e.forceRedraw = false
-	e.Border.dirty = false
+	if e.Border.enabled {
+		e.Border.dirty = false
+		e.Border.internalLinksRecalculated = false
+	}
 }
 
 func (e *Element) renderAnimations() {
@@ -372,9 +382,16 @@ func (e *Element) drawChildren() {
 	}
 
 	if !e.forceRedraw {
-		//check for transparent dirty children. if we find one, trigger a redraw
+		// some pre-draw checks.
+		// NOTE TO FUTURE BEN: this has to be done here and NOT in prepareRender() because a child might become
+		// transparent between the prepare render phase and this one.
 		for _, child := range e.GetChildren() {
-			if child.IsVisible() && child.IsTransparent() && child.getCanvas().Dirty() {
+			if !child.IsVisible() {
+				continue
+			}
+
+			//check for transparent dirty children. if we find one, trigger a redraw
+			if child.IsTransparent() && child.getCanvas().Dirty() {
 				e.forceRedraw = true
 				e.Clear()
 				if e.Border.enabled {
@@ -382,12 +399,18 @@ func (e *Element) drawChildren() {
 				}
 				break
 			}
+
+			// trigger an internal border link recalculation if a child's internal links were changed this frame.
+			// this happens automatically when forcing a redraw, but otherwise we have to check for it here.
+			if e.Border.enabled && child.IsBordered() && child.getBorder().internalLinksRecalculated {
+				e.Border.internalLinksRecalculated = true
+			}
 		}
 	}
 
-	// collect opaque and transparent children. if a transparent child is dirty, we trigger a redraw
-	// NOTE TO FUTURE BEN: this has to be done here and NOT in prepareRender() because a child might become transparent
-	// between the prepare render phase and this one.
+	// collect opaque and transparent children, sort accordingly, and recombine into a drawlist.
+	// opaque children can be drawn high to low to prevent overdraw, but transparent ones must be drawn low to high
+	// like Bob Ross would.
 	var opaque []element
 	var transparent []element
 
@@ -405,48 +428,28 @@ func (e *Element) drawChildren() {
 		}
 	}
 
-	// sort draw lists and combine. opaque children can be drawn high to low to prevent overdraw, but transparent ones
-	// must be drawn low to high like Bob Ross would.
 	slices.SortStableFunc(opaque, reversedepthsort)
 	slices.SortStableFunc(transparent, depthsort)
 	drawlist := append(opaque, transparent...)
 
 	// precompute cells that will need to be relinked once dirty elements are drawn. this needs to be done
 	// beforehand because linking must be done after drawing, but drawing sets canvases as clean. we need to know which
-	// canvases are dirty to do this properly.
-	var borderLinks util.Set[vec.Coord]
-	for _, child := range drawlist {
-		if !child.IsBordered() {
-			continue
-		}
-
-		if style := child.getBorderStyle(); style.DisableLink {
-			continue
-		}
-
-		// link child to relevant siblings
-		for _, sibling := range e.GetChildren() {
-			if child == sibling || !sibling.IsBordered() || sibling.getDepth() != child.getDepth() || !sibling.IsVisible() {
-				continue
-			}
-
-			if style := sibling.getBorderStyle(); !style.DisableLink {
-				borderLinks = borderLinks.Union(e.calcBorderLinkCoords(child, sibling))
-			}
-		}
-
-		// link child to parent
-		if child.getDepth() == BorderDepth && e.IsBordered() {
-			borderLinks = borderLinks.Union(e.calcBorderLinkCoords(child, e.Canvas))
-		}
-	}
+	// canvases are dirty to do this properly. if this element is bordered, we ensure the cache of internal border links
+	// (cells in the element's border that should be linked to) is rebuilt if necessary.
+	borderLinks := e.computeBorderLinks(drawlist)
 
 	for _, child := range drawlist {
 		child.Draw(&e.Canvas)
 	}
 
+	if !e.Canvas.Dirty() {
+		return
+	}
+
 	for coord := range borderLinks.EachElement() {
-		e.linkBorderCell(coord, e.GetDepth(coord))
+		if e.GetCell(coord).Dirty { // this check may be too restrictive...
+			e.linkBorderCell(coord, e.GetDepth(coord))
+		}
 	}
 }
 

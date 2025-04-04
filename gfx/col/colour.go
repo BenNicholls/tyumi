@@ -2,7 +2,11 @@
 // colours are uint32s in ARGB format.
 package col
 
-import "github.com/bennicholls/tyumi/util"
+import (
+	"math/rand"
+
+	"github.com/bennicholls/tyumi/util"
+)
 
 // Colour is an ARGB8888 encoded colour.
 type Colour uint32
@@ -67,6 +71,11 @@ func (c Colour) Lerp(c2 Colour, val, steps int) Colour {
 	}
 
 	return MakeOpaque(util.Lerp(c.R(), c2.R(), val, steps), util.Lerp(c.G(), c2.G(), val, steps), util.Lerp(c.B(), c2.B(), val, steps))
+}
+
+// Random returns a random opaque colour.
+func Random() Colour {
+	return MakeOpaque(uint8(rand.Uint32()), uint8(rand.Uint32()), uint8(rand.Uint32()))
 }
 
 // A Pair of colours, fore and back

@@ -25,6 +25,13 @@ func (s *Set[E]) Add(elems ...E) {
 	}
 }
 
+// Adds the elements of another set to the Set. Operationally this is the same as a Union, except it works in-place.
+func (s *Set[E]) AddSet(s2 Set[E]) {
+	for elem := range s2.EachElement() {
+		s.Add(elem)
+	}
+}
+
 func (s Set[E]) Contains(elem E) bool {
 	if len(s.elements) == 0 {
 		return false

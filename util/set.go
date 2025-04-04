@@ -32,6 +32,21 @@ func (s *Set[E]) AddSet(s2 Set[E]) {
 	}
 }
 
+// Returns true if s and s2 have precisely the same elements.
+func (s Set[E]) Equals(s2 Set[E]) bool {
+	if s.Count() != s2.Count() {
+		return false
+	}
+
+	for elem := range s.EachElement() {
+		if !s2.Contains(elem) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (s Set[E]) Contains(elem E) bool {
 	if len(s.elements) == 0 {
 		return false

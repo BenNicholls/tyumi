@@ -14,6 +14,15 @@ type dialog interface {
 	Done() bool
 }
 
+// Opens a dialog in the current scene. If there is already an open dialog or some other child scene, does nothing.
+func OpenDialog(d dialog) {
+	if subScene := currentScene.getActiveSubScene(); subScene != nil {
+		return
+	}
+
+	currentScene.OpenDialog(d)
+}
+
 // MessageDialog is a dialog that displays a simple message and an okay button.
 type MessageDialog struct {
 	Scene

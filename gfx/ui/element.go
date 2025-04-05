@@ -258,6 +258,12 @@ func (e *Element) RemoveChild(child element) {
 	e.ForceRedraw()
 }
 
+func (e *Element) RemoveAllChildren() {
+	for _, child := range slices.Backward(e.GetChildren()) {
+		e.RemoveChild(child)
+	}
+}
+
 // OVERRIDABLE FUNCTIONS!
 // -----------------
 

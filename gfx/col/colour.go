@@ -64,9 +64,9 @@ func (c Colour) IsTransparent() bool {
 // NOTE: this completely disregards transparent colours, except for NONE. If lerping to NONE, it just doesn't do it and
 // returns the other colour.
 func (c Colour) Lerp(c2 Colour, val, steps int) Colour {
-	if c == NONE {
+	if c == NONE || val >= steps {
 		return c2
-	} else if c2 == NONE {
+	} else if c2 == NONE || val <= 0 {
 		return c
 	}
 
@@ -89,28 +89,17 @@ func (p Pair) Lerp(p2 Pair, val, steps int) Pair {
 	return Pair{p.Fore.Lerp(p2.Fore, val, steps), p.Back.Lerp(p2.Back, val, steps)}
 }
 
-type Palette []Colour
-
-// Adds the palette p2 to the end of p.
-func (p *Palette) Add(p2 Palette) {
-	if (*p)[len(*p)-1] == p2[0] {
-		*p = append(*p, p2[1:]...)
-	} else {
-		*p = append(*p, p2...)
-	}
-}
+type Gradient []Colour
 
 // Generate a palette with num items, passing from colour c1 to c2. The colours are
 // lineraly interpolated evenly from one to the next. Gradient is NOT circular.
 // TODO: Circular palette function?
-func GenerateGradient(num int, c1, c2 Colour) (p Palette) {
-	p = make(Palette, num)
+func GenerateGradient(num int, c1, c2 Colour) (p Gradient) {
+	p = make(Gradient, num)
 
-	for i := range p {
-		p[i] = c1.Lerp(c2, i, num)
+	for i := range num {
+		p[i] = c1.Lerp(c2, i, num-1)
 	}
-
-	p[num-1] = c2 //fix end of palette rounding lerp stuff.
 
 	return
 }

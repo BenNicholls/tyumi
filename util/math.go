@@ -31,7 +31,7 @@ func Clamp[T constraints.Ordered](value, min, max T) T {
 	if min == max {
 		return min
 	}
-	
+
 	if min > max {
 		min, max = max, min
 	}
@@ -51,7 +51,7 @@ func CycleClamp(value, min, max int) int {
 	if min == max {
 		return min
 	}
-	
+
 	clampedValue, _ := CycleClampWithOverflow(value, min, max)
 	return clampedValue
 }
@@ -84,12 +84,12 @@ func RoundFloatToInt(f float64) int {
 
 // Lerp linearly interpolates a range (start-end) over (steps) intervals, and returns the (val)th step.
 func Lerp[T constraints.Integer | constraints.Float](start, end T, val, steps int) T {
-	if val >= steps {
+	if val >= steps || start == end {
 		return end
 	} else if val <= 0 {
 		return start
 	}
 
-	stepVal := float64(end-start) / float64(steps)
+	stepVal := (float64(end)-float64(start)) / float64(steps)
 	return T(float64(start) + stepVal*float64(val))
 }

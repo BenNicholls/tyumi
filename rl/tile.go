@@ -34,7 +34,7 @@ func init() {
 
 type Tile struct {
 	tileType TileType
-	entity   *Entity
+	entity   TileMapEntity
 }
 
 func (t Tile) GetTileType() TileType {

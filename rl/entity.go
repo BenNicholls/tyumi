@@ -6,6 +6,11 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+type TileMapEntity interface {
+	MoveTo(pos vec.Coord)
+	GetVisuals() gfx.Visuals
+}
+
 type EntityType uint32
 
 type EntityData struct {
@@ -30,9 +35,6 @@ func init() {
 }
 
 type Entity struct {
-	Name string
-	Desc string
-
 	entityType EntityType
 	position   vec.Coord
 }
@@ -43,4 +45,16 @@ func (e *Entity) Init(entity_type EntityType) {
 
 func (e Entity) GetVisuals() gfx.Visuals {
 	return entityDataCache.GetData(e.entityType).GetVisuals()
+}
+
+func (e Entity) Position() vec.Coord {
+	return e.position
+}
+
+func (e *Entity) MoveTo(pos vec.Coord) {
+	e.position = pos
+}
+
+func (e Entity) IsInTilemap() bool {
+	return e.position != vec.Coord{-1, -1}
 }

@@ -2,6 +2,7 @@ package vec
 
 import (
 	"iter"
+	"math/rand"
 )
 
 // Bounded defines objects that can report a bounding box of some kind.
@@ -143,4 +144,12 @@ func Intersects(b1, b2 Bounded) bool {
 	}
 
 	return true
+}
+
+func RandomCoordInArea(area Bounded) (c Coord) {
+	r := area.Bounds()
+	c.X = rand.Intn(r.W) + r.X
+	c.Y = rand.Intn(r.H) + r.Y
+
+	return
 }

@@ -41,14 +41,14 @@ func (l Line) EachCoord() iter.Seq[Coord] {
 			step_dir = DIR_UP
 		}
 	case l.dx() == l.dy(): //UPLEFT to DOWNRIGHT
-		step_dir = Direction{-1, -1}
+		step_dir = DIR_UPLEFT
 		if l.Start.X < l.End.X {
-			step_dir = Direction{1, 1}
+			step_dir = DIR_DOWNRIGHT
 		}
 	case l.dx() == -l.dy(): //DOWNLEFT to UPRIGHT
-		step_dir = Direction{-1, 1}
+		step_dir = DIR_DOWNLEFT
 		if l.Start.X < l.End.X {
-			step_dir = Direction{1, -1}
+			step_dir = DIR_UPRIGHT
 		}
 	}
 

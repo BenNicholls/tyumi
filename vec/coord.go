@@ -32,12 +32,12 @@ func (c1 Coord) Subtract(c2 Coord) Coord {
 
 // Returns the coordinate stepped once in the direction d
 func (c Coord) Step(d Direction) Coord {
-	return c.Add(Coord(d))
+	return c.Add(d.Coord())
 }
 
 // Returns the coordinate stepped N times in the direction d
 func (c Coord) StepN(d Direction, n int) Coord {
-	return c.Add(Coord(d).Scale(n))
+	return c.Add(d.Coord().Scale(n))
 }
 
 // Returns the coordinate with both X and Y multiplied by scale
@@ -88,46 +88,79 @@ func IndexToCoord(index, stride int) Coord {
 	return Coord{index % stride, index / stride}
 }
 
-type Direction Vec2i
+type Direction int
 
-var (
-	DIR_NONE  Direction = Direction{0, 0}
-	DIR_UP    Direction = Direction{0, -1}
-	DIR_DOWN  Direction = Direction{0, 1}
-	DIR_LEFT  Direction = Direction{-1, 0}
-	DIR_RIGHT Direction = Direction{1, 0}
+const (
+	DIR_UP Direction = iota
+	DIR_UPRIGHT
+	DIR_RIGHT
+	DIR_DOWNRIGHT
+	DIR_DOWN
+	DIR_DOWNLEFT
+	DIR_LEFT
+	DIR_UPLEFT
+	DIR_NONE
 )
 
-var CardinalDirections [4]Direction = [4]Direction{DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT}
+var directions []Coord = []Coord{
+	{0, -1},  //Up
+	{1, -1},  //Up Right
+	{1, 0},   //Right
+	{1, 1},   //Down Right
+	{0, 1},   //Down
+	{-1, 1},  //Down Left
+	{-1, 0},  //Left
+	{-1, -1}, //Up Left
+	{0, 0},   //No Move
+}
+
+var Directions []Direction = []Direction{DIR_UP, DIR_UPRIGHT, DIR_RIGHT, DIR_DOWNRIGHT, DIR_DOWN, DIR_DOWNLEFT, DIR_LEFT, DIR_UPLEFT}
+var CardinalDirections []Direction = []Direction{DIR_UP, DIR_RIGHT, DIR_DOWN, DIR_LEFT}
+
+func (d Direction) Coord() Coord {
+	return directions[int(d)]
+}
 
 func (d Direction) Inverted() Direction {
-	return Direction{-d.X, -d.Y}
+	return Direction(util.CycleClamp(int(d)+4, 0, 7))
 }
 
 func (d Direction) RotateCW() Direction {
-	switch d {
-	case DIR_UP:
-		return DIR_RIGHT
-	case DIR_RIGHT:
-		return DIR_DOWN
-	case DIR_DOWN:
-		return DIR_LEFT
-	case DIR_LEFT:
-		return DIR_UP
+	if d == DIR_NONE {
+		return d
 	}
-	return DIR_NONE
+
+	return Direction(util.CycleClamp(int(d)+1, 0, 7))
 }
 
 func (d Direction) RotateCCW() Direction {
-	switch d {
-	case DIR_UP:
-		return DIR_LEFT
-	case DIR_RIGHT:
-		return DIR_UP
-	case DIR_DOWN:
-		return DIR_RIGHT
-	case DIR_LEFT:
-		return DIR_DOWN
+	if d == DIR_NONE {
+		return d
 	}
-	return DIR_NONE
+
+	return Direction(util.CycleClamp(int(d)-1, 0, 7))
+}
+
+func (d Direction) RotateCW90() Direction {
+	if d == DIR_NONE {
+		return d
+	}
+
+	return Direction(util.CycleClamp(int(d)+2, 0, 7))
+}
+
+func (d Direction) RotateCCW90() Direction {
+	if d == DIR_NONE {
+		return d
+	}
+
+	return Direction(util.CycleClamp(int(d)-2, 0, 7))
+}
+
+func RandomDirection() Direction {
+	return util.PickOne(Directions)
+}
+
+func RandomCardinalDirection() Direction {
+	return util.PickOne(CardinalDirections)
 }

@@ -52,13 +52,6 @@ func (l *List) Init(size vec.Dims, pos vec.Coord, depth int) {
 // Insert adds elements to the list. Inserted elements will be added to the end of the list and automatically
 // positioned.
 func (l *List) Insert(items ...element) {
-	if l.Count() == 0 {
-		l.selected = 0
-		if l.emptyLabel != nil {
-			l.emptyLabel.Hide()
-		}
-	}
-
 	if l.items == nil {
 		l.items = make([]element, 0)
 	}
@@ -69,6 +62,15 @@ func (l *List) Insert(items ...element) {
 	}
 
 	l.calibrate()
+
+	if l.Count() == 1 {
+		l.Select(0)
+
+		if l.emptyLabel != nil {
+			l.emptyLabel.Hide()
+		}
+	}
+
 	l.Updated = true
 }
 
@@ -89,7 +91,7 @@ func (l *List) Remove(item element) {
 	l.RemoveChild(item)
 	l.items = slices.Delete(l.items, itemIndex, itemIndex+1)
 	if itemIndex <= l.selected {
-		l.selected = l.selected - 1
+		l.Select(l.selected - 1)
 	}
 
 	if l.emptyLabel != nil && l.Count() == 0 {
@@ -111,7 +113,7 @@ func (l *List) RemoveAll() {
 	}
 
 	l.items = nil
-	l.selected = -1
+	l.Select(-1)
 	if l.emptyLabel != nil {
 		l.emptyLabel.Show()
 	}
@@ -229,7 +231,11 @@ func (l *List) SetPadding(padding int) {
 
 func (l *List) Select(selection int) {
 	if l.Count() == 0 {
-		l.selected = -1
+		if l.selected != -1 {
+			l.selected = -1
+			fireCallbacks(l.OnChangeSelection)
+			l.Updated = true
+		}
 		return
 	}
 

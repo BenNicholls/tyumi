@@ -14,6 +14,16 @@ func init() {
 	input.DefaultActionMap.AddSimpleKeyAction(ACTION_PAGE_NEXT, input.K_TAB)
 }
 
+// PageElement is the interface defining the elements that can act as pages in the PageContainer. It's satisfied by
+// the Page element, which you can embed into a custom element.
+type PageElement interface {
+	element
+	initPage(size vec.Dims, title string)
+	activate()
+	deactivate()
+	getTab() *Textbox
+}
+
 // PageContainer contains multiple pages and displays them one at a time, with a familiar tab interface at the top
 // for swapping pages.
 type PageContainer struct {
@@ -21,7 +31,7 @@ type PageContainer struct {
 
 	OnPageChanged func()
 
-	pages            []*Page
+	pages            []PageElement
 	currentPageIndex int //this is set to -1 on container creation, indicating no pages are selected (since they don't exist yet)
 }
 
@@ -36,7 +46,7 @@ func (pc *PageContainer) Init(size vec.Dims, pos vec.Coord, depth int) {
 	pc.Element.Init(size, pos, depth)
 	pc.TreeNode.Init(pc)
 
-	pc.pages = make([]*Page, 0)
+	pc.pages = make([]PageElement, 0)
 	pc.currentPageIndex = -1 //no pages in container, so no selection
 }
 
@@ -47,6 +57,13 @@ func (pc *PageContainer) CreatePage(title string) *Page {
 	pc.addPage(newpage)
 
 	return newpage
+}
+
+// Adds a supplied PageElement to the PageContainer. The provided page will be initialized, resized, and repositioned
+// here, so don't bother initializing it beforehand. Once added, the page element can be used just like a normal page.
+func (pc *PageContainer) AddPage(title string, page PageElement) {
+	page.initPage(pc.size.Shrink(0, 3), title)
+	pc.addPage(page)
 }
 
 // Selects the next page in the container. If at the end, wraps around to the first tab.
@@ -67,14 +84,14 @@ func (pc *PageContainer) PrevPage() {
 	pc.selectPage(util.CycleClamp(pc.currentPageIndex-1, 0, len(pc.pages)-1))
 }
 
-func (pc *PageContainer) addPage(page *Page) {
+func (pc *PageContainer) addPage(page PageElement) {
 	//find position for next tab
 	x := 1
 	for _, page := range pc.pages {
-		x += page.tab.Size().W + 1
+		x += page.getTab().Size().W + 1
 	}
-	page.tab.MoveTo(vec.Coord{x, 1})
-	pc.AddChild(page.tab)
+	page.getTab().MoveTo(vec.Coord{x, 1})
+	pc.AddChild(page.getTab())
 	pc.AddChild(page)
 	pc.pages = append(pc.pages, page)
 
@@ -103,7 +120,7 @@ func (pc *PageContainer) selectPage(page_index int) {
 	fireCallbacks(pc.OnPageChanged)
 }
 
-func (pc *PageContainer) getSelectedPage() *Page {
+func (pc *PageContainer) getSelectedPage() PageElement {
 	if len(pc.pages) == 0 {
 		return nil
 	}
@@ -122,7 +139,7 @@ func (pc *PageContainer) renderIfDirty() {
 	}
 
 	//blank out border below selected page's tab
-	selectedTab := pc.getSelectedPage().tab
+	selectedTab := pc.getSelectedPage().getTab()
 	cursor := selectedTab.Bounds().Coord
 	cursor.Move(0, 2)
 	brush := gfx.NewGlyphVisuals(selectedTab.getBorderStyle().GetGlyph(gfx.LINK_UL), selectedTab.Border.colours)
@@ -149,19 +166,22 @@ func (pc *PageContainer) HandleAction(action input.ActionID) (action_handled boo
 }
 
 // Page is the content for a tab in a PageContainer. Size is defined and controlled by the PageContainer.
-// Pages are initialized as deactivated, and will be activated when selected by the page container
+// Pages are initialized as deactivated (hidden), and will be activated when selected by the page container.
 type Page struct {
 	Element
+
+	OnActivate   func() //callback called when the page is activated (switched to)
+	OnDeactivate func() //callback called when the page is deactivated (switched away from)
 
 	tab *Textbox //textbox for the tab in the pagecontainer
 }
 
-func newPage(page_size vec.Dims, title string) (p *Page) {
+func (p *Page) initPage(size vec.Dims, title string) {
 	if title == "" {
 		title = " "
 	}
-	p = new(Page)
-	p.Init(page_size, vec.Coord{0, 3}, BorderDepth)
+
+	p.Element.Init(size, vec.Coord{0, 3}, BorderDepth)
 	p.EnableBorder()
 	p.Border.SetStyle(BORDER_STYLE_INHERIT)
 
@@ -174,14 +194,27 @@ func newPage(page_size vec.Dims, title string) (p *Page) {
 	return
 }
 
+func newPage(size vec.Dims, title string) (p *Page) {
+	p = new(Page)
+	p.initPage(size, title)
+
+	return
+}
+
+func (p *Page) getTab() *Textbox {
+	return p.tab
+}
+
 func (p *Page) activate() {
 	p.tab.EnableBorder()
 	p.Show()
+	fireCallbacks(p.OnActivate)
 }
 
 func (p *Page) deactivate() {
 	p.tab.DisableBorder()
 	p.Hide()
+	fireCallbacks(p.OnDeactivate)
 }
 
 // No-op. Pages cannot be moved relative to their container.

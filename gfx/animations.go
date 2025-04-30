@@ -153,6 +153,11 @@ func (pa *PulseAnimation) SetArea(area vec.Rect) {
 	pa.fade.SetArea(area)
 }
 
+func (pa *PulseAnimation) MoveTo(pos vec.Coord) {
+	pa.Animation.MoveTo(pos)
+	pa.fade.MoveTo(pos)
+}
+
 func (pa *PulseAnimation) Render(canvas *Canvas) {
 	pa.fade.Render(canvas)
 

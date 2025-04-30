@@ -10,14 +10,13 @@ type TileType uint32
 type TileData struct {
 	Name     string
 	Desc     string
-	Glyph    gfx.Glyph
-	Colours  col.Pair
+	Visuals  gfx.Visuals
 	Passable bool
 	Opaque   bool
 }
 
 func (td TileData) GetVisuals() gfx.Visuals {
-	return gfx.NewGlyphVisuals(td.Glyph, td.Colours)
+	return td.Visuals
 }
 
 func RegisterTileType(tileData TileData) TileType {

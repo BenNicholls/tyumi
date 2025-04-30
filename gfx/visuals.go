@@ -53,6 +53,10 @@ func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
 	dst_canvas.DrawVisuals(offset, depth, v)
 }
 
+func (v Visuals) GetVisuals() Visuals {
+	return v
+}
+
 // A glyph to be displayed. Tyumi fonts are based on the old codepage 437 fonts from ancient terminal applications,
 // which had a whopping 256 characters to choose from.
 type Glyph uint8

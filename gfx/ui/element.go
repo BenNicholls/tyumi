@@ -78,6 +78,7 @@ type Element struct {
 	Border      Border //the element's border data. use EnableBorder() to turn on
 	Updated     bool   //indicates this object's state has changed and needs to be re-rendered.
 	AcceptInput bool   // if true, the element will be sent inputs when in a window with SendEventsToUnfocused = true
+	OnRender    func() // a callback, called when the element renders (unless the element has custom rendering logic)
 
 	position    vec.Coord      //position relative to parent
 	size        vec.Dims       //size of the drawable area of the element
@@ -274,12 +275,17 @@ func (e *Element) Update() {
 	return
 }
 
-// Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour.
+// Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour. If
+// this method has not been overriden, it attempts to call the user-provided OnRender() callback, if any.
 // Elements are rendered if their Updated flag is true. Note that an element's children are composited seperately and
 // you do not have to handle that here. Render() is called *after* child elements are drawn, and *before* any playing
 // animations are drawn.
 func (e *Element) Render() {
-	return
+	if e.OnRender == nil {
+		return
+	}
+
+	e.OnRender()
 }
 
 // Handles keypresses. Override this to implement key input handling.

@@ -7,8 +7,7 @@ import (
 
 // The basic visual definition of a single-tile object that can be drawn to the screen.
 // Visuals can be one of 3 Modes: Glyph drawing, or Text drawing, or disabled.
-// Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell,
-// hence the 2 Chars.
+// Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell, hence the 2 Chars.
 type Visuals struct {
 	Mode    DrawMode
 	Glyph   Glyph

@@ -14,7 +14,7 @@ type DrawMode uint8
 const (
 	DRAW_GLYPH DrawMode = iota // draws cell in glyph mode (square font)
 	DRAW_TEXT                  // draws cell in text mode (half-width font)
-	DRAW_NONE                  //do not draw this cell
+	DRAW_NONE                  // do not draw this cell
 )
 
 // Defines anything with the ability to be drawn to a canvas
@@ -41,12 +41,13 @@ func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
 		srcCursor := dstCursor.Subtract(offset)
 		cell := c.getCell(srcCursor)
 		cell.Dirty = false
+		if cell.Visuals.Mode == DRAW_NONE {
+			continue
+		}
 
 		//draw cell if depth is higher, or if the cell in the destination canvas is DRAW_NONE
 		if dst_canvas.getDepth(dstCursor) <= depth || dst_canvas.getCell(dstCursor).Mode == DRAW_NONE {
-			if cell.Visuals.Mode != DRAW_NONE {
-				dst_canvas.setCell(dstCursor, depth, cell.Visuals)
-			}
+			dst_canvas.setCell(dstCursor, depth, cell.Visuals)
 		}
 	}
 

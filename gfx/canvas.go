@@ -209,6 +209,9 @@ func (c *Canvas) setBackColour(pos vec.Coord, depth int, colour col.Colour) {
 func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
 	v := c.getCell(pos).Visuals
 	v.Colours = colours
+	if v.Mode == DRAW_NONE && colours.Back != col.NONE {
+		v.Mode = DRAW_GLYPH
+	}
 	c.setCell(pos, depth, v)
 }
 

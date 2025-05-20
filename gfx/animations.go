@@ -29,10 +29,6 @@ func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rat
 	return
 }
 
-func (ba *BlinkAnimation) MoveTo(pos vec.Coord) {
-	ba.Animation.MoveTo(pos)
-}
-
 func (ba *BlinkAnimation) Update() {
 	ba.Animation.Update()
 
@@ -83,9 +79,9 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colour
 func (fa *FadeAnimation) Render(c *Canvas) {
 	for cursor := range vec.EachCoordInIntersection(c, fa) {
 		dst_cell := c.getCell(cursor)
-		if dst_cell.Mode == DRAW_NONE {
-			continue
-		}
+		// if dst_cell.Mode == DRAW_NONE {
+		// 	continue
+		// }
 
 		colours := fa.FromColours
 		if colours.Fore == col.NONE {

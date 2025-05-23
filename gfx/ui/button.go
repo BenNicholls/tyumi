@@ -17,6 +17,7 @@ func init() {
 type Button struct {
 	Textbox
 
+	DisablePress     bool // if true, button will not be pressable.
 	OnPressCallback  func()
 	OnPressAnimation gfx.Animator
 }
@@ -40,9 +41,11 @@ func NewButton(size vec.Dims, pos vec.Coord, depth int, text string, on_press fu
 }
 
 func (b *Button) Press() {
-	if b.OnPressCallback != nil {
-		b.OnPressCallback()
+	if b.DisablePress {
+		return
 	}
+
+	fireCallbacks(b.OnPressCallback)
 
 	if b.OnPressAnimation != nil {
 		if !b.OnPressAnimation.IsPlaying() {

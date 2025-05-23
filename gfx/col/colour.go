@@ -3,6 +3,7 @@
 package col
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/bennicholls/tyumi/util"
@@ -10,6 +11,14 @@ import (
 
 // Colour is an ARGB8888 encoded colour.
 type Colour uint32
+
+func (c Colour) String() string {
+	if name, ok := ColourNames[c]; ok {
+		return name
+	} else {
+		return fmt.Sprintf("(%v, %v, %v, %v)", c.A(), c.R(), c.G(), c.B())
+	}
+}
 
 // Make returns an ARGB8888 colour formed from provided uint8 components.
 func Make(a, r, g, b uint8) (colour Colour) {
@@ -82,6 +91,10 @@ func Random() Colour {
 type Pair struct {
 	Fore Colour
 	Back Colour
+}
+
+func (p Pair) String() string {
+	return fmt.Sprintf("{%s, %s}", p.Fore, p.Back)
 }
 
 // Linearly interpolates between p and p2 over (steps) number of steps, returning the (val)th value.

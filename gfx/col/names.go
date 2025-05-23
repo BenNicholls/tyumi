@@ -24,3 +24,25 @@ const (
 	PURPLE    Colour = 0xFF800080
 	ORANGE    Colour = 0xFFFFA500
 )
+
+var ColourNames = map[Colour]string{
+	NONE:      "None",
+	WHITE:     "White",
+	BLACK:     "Black",
+	RED:       "Red",
+	BLUE:      "Blue",
+	LIME:      "Lime",
+	LIGHTGREY: "Light Grey",
+	GREY:      "Grey",
+	DARKGREY:  "Dark Grey",
+	YELLOW:    "Yellow",
+	FUSCHIA:   "Fuschia",
+	CYAN:      "Cyan",
+	MAROON:    "Maroon",
+	OLIVE:     "Olive",
+	GREEN:     "Green",
+	TEAL:      "Teal",
+	NAVY:      "Navy",
+	PURPLE:    "Purple",
+	ORANGE:    "Orange",
+}

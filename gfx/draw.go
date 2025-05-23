@@ -17,6 +17,19 @@ const (
 	DRAW_NONE                  // do not draw this cell
 )
 
+func (m DrawMode) String() string {
+	switch m {
+	case DRAW_GLYPH:
+		return "Glyph"
+	case DRAW_TEXT:
+		return "Text"
+	case DRAW_NONE:
+		return "None"
+	default:
+		return "Unknown"
+	}
+}
+
 // Defines anything with the ability to be drawn to a canvas
 type Drawable interface {
 	Draw(dst_canvas *Canvas, offset vec.Coord, depth int)

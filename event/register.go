@@ -20,7 +20,7 @@ const (
 
 // eventInfo describes each registered event type.
 type eventInfo struct {
-	id        int
+	id        EventID
 	name      string
 	eType     eventType
 	listeners util.Set[*Stream]
@@ -38,9 +38,9 @@ func (e *eventInfo) removeListener(stream *Stream) {
 // event_type is SIMPLE or COMPLEX. simple events just contain the ID, complex events are composed around a larger
 // event struct with additional data.
 // NOTE: name is NOT a unique identifier, only the returned ID is. Name is just for human readability.
-func Register(name string, event_type eventType) int {
+func Register(name string, event_type eventType) EventID {
 	info := eventInfo{
-		id:    len(registeredEvents),
+		id:    EventID(len(registeredEvents)),
 		name:  name,
 		eType: event_type,
 	}

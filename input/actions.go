@@ -7,7 +7,7 @@ import (
 	"github.com/bennicholls/tyumi/util"
 )
 
-var EV_ACTION int = event.Register("Action Event", event.COMPLEX)
+var EV_ACTION = event.Register("Action Event", event.COMPLEX)
 
 // The default action map. Tyumi packages that rely on actions will register action triggers here.
 var DefaultActionMap ActionMap

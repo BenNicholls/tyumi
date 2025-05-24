@@ -15,8 +15,8 @@ type Listener interface {
 	SetStreamSize(size int)
 	ProcessEvents()
 	FlushEvents()
-	Listen(ids ...int)
-	DeListen(ids ...int)
+	Listen(ids ...EventID)
+	DeListen(ids ...EventID)
 	StopListening()
 }
 
@@ -24,9 +24,9 @@ type Listener interface {
 // to call the assigned event handler on each accumulated event.
 type Stream struct {
 	stream    chan Event
-	handler   Handler       //event handler called by Process()
-	listenIDs util.Set[int] // ids that are currently being listened for
-	disabled  bool          // whether the stream accepts events
+	handler   Handler           //event handler called by Process()
+	listenIDs util.Set[EventID] // ids that are currently being listened for
+	disabled  bool              // whether the stream accepts events
 }
 
 // Initializes a stream. Size is the maximum number of events that can be accumulated before processing. Handler is the
@@ -56,6 +56,11 @@ func (s *Stream) SetEventHandler(handler Handler) {
 // Sets the maximum number of events that the stream can hold before needing to be processed. If this is not called, a
 // default value of 100 will be used.
 func (s *Stream) SetStreamSize(size int) {
+	if size <= 0 {
+		log.Error("Attempting to set stream size to 0 or less. Don't do that.")
+		return
+	}
+
 	if len(s.stream) > 0 {
 		log.Warning("Setting stream size on an active event stream! All accumulated events flushed.")
 	}
@@ -71,9 +76,9 @@ func (s *Stream) FlushEvents() {
 }
 
 // Begins listening for the specified event(s).
-func (s *Stream) Listen(ids ...int) {
+func (s *Stream) Listen(ids ...EventID) {
 	for _, id := range ids {
-		if !validID(id) {
+		if !id.valid() {
 			log.Warning("Attempted to listen for unregistered event ID: ", id)
 			continue
 		}
@@ -83,9 +88,9 @@ func (s *Stream) Listen(ids ...int) {
 }
 
 // DeListen will prevent the stream from receiving anymore of the specified events.
-func (s *Stream) DeListen(ids ...int) {
-	for id := range ids {
-		if !validID(id) {
+func (s *Stream) DeListen(ids ...EventID) {
+	for _, id := range ids {
+		if !id.valid() {
 			continue
 		}
 		s.listenIDs.Remove(id)

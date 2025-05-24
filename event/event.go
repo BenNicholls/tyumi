@@ -7,20 +7,26 @@ import "github.com/bennicholls/tyumi/log"
 // Definition for event objects. Compose custom events around the EventPrototype to satisfy
 // this interface cleanly.
 type Event interface {
-	ID() int
+	ID() EventID
 	String() string
 	Handled() bool
 	setHandled()
 }
 
+type EventID uint32
+
+func (id EventID) valid() bool {
+	return int(id) < len(registeredEvents)
+}
+
 // Compose custom events around this
 type EventPrototype struct {
-	id      int
+	id      EventID
 	handled bool
 }
 
-func New(ID int) EventPrototype {
-	if !validID(ID) {
+func New(ID EventID) EventPrototype {
+	if !ID.valid() {
 		log.Warning("Attempted to create event with unregistered ID: ", ID)
 		return EventPrototype{id: 0}
 	}
@@ -28,7 +34,7 @@ func New(ID int) EventPrototype {
 	return EventPrototype{id: ID}
 }
 
-func (e EventPrototype) ID() int {
+func (e EventPrototype) ID() EventID {
 	return e.id
 }
 
@@ -53,7 +59,7 @@ func (e *EventPrototype) setHandled() {
 
 // fire the event into the void. the event will be sent to all listening event streams
 func Fire(e Event) {
-	if !validID(e.ID()) {
+	if !e.ID().valid() {
 		log.Error("Attempted to fire unregistered event with ID ", e.ID())
 		return
 	}
@@ -64,7 +70,7 @@ func Fire(e Event) {
 }
 
 // fire a simple event into the void. Produces and error if the event was not registered as a simple event.
-func FireSimple(ID int) {
+func FireSimple(ID EventID) {
 	if registeredEvents[ID].eType != SIMPLE {
 		log.Error("Attempted to fire complex event with FireSimple(), id: ", ID)
 		return
@@ -72,8 +78,4 @@ func FireSimple(ID int) {
 
 	simpleEvent := EventPrototype{id: ID}
 	Fire(&simpleEvent)
-}
-
-func validID(ID int) bool {
-	return ID < len(registeredEvents) && ID > 0
 }

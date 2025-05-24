@@ -53,7 +53,7 @@ func (md *MessageDialog) Init(title, message string) {
 	md.Window().AddChild(&md.okayButton)
 	md.okayButton.CenterHorizontal()
 
-	md.Events().Listen(gfx.EV_ANIMATION_COMPLETE)
+	md.Listen(gfx.EV_ANIMATION_COMPLETE)
 	md.SetEventHandler(md.HandleEvent)
 }
 

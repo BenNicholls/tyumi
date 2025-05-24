@@ -21,20 +21,19 @@ const (
 
 // A gameobject to be handled by Tyumi's main game loop.
 type scene interface {
+	event.Listener
+	InputEvents() *event.Stream
+
 	Window() *ui.Window
 	Ready() bool
+	Shutdown()
 
 	Update()
 	UpdateUI()
 	processTimers()
 	IsBlocked() bool
 
-	InputEvents() *event.Stream
-	Events() *event.Stream
-
 	OpenDialog(dialog)
-
-	Shutdown()
 
 	getActiveSubScene() scene
 	flushInputs()
@@ -47,13 +46,13 @@ type scene interface {
 // and should contain your main game code.
 type Scene struct {
 	util.StateMachine
+	event.Stream // event stream for game events. these are collected during update() and then processed at the end of the tick (before ui updating/rendering)
 
 	window *ui.Window
 
 	subScene dialog
 	timers   []Timer
 
-	events               event.Stream        //for engine events, game events, etc. processed at the end of each tick
 	inputEvents          event.Stream        //for input events. processed at the start of each tick
 	inputHandler         event.Handler       //user-provided input handling function. runs AFTER the UI has had a chance to process input.
 	actionHandler        input.ActionHandler //user-provided action handling function. runs AFTER the UI has had a chance to process input.
@@ -128,7 +127,6 @@ func (s *Scene) init(size vec.Dims, pos vec.Coord, bordered bool) {
 		s.window.EnableBorder()
 	}
 
-	s.events = event.NewStream(100, nil)
 	s.inputEvents = event.NewStream(100, s.handleInput)
 
 	//setup automatic listening for input events.
@@ -179,8 +177,8 @@ func (s *Scene) getActiveSubScene() scene {
 }
 
 func (s *Scene) cleanup() {
-	s.events.Close()
-	s.inputEvents.Close()
+	s.StopListening()
+	s.inputEvents.StopListening()
 
 	if s.subScene != nil {
 		s.subScene.Shutdown()
@@ -204,18 +202,8 @@ func (s *Scene) Window() *ui.Window {
 	return s.window
 }
 
-func (s *Scene) Events() *event.Stream {
-	return &s.events
-}
-
 func (s *Scene) InputEvents() *event.Stream {
 	return &s.inputEvents
-}
-
-// sets the function for handling game events. these are collected during Update(), and then processed
-// at the end of each Update() in the order they were received.
-func (s *Scene) SetEventHandler(handler event.Handler) {
-	s.events.AddHandler(handler)
 }
 
 // Sets the function for handling inputs to the scene object. Inputs are collected, distributed and then
@@ -266,7 +254,7 @@ func (s *Scene) handleInput(event event.Event) (event_handled bool) {
 }
 
 func (s *Scene) flushInputs() {
-	s.inputEvents.Flush()
+	s.inputEvents.FlushEvents()
 
 	if s.subScene != nil {
 		s.subScene.flushInputs()

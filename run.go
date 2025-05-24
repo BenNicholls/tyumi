@@ -25,12 +25,12 @@ func Run() {
 
 	for running = true; running; {
 		beginFrame()
-		eventGenerator() //take inputs from platform, convert to tyumi events as appropriate, and distribute
-		update()         //step forward the gamestate
-		updateUI()       //update changed UI elements
-		render()         //composite frame together, post process, and render to screen
-		events.Process() //processes internal events
-		endFrame()       //do any end of tick cleanup, then sleep to maintain framerate if necessary
+		eventGenerator()       //take inputs from platform, convert to tyumi events as appropriate, and distribute
+		update()               //step forward the gamestate
+		updateUI()             //update changed UI elements
+		render()               //composite frame together, post process, and render to screen
+		events.ProcessEvents() //processes internal events
+		endFrame()             //do any end of tick cleanup, then sleep to maintain framerate if necessary
 	}
 
 	currentPlatform.Shutdown()
@@ -47,10 +47,10 @@ func beginFrame() {
 
 // This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.
 func update() {
-	mainConsole.events.Process()
+	mainConsole.ProcessEvents()
 
 	if !activeScene.IsBlocked() {
-		activeScene.InputEvents().Process()
+		activeScene.InputEvents().ProcessEvents()
 	}
 
 	// make sure we don't accumulate a bunch of inputs in scenes that aren't being updated for whatever reason
@@ -61,7 +61,7 @@ func update() {
 		activeScene.Update()
 	}
 
-	activeScene.Events().Process() //process any gameplay events from this frame.
+	activeScene.ProcessEvents() //process any gameplay events from this frame.
 }
 
 // Updates any UI elements that need updating after the most recent tick in the current active scene.

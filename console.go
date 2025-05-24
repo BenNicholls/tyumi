@@ -13,14 +13,14 @@ var mainConsole console
 
 type console struct {
 	gfx.Canvas
+	event.Stream
+
 	ready bool
 	title string // title of the program
 
 	mouseCursorEnabled bool
 	mouseCursorVisuals gfx.Visuals
 	mouseCursorPos     vec.Coord
-
-	events event.Stream
 }
 
 func (c *console) changeTitle(new_title string) {
@@ -55,7 +55,7 @@ func InitConsole(title string, console_size vec.Dims, glyph_path, font_path stri
 		return
 	}
 
-	mainConsole.Init(console_size)
+	mainConsole.Canvas.Init(console_size)
 	mainConsole.title = title
 
 	// now that the console is set up, we can initialize the renderer (hopefully)
@@ -65,8 +65,8 @@ func InitConsole(title string, console_size vec.Dims, glyph_path, font_path stri
 		return
 	}
 
-	mainConsole.events = event.NewStream(50, mainConsole.handleEvents)
-	mainConsole.events.Listen(input.EV_MOUSEMOVE)
+	mainConsole.SetEventHandler(mainConsole.handleEvents)
+	mainConsole.Listen(input.EV_MOUSEMOVE)
 
 	mainConsole.mouseCursorVisuals = gfx.NewGlyphVisuals(gfx.GLYPH_BORDER_UUDDLLRR, col.Pair{col.WHITE, col.NONE})
 

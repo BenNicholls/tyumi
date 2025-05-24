@@ -59,7 +59,7 @@ func Fire(e Event) {
 	}
 
 	for _, s := range registeredEvents[e.ID()].listeners {
-		s.Add(e)
+		s.add(e)
 	}
 }
 

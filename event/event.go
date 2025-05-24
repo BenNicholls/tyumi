@@ -58,18 +58,13 @@ func Fire(e Event) {
 		return
 	}
 
-	for _, s := range registeredEvents[e.ID()].listeners {
+	for s := range registeredEvents[e.ID()].listeners.EachElement() {
 		s.add(e)
 	}
 }
 
 // fire a simple event into the void. Produces and error if the event was not registered as a simple event.
 func FireSimple(ID int) {
-	if !validID(ID) {
-		log.Error("Attempted to fire unregistered event with ID ", ID)
-		return
-	}
-
 	if registeredEvents[ID].eType != SIMPLE {
 		log.Error("Attempted to fire complex event with FireSimple(), id: ", ID)
 		return

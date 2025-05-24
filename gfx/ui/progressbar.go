@@ -23,6 +23,21 @@ func (pb *ProgressBar) Init(size vec.Dims, pos vec.Coord, depth int, progress_co
 	pb.progress = 100
 }
 
+func (pb ProgressBar) GetProgress() int {
+	return pb.progress
+}
+
+// Returns a value [0,1] representing the progress value of the progressbar.
+func (pb ProgressBar) GetProgressNormalized() float64 {
+	if pb.progress == 100 {
+		return 1
+	} else if pb.progress == 0 {
+		return 0
+	} else {
+		return float64(pb.progress) / 100
+	}
+}
+
 // SetProgress determines the length of the progress bar. It takes a percentage (which it clamps to [0, 100] just in
 // case you forget).
 func (pb *ProgressBar) SetProgress(progress_pct int) {

@@ -177,8 +177,8 @@ func (s *Scene) getActiveSubScene() scene {
 }
 
 func (s *Scene) cleanup() {
-	s.StopListening()
-	s.inputEvents.StopListening()
+	s.DisableListening()
+	s.inputEvents.DisableListening()
 
 	if s.subScene != nil {
 		s.subScene.Shutdown()

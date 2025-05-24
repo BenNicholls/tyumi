@@ -6,7 +6,7 @@ import (
 )
 
 // A Handler is called when processing events in an eventstream. It takes 1 argument e: the event being processed.
-// It is expected that, if the Handler successfully handles the event, it returns true
+// It is expected to return true if the Handler successfully handles the event.
 type Handler func(e Event) (handled bool)
 
 // Listener defines anything that can listen for and process events.
@@ -17,7 +17,8 @@ type Listener interface {
 	FlushEvents()
 	Listen(ids ...EventID)
 	DeListen(ids ...EventID)
-	StopListening()
+	EnableListening()
+	DisableListening()
 }
 
 // Stream is a queue of events. Use Listen() to have the stream collect events of a certain type, and then ProcessEvents()
@@ -82,8 +83,11 @@ func (s *Stream) Listen(ids ...EventID) {
 			log.Warning("Attempted to listen for unregistered event ID: ", id)
 			continue
 		}
+
 		s.listenIDs.Add(id)
-		registeredEvents[id].addListener(s)
+		if !s.disabled {
+			registeredEvents[id].addListener(s)
+		}
 	}
 }
 
@@ -93,8 +97,11 @@ func (s *Stream) DeListen(ids ...EventID) {
 		if !id.valid() {
 			continue
 		}
+
 		s.listenIDs.Remove(id)
-		registeredEvents[id].removeListener(s)
+		if !s.disabled {
+			registeredEvents[id].removeListener(s)
+		}
 	}
 }
 
@@ -105,8 +112,8 @@ func (s *Stream) EnableListening() {
 }
 
 // Disables listening for events. Disabled streams will not receive events and ProcessEvents() becomes a no-op. Use
-// EnableListening() to reactivate the stream. Note that disabling a stream does NOT close the stream. If you are done
-// with the stream and need to have the garbage collector free it you must call StopListening() to close it.
+// EnableListening() to reactivate the stream. Disabling a stream also removes all cached pointers to the stream object
+// from the event package; be sure to call this if you want your stream to be garbage collected.
 func (s *Stream) DisableListening() {
 	s.setDisabled(true)
 }
@@ -119,17 +126,14 @@ func (s *Stream) setDisabled(disabled bool) {
 	s.disabled = disabled
 	if s.disabled {
 		s.FlushEvents()
+		for i := range s.listenIDs.EachElement() {
+			registeredEvents[i].removeListener(s)
+		}
+	} else {
+		for i := range s.listenIDs.EachElement() {
+			registeredEvents[i].addListener(s)
+		}
 	}
-}
-
-// Closes an event stream, effectively de-listening for all listened events. Also removes any assigned event handler.
-func (s *Stream) StopListening() {
-	for i := range s.listenIDs.EachElement() {
-		registeredEvents[i].removeListener(s)
-	}
-
-	s.listenIDs.RemoveAll()
-	s.handler = nil
 }
 
 // Processes all events in the stream with the provided event handler function (if there is one).
@@ -149,7 +153,7 @@ func (s *Stream) ProcessEvents() {
 // Adds an event to the stream, unless the stream is full. If stream does not have an event handler, we assume
 // that it can't handle events so we don't add anything.
 func (s *Stream) add(e Event) {
-	if s.disabled || s.handler == nil {
+	if s.handler == nil {
 		return
 	}
 

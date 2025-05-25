@@ -55,6 +55,7 @@ func (wnd *Window) Update() {
 	// update all visible subelements (unless window is blocked) and their animations
 	util.WalkSubTrees[element](wnd, func(element element) {
 		if !wnd.IsBlocked() {
+			element.ProcessEvents()
 			element.Update()
 		}
 		element.updateAnimations()
@@ -285,10 +286,4 @@ type Labelled interface {
 	SetLabel(string)
 	GetLabel() string
 	IsLabelled() bool
-}
-
-// predicate for window's ui-tree-walking functions. elements that are not visible do not need to be updated
-// or rendered, and neither do their children, so we use this to break early
-func ifVisible(e element) bool {
-	return e.IsVisible()
 }

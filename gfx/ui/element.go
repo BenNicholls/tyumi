@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
@@ -18,6 +19,7 @@ type element interface {
 	vec.Bounded
 	util.TreeType[element]
 	Labelled
+	event.Listener
 
 	Update()
 	IsUpdated() bool
@@ -75,6 +77,7 @@ type element interface {
 type Element struct {
 	gfx.Canvas
 	util.TreeNode[element]
+	event.Stream
 	Border      Border //the element's border data. use EnableBorder() to turn on
 	Updated     bool   //indicates this object's state has changed and needs to be re-rendered.
 	AcceptInput bool   // if true, the element will be sent inputs when in a window with SendEventsToUnfocused = true
@@ -125,6 +128,12 @@ func (e *Element) Init(size vec.Dims, pos vec.Coord, depth int) {
 	e.forceRedraw = true
 	e.TreeNode.Init(e)
 	e.id = generate_id()
+
+	// if element is not in a window, ensure it and all children that may already be attached have their event streams
+	// disabled
+	if e.getWindow() == nil {
+		util.WalkTree[element](e, func(element element) { element.DisableListening() })
+	}
 }
 
 // Size returns the size of the drawable area of the element.
@@ -224,7 +233,7 @@ func (e *Element) CenterVertical() {
 	e.MoveTo(vec.Coord{e.position.X, (parent.Size().H - e.size.H) / 2})
 }
 
-// AddChild add a child element to this one. Child elements are composited together along with their parent to
+// AddChild adds a child element to this one. Child elements are composited together along with their parent to
 // produce the final visuals for the element.
 func (e *Element) AddChild(child element) {
 	if child.ID() == e.id {
@@ -235,6 +244,7 @@ func (e *Element) AddChild(child element) {
 	e.TreeNode.AddChild(child)
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeAdded(child)
+		util.WalkTree(child, func(element element) { element.EnableListening() }, ifVisible)
 	}
 	e.ForceRedraw()
 }
@@ -255,6 +265,7 @@ func (e *Element) RemoveChild(child element) {
 
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeRemoved(child)
+		util.WalkTree(child, func(element element) { element.DisableListening() })
 	}
 	e.ForceRedraw()
 }
@@ -539,8 +550,10 @@ func (e *Element) setVisible(v bool) {
 	e.visible = v
 	if e.visible {
 		e.Updated = true
+		util.WalkTree[element](e, func(element element) { element.EnableListening() }, ifVisible)
 	} else {
 		e.setFocus(false)
+		util.WalkTree[element](e, func(element element) { element.DisableListening() })
 	}
 
 	e.forceParentRedraw()

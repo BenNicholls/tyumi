@@ -112,7 +112,12 @@ func (kb KeyboardEvent) Text() (s string) {
 }
 
 func (kb KeyboardEvent) String() (s string) {
-	s = "KEY EVENT. PRESSED: "
+	s = "KEY EVENT. "
+	if kb.PressType == KEY_PRESSED {
+		s += "PRESSED: "
+	} else {
+		s += "RELEASED: "
+	}
 	if txt := kb.Text(); txt != "" {
 		s += txt
 	} else {

@@ -1,6 +1,8 @@
 package event
 
 import (
+	"slices"
+
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 )
@@ -21,20 +23,31 @@ type Listener interface {
 	DisableListening()
 }
 
+// SuppressionMode defines how duplicate events are handled in an event stream.
+type SuppressionMode uint8
+
+const (
+	DoNotSuppress SuppressionMode = iota // Default suppression mode. Duplicate events are not suppressed.
+	KeepFirst                            // Duplicate events are not added, the first instance of the event is kept in the stream
+	KeepLast                             // Duplicate events replace earlier matching events in the stream.
+)
+
 // Stream is a queue of events. Use Listen() to have the stream collect events of a certain type, and then ProcessEvents()
 // to call the assigned event handler on each accumulated event.
 type Stream struct {
-	stream    chan Event
-	handler   Handler           //event handler called by Process()
-	listenIDs util.Set[EventID] // ids that are currently being listened for
-	disabled  bool              // whether the stream accepts events
+	stream       []Event
+	handler      Handler           //event handler called by Process()
+	listenIDs    util.Set[EventID] // ids that are currently being listened for
+	disabled     bool              // whether the stream accepts events
+	suppression  SuppressionMode   // type of duplicate event suppression
+	eventIndices map[EventID]int   // indices of events with specific IDs, used while suppressing duplicate events
 }
 
 // Initializes a stream. Size is the maximum number of events that can be accumulated before processing. Handler is the
 // function called on the events during processing. If handler is nil, no events will be sent to this stream.
 // Event streams do not need to be initialized explicitly; if not, a default size of 100 will be used.
 func (s *Stream) Init(size int, handler Handler) {
-	s.stream = make(chan Event, size)
+	s.stream = make([]Event, 0, size)
 	s.handler = handler
 }
 
@@ -69,10 +82,27 @@ func (s *Stream) SetStreamSize(size int) {
 	s.Init(size, s.handler)
 }
 
-// Flushes all events from the stream instead of processing them.
+// Sets the type of duplicate event suppression. If suppression is enabled, the stream will discard events with the same
+// EventID as an event already in the stream. Possible values are:
+//
+//	DoNotSuppress: allows duplicate events
+//	KeepFirst: suppress duplicates, keeping the first instance of the event in the stream
+//	KeepLast: suppress duplicates, replacing earlier instances of an event with the latest one
+func (s *Stream) SuppressDuplicateEvents(mode SuppressionMode) {
+	s.suppression = mode
+
+	if s.suppression != DoNotSuppress {
+		s.eventIndices = make(map[EventID]int)
+	} else {
+		s.eventIndices = nil
+	}
+}
+
+// Clears the event stream of all collected events.
 func (s *Stream) FlushEvents() {
-	for range len(s.stream) {
-		<-s.stream
+	s.stream = slices.Delete(s.stream, 0, len(s.stream))
+	if s.suppression != DoNotSuppress {
+		clear(s.eventIndices)
 	}
 }
 
@@ -142,12 +172,14 @@ func (s *Stream) ProcessEvents() {
 		return
 	}
 
-	for event := s.next(); event != nil; event = s.next() {
+	for _, event := range s.stream {
 		handled := s.handler(event)
 		if handled {
 			event.setHandled()
 		}
 	}
+
+	s.FlushEvents()
 }
 
 // Adds an event to the stream, unless the stream is full. If stream does not have an event handler, we assume
@@ -162,14 +194,18 @@ func (s *Stream) add(e Event) {
 		return
 	}
 
-	s.stream <- e
-}
+	if s.suppression != DoNotSuppress {
+		// if duplicate ID found, either replace or just return depending on mode.
+		if i, ok := s.eventIndices[e.ID()]; ok {
+			if s.suppression == KeepLast {
+				s.stream[i] = e
+			}
 
-// pops the next event and returns it. if there are no events, this will return nil
-func (s *Stream) next() Event {
-	if len(s.stream) == 0 {
-		return nil
+			return
+		} else {
+			s.eventIndices[e.ID()] = len(s.stream)
+		}
 	}
 
-	return <-s.stream
+	s.stream = append(s.stream, e)
 }

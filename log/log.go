@@ -61,6 +61,11 @@ func log(level level, messages ...any) {
 		Time:    time.Now(),
 		Message: fmt.Sprint(messages...),
 	}
+
+	if e.Message == "" {
+		return
+	}
+
 	logger = append(logger, e)
 
 	if onMessageCallback != nil {
@@ -72,7 +77,7 @@ func log(level level, messages ...any) {
 	}
 }
 
-// Writes the log to log.txt. 
+// Writes the log to log.txt.
 // TODO: make this filepath customizable.
 func WriteToDisk() {
 	f, err := os.Create("log.txt")

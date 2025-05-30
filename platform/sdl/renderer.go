@@ -46,7 +46,7 @@ func NewRenderer() *Renderer {
 
 func (r *Renderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string) (err error) {
 	//renderer defaults to 800x600, once fonts are loaded it figures out the resolution to use and resizes accordingly
-	r.window, err = sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, 800, 600, sdl.WINDOW_OPENGL)
+	r.window, err = sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, 800, 600, sdl.WINDOW_OPENGL|sdl.WINDOW_RESIZABLE)
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to create window. sdl: ", sdl.GetError())
 		return errors.New("Failed to create window.")
@@ -57,6 +57,9 @@ func (r *Renderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string)
 		log.Error("SDL RENDERER: Failed to create renderer. sdl: ", sdl.GetError())
 		return errors.New("Failed to create renderer.")
 	}
+
+	r.renderer.SetLogicalSize(800, 600)
+
 	r.renderer.Clear()
 
 	r.console = console
@@ -115,9 +118,12 @@ func (r *Renderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 			return
 		}
 		console_size := r.console.Size()
-		r.window.SetSize(int32(r.tileSize*console_size.W), int32(r.tileSize*console_size.H))
+		w, h := int32(r.tileSize*console_size.W), int32(r.tileSize*console_size.H)
+		r.window.SetSize(w, h)
+		r.renderer.SetLogicalSize(w, h)
 		_ = r.createCanvasBuffer() //TODO: handle this error?
 		r.window.SetPosition(sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED)
+		r.forceRedraw = true
 		log.Info("SDL RENDERER: resized window.")
 	}
 
@@ -189,6 +195,10 @@ func (r *Renderer) createCanvasBuffer() (err error) {
 	return
 }
 
+func (r *Renderer) onWindowResize() {
+	r.forceRedraw = true
+}
+
 // Enables or disables fullscreen. All tyumi consoles use borderless fullscreen instead of native
 // and the output is scaled to the monitor size.
 func (r *Renderer) SetFullscreen(enable bool) {
@@ -214,6 +224,10 @@ func (r *Renderer) ToggleFullscreen() {
 
 // Renders the console to the GPU and flips the buffer.
 func (r *Renderer) Render() {
+	if !r.console.Dirty() && !r.forceRedraw {
+		return
+	}
+
 	var src, dst sdl.Rect
 	t := r.renderer.GetRenderTarget()          //store window texture, we'll switch back to it once we're done with the buffer.
 	r.renderer.SetRenderTarget(r.canvasBuffer) //point renderer at buffer texture, we'll draw there
@@ -243,6 +257,8 @@ func (r *Renderer) Render() {
 	r.renderer.SetRenderTarget(t) //point renderer at window again
 	r.renderer.Copy(r.canvasBuffer, nil, nil)
 	r.renderer.Present()
+	r.backDrawColour = col.BLACK
+	r.renderer.SetDrawColor(r.backDrawColour.RGBA())
 	r.renderer.Clear()
 
 	r.forceRedraw = false

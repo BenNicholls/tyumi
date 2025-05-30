@@ -26,6 +26,10 @@ func SetFramerate(f int) {
 	frameTargetDuration = time.Duration(1000/float64(f)) * time.Millisecond
 }
 
+func SetFullScreen(enable bool) {
+	currentPlatform.GetRenderer().SetFullscreen(enable)
+}
+
 // Gets the tick number for the current tick (duh)
 func GetTick() int {
 	return tick

@@ -18,6 +18,10 @@ func (p *Platform) processEvents() {
 		case *sdl.QuitEvent:
 			event.FireSimple(tyumi.EV_QUIT)
 			break //don't care about other input events if we're quitting
+		case *sdl.WindowEvent:
+			if e.Event == sdl.WINDOWEVENT_RESIZED {
+				p.renderer.onWindowResize()
+			}
 		case *sdl.KeyboardEvent:
 			if key, ok := keycodemap[e.Keysym.Sym]; ok {
 				switch e.State {

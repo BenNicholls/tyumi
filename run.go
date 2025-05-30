@@ -74,9 +74,7 @@ func updateUI() {
 func render() {
 	activeScene.Window().Render()
 	activeScene.Window().Draw(&mainConsole.Canvas)
-	if mainConsole.Dirty() {
-		renderer.Render()
-	}
+	renderer.Render()
 }
 
 func endFrame() {

@@ -2,6 +2,7 @@ package sdl
 
 import (
 	"errors"
+	"image/color"
 
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
@@ -123,17 +124,41 @@ func (r *Renderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 	return
 }
 
-// Loads a bmp font into the GPU using the current window renderer.
+// Loads a bmp font into the GPU using the current window renderer. White pixels (RGB 255, 255, 255) are modulated with
+// a cell's colour, and Fuschia pixels (RGB 255, 0, 255) are transparent.  If the image contains pixels with any other
+// G value it converts those pixels to partially transparent white pixels with Alpha = G.
 // TODO: support more than bmps?
 func (r *Renderer) loadTexture(path string) (*sdl.Texture, error) {
-	image, err := sdl.LoadBMP(path)
+	bmpImage, err := sdl.LoadBMP(path)
+	defer bmpImage.Free()
+
+	image, err := bmpImage.ConvertFormat(sdl.PIXELFORMAT_RGBA8888, 0)
 	defer image.Free()
+
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to load image: ", sdl.GetError())
 		return nil, errors.New("Failed to load image")
 	}
 
-	image.SetColorKey(true, uint32(col.KEY))
+	keyColour := color.NRGBA{255, 0, 255, 255}
+	transparent := color.NRGBA{0, 0, 0, 0}
+
+	image.Lock()
+	for cursor := range vec.EachCoordInArea(vec.Dims{int(image.W), int(image.H)}) {
+		colour := image.At(cursor.X, cursor.Y).(color.NRGBA)
+		if colour.G != 0xFF {
+			if colour == keyColour {
+				image.Set(cursor.X, cursor.Y, transparent)
+			} else {
+				colour.A = colour.G
+				colour.G = 0xFF
+				image.Set(cursor.X, cursor.Y, colour)
+			}
+		}
+	}
+	image.Unlock()
+	image.SetRLE(true)
+
 	texture, err := r.renderer.CreateTextureFromSurface(image)
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to create texture: ", sdl.GetError())

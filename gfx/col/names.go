@@ -1,7 +1,5 @@
 package col
 
-const KEY = FUSCHIA //key color. renderers should use this to support spritesheet transparency for BMP
-
 // colours! hardcoded for your pleasure.
 const (
 	NONE      Colour = 0x00000000

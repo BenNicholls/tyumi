@@ -221,14 +221,15 @@ func (r *Renderer) Render() {
 	for cursor := range vec.EachCoordInArea(r.console) {
 		cell := r.console.GetCell(cursor)
 		if cell.Dirty || r.forceRedraw {
-			if cell.Mode == gfx.DRAW_TEXT {
+			switch cell.Mode {
+			case gfx.DRAW_TEXT:
 				for c_i, char := range cell.Chars {
 					char := int(char)
 					dst = makeRect(cursor.X*r.tileSize+c_i*r.tileSize/2, cursor.Y*r.tileSize, r.tileSize/2, r.tileSize)
 					src = makeRect((char%32)*r.tileSize/2, (char/32)*r.tileSize, r.tileSize/2, r.tileSize)
 					r.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.Colours, char)
 				}
-			} else {
+			case gfx.DRAW_GLYPH:
 				glyph := int(cell.Glyph)
 				dst = makeRect(cursor.X*r.tileSize, cursor.Y*r.tileSize, r.tileSize, r.tileSize)
 				src = makeRect((glyph%16)*r.tileSize, (glyph/16)*r.tileSize, r.tileSize, r.tileSize)

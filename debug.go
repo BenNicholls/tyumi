@@ -4,7 +4,7 @@ package tyumi
 
 import "github.com/bennicholls/tyumi/log"
 
-const debug bool = true
+const Debug bool = true
 
 func init() {
 	log.SetMinimumLogLevel(log.LVL_DEBUG)

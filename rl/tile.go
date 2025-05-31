@@ -65,3 +65,7 @@ func (t Tile) GetVisuals() gfx.Visuals {
 func (t Tile) IsPassable() bool {
 	return t.entity == nil && tileDataCache.GetData(t.tileType).Passable
 }
+
+func (t Tile) IsTransparent() bool {
+	return !tileDataCache.GetData(t.tileType).Opaque
+}

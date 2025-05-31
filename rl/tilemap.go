@@ -30,6 +30,10 @@ func (tm TileMap) Bounds() vec.Rect {
 	return tm.size.Bounds()
 }
 
+func (tm *TileMap) Clean() {
+	tm.dirty = false
+}
+
 func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
 	if !pos.IsInside(tm) {
 		return
@@ -109,15 +113,19 @@ func (tm TileMap) Dirty() bool {
 
 func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	for cursor := range vec.EachCoordInIntersection(dst_canvas, tm.Bounds().Translated(offset)) {
-		tile := tm.GetTile(cursor.Subtract(offset))
-		if tile.tileType == TILE_NONE {
-			dst_canvas.DrawVisuals(cursor, 0, dst_canvas.DefaultVisuals())
-		} else {
-			dst_canvas.DrawObject(cursor, 0, tile)
-		}
+		dst_canvas.DrawVisuals(cursor, depth, tm.CalcTileVisuals(cursor.Subtract(offset)))
 	}
 
 	tm.dirty = false
+}
+
+func (tm TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
+	tile := tm.GetTile(pos)
+	if tile.tileType == TILE_NONE {
+		return gfx.Visuals{Mode: gfx.DRAW_NONE}
+	} else {
+		return tile.GetVisuals()
+	}
 }
 
 func (tm TileMap) CopyToTileMap(dst_map *TileMap, offset vec.Coord) {

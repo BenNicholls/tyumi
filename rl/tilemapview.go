@@ -9,6 +9,7 @@ import (
 type drawableTileMap interface {
 	vec.Bounded
 	gfx.DrawableReporter
+	CalcTileVisuals(tile_pos vec.Coord) gfx.Visuals
 }
 
 type TileMapView struct {
@@ -40,12 +41,12 @@ func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {
 }
 
 func (tmv *TileMapView) CenterTileMap() {
-	offset := vec.Coord{(tmv.tilemap.Bounds().W - tmv.Bounds().W)/2, (tmv.tilemap.Bounds().H - tmv.Bounds().H)/2}
+	offset := vec.Coord{(tmv.tilemap.Bounds().W - tmv.Bounds().W) / 2, (tmv.tilemap.Bounds().H - tmv.Bounds().H) / 2}
 	tmv.SetCameraOffset(offset)
 }
 
 func (tmv *TileMapView) CenterOnTileMapCoord(tilemap_pos vec.Coord) {
-	offset := tilemap_pos.Subtract(vec.Coord{tmv.Bounds().W/2-1, tmv.Bounds().H/2-1})
+	offset := tilemap_pos.Subtract(vec.Coord{tmv.Bounds().W/2 - 1, tmv.Bounds().H/2 - 1})
 	tmv.SetCameraOffset(offset)
 }
 
@@ -84,4 +85,15 @@ func (tmv *TileMapView) Render() {
 	}
 
 	tmv.tilemap.Draw(&tmv.Canvas, tmv.cameraOffset.Scale(-1), 0)
+	offset := tmv.cameraOffset.Scale(-1)
+	for cursor := range vec.EachCoordInIntersection(tmv, tmv.tilemap.Bounds().Translated(offset)) {
+		tileVisuals := tmv.tilemap.CalcTileVisuals(cursor.Subtract(offset))
+		if tileVisuals.Mode == gfx.DRAW_NONE {
+			tmv.DrawVisuals(cursor, 0, tmv.DefaultVisuals())
+		} else {
+			tmv.DrawVisuals(cursor, 0, tileVisuals)
+		}
+	}
+
+	tmv.tilemap.Clean()
 }

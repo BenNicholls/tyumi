@@ -39,6 +39,7 @@ type Drawable interface {
 type DrawableReporter interface {
 	Drawable
 	Dirty() bool
+	Clean()
 }
 
 // Defines anything that can report a set of visuals for drawing to a single cell.

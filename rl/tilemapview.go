@@ -45,7 +45,7 @@ func (tmv *TileMapView) CenterTileMap() {
 }
 
 func (tmv *TileMapView) CenterOnTileMapCoord(tilemap_pos vec.Coord) {
-	offset := tilemap_pos.Subtract(vec.Coord{tmv.Bounds().W/2, tmv.Bounds().H/2})
+	offset := tilemap_pos.Subtract(vec.Coord{tmv.Bounds().W/2-1, tmv.Bounds().H/2-1})
 	tmv.SetCameraOffset(offset)
 }
 
@@ -59,7 +59,7 @@ func (tmv *TileMapView) MoveCamera(dx, dy int) {
 
 func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
 	tmv.cameraOffset = offset
-	tmv.Updated = true
+	tmv.ForceRedraw()
 }
 
 func (tmv TileMapView) GetCameraOffset() vec.Coord {

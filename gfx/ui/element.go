@@ -119,7 +119,7 @@ func (e *Element) String() string {
 // be done for all elements! Don't forget!
 func (e *Element) Init(size vec.Dims, pos vec.Coord, depth int) {
 	e.Canvas.Init(size)
-	e.SetDefaultVisuals(defaultCanvasVisuals)
+	e.SetDefaultVisuals(DefaultElementVisuals)
 	e.position = pos
 	e.size = size
 	e.depth = depth

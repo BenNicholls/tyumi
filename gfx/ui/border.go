@@ -161,7 +161,7 @@ func (e *Element) getBorderStyle() (style BorderStyle) {
 	//find some colour to use, prioritizing current border, then the style, then falling back to the ui default
 	colours := e.Border.colours
 	if e.focused {
-		colours.Fore = defaultFocusColour
+		colours.Fore = DefaultFocusColour
 	}
 
 	if colours.Fore == col.NONE {

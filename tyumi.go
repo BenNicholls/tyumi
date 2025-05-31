@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 )
@@ -28,6 +29,10 @@ func SetFramerate(f int) {
 
 func SetFullScreen(enable bool) {
 	currentPlatform.GetRenderer().SetFullscreen(enable)
+}
+
+func SetClearColour(colour col.Colour) {
+	currentPlatform.GetRenderer().SetClearColour(colour)
 }
 
 // Gets the tick number for the current tick (duh)

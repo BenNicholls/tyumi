@@ -3,6 +3,7 @@ package tyumi
 import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
 )
 
@@ -56,6 +57,7 @@ type Renderer interface {
 	Cleanup()
 	ChangeFonts(glyphPath, fontPath string) error
 	SetFullscreen(bool)
+	SetClearColour(colour col.Colour)
 	ToggleFullscreen()
 	Render()
 	ForceRedraw()

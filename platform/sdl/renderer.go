@@ -27,6 +27,7 @@ type Renderer struct {
 	frames int // frames rendered. NOTE: this can differ from engine.tick since the renderer may not render every tick
 
 	//store render colours so we don't have to set them for every renderer.Copy()
+	clearColour         col.Colour
 	backDrawColour      col.Colour
 	foreDrawColourText  col.Colour
 	foreDrawColourGlyph col.Colour
@@ -222,6 +223,11 @@ func (r *Renderer) ToggleFullscreen() {
 	}
 }
 
+func (r *Renderer) SetClearColour(colour col.Colour) {
+	r.clearColour = colour
+	r.forceRedraw = true
+}
+
 // Renders the console to the GPU and flips the buffer.
 func (r *Renderer) Render() {
 	if !r.console.Dirty() && !r.forceRedraw {
@@ -257,8 +263,7 @@ func (r *Renderer) Render() {
 	r.renderer.SetRenderTarget(t) //point renderer at window again
 	r.renderer.Copy(r.canvasBuffer, nil, nil)
 	r.renderer.Present()
-	r.backDrawColour = col.BLACK
-	r.renderer.SetDrawColor(r.backDrawColour.RGBA())
+	r.renderer.SetDrawColor(r.clearColour.RGBA())
 	r.renderer.Clear()
 
 	r.forceRedraw = false

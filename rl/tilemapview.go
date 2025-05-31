@@ -84,7 +84,6 @@ func (tmv *TileMapView) Render() {
 		return
 	}
 
-	tmv.tilemap.Draw(&tmv.Canvas, tmv.cameraOffset.Scale(-1), 0)
 	offset := tmv.cameraOffset.Scale(-1)
 	for cursor := range vec.EachCoordInIntersection(tmv, tmv.tilemap.Bounds().Translated(offset)) {
 		tileVisuals := tmv.tilemap.CalcTileVisuals(cursor.Subtract(offset))

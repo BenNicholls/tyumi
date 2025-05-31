@@ -28,7 +28,7 @@ func (l Line) LengthSq() int {
 func (l Line) EachCoord() iter.Seq[Coord] {
 	//detect if we're drawing a straight line or not. if we are, we can skip the more expensive bresenham algorithm in
 	//lieu of a simple loop stepping in the right direction until done
-	var step_dir Direction
+	var step_dir Direction = DIR_NONE
 	switch {
 	case l.dy() == 0: //horizontal line
 		step_dir = DIR_RIGHT
@@ -63,16 +63,13 @@ func (l Line) EachCoord() iter.Seq[Coord] {
 	}
 
 	// setup and return an iterator implementing bresenham's algorithm
-	dx := util.Abs(l.dx())
-	dy := -util.Abs(l.dy())
+	dx, dy := util.Abs(l.dx()), -util.Abs(l.dy())
 	e := dx + dy
-
-	sx := -1
+	e2 := e * 2
+	sx, sy := -1, -1
 	if l.Start.X < l.End.X {
 		sx = 1
 	}
-
-	sy := -1
 	if l.Start.Y < l.End.Y {
 		sy = 1
 	}
@@ -82,21 +79,21 @@ func (l Line) EachCoord() iter.Seq[Coord] {
 			if !yield(l.Start) {
 				return
 			}
-			e2 := 2 * e
 			if e2 >= dy {
 				if l.Start.X == l.End.X {
 					return
 				}
 				e = e + dy
-				l.Start.X = l.Start.X + sx
+				l.Start.X += sx
 			}
 			if e2 <= dx {
 				if l.Start.Y == l.End.Y {
 					return
 				}
 				e = e + dx
-				l.Start.Y = l.Start.Y + sy
+				l.Start.Y += sy
 			}
+			e2 = e * 2
 		}
 	}
 }

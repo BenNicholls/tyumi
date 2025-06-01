@@ -79,7 +79,18 @@ func (tm *TileMap) AddEntity(entity TileMapEntity, pos vec.Coord) {
 	tm.dirty = true
 }
 
-func (tm *TileMap) RemoveEntity(pos vec.Coord) {
+func (tm *TileMap) RemoveEntity(entity TileMapEntity) {
+	pos := entity.Position()
+	if !pos.IsInside(tm) {
+		return
+	}
+
+	if tile := tm.getTile(pos); tile.entity == entity {
+		tm.RemoveEntityAt(pos)
+	}
+}
+
+func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 	if !pos.IsInside(tm) {
 		return
 	}
@@ -91,13 +102,14 @@ func (tm *TileMap) RemoveEntity(pos vec.Coord) {
 	}
 }
 
-func (tm *TileMap) MoveEntity(from, to vec.Coord) {
+func (tm *TileMap) MoveEntity(entity TileMapEntity, to vec.Coord) {
+	from := entity.Position()
 	if !from.IsInside(tm) || !to.IsInside(tm) {
 		return
 	}
 
 	fromTile, toTile := tm.getTile(from), tm.getTile(to)
-	if fromTile.entity == nil || !toTile.IsPassable() {
+	if fromTile.entity != entity || !toTile.IsPassable() {
 		return
 	}
 

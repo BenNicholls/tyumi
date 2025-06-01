@@ -8,6 +8,7 @@ import (
 
 type TileMapEntity interface {
 	MoveTo(pos vec.Coord)
+	Position() vec.Coord
 	GetVisuals() gfx.Visuals
 }
 

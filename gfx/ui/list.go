@@ -22,6 +22,7 @@ func init() {
 type List struct {
 	Element
 
+	ReverseOrder      bool   // if true, inserted elements are displayed from most recent to least recent
 	OnChangeSelection func() //callback triggered any time selection is changed, i.e. by scrolling
 
 	padding   int  //amount of padding added between list items
@@ -152,7 +153,13 @@ func (l *List) SetEmptyText(text string) {
 // positions all the children elements so they are top to bottom, and the selected item is visible
 func (l *List) calibrate() {
 	l.contentHeight = 0
-	for _, item := range l.items {
+	for i := range l.Count() {
+		var item element
+		if l.ReverseOrder {
+			item = l.items[l.Count()-1-i]
+		} else {
+			item = l.items[i]
+		}
 		item.MoveTo(vec.Coord{0, l.contentHeight - l.scrollOffset})
 		if item.IsBordered() {
 			item.Move(0, 1)
@@ -268,7 +275,12 @@ func (l *List) Next() {
 		return
 	}
 
-	nextIndex := util.CycleClamp(l.selected+1, 0, l.Count()-1)
+	var nextIndex int
+	if !l.ReverseOrder {
+		nextIndex = util.CycleClamp(l.selected+1, 0, l.Count()-1)
+	} else {
+		nextIndex = util.CycleClamp(l.selected-1, 0, l.Count()-1)
+	}
 	l.Select(nextIndex)
 }
 
@@ -278,16 +290,29 @@ func (l *List) Prev() {
 		return
 	}
 
-	prevIndex := util.CycleClamp(l.selected-1, 0, l.Count()-1)
+	var prevIndex int
+	if !l.ReverseOrder {
+		prevIndex = util.CycleClamp(l.selected-1, 0, l.Count()-1)
+	} else {
+		prevIndex = util.CycleClamp(l.selected+1, 0, l.Count()-1)
+	}
 	l.Select(prevIndex)
 }
 
 func (l *List) ScrollToTop() {
-	l.Select(0)
+	if l.ReverseOrder {
+		l.Select(l.Count() - 1)
+	} else {
+		l.Select(0)
+	}
 }
 
 func (l *List) ScrollToBottom() {
-	l.Select(l.Count()-1)
+	if !l.ReverseOrder {
+		l.Select(l.Count() - 1)
+	} else {
+		l.Select(0)
+	}
 }
 
 func (l *List) prepareRender() {

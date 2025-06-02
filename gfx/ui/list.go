@@ -31,6 +31,7 @@ type List struct {
 
 	emptyLabel *Textbox
 	items      []element
+	capacity   int // max capacity for items in the List. if 0, no limit is enforced. If > 0, new items replace the oldest items.
 
 	contentHeight int //total height of all list contents. used for viewport and scrollbar purposes
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
@@ -61,6 +62,10 @@ func (l *List) Insert(items ...element) {
 
 	if l.items == nil {
 		l.items = make([]element, 0)
+	} else if l.capacity > 0 && len(l.items) == l.capacity {
+		for i := range len(items) {
+			l.RemoveAt(len(items) - 1 - i)
+		}
 	}
 
 	for _, item := range items {
@@ -144,6 +149,19 @@ func (l *List) RemoveAll() {
 // Count returns the number of items in the list.
 func (l List) Count() int {
 	return len(l.items)
+}
+
+// SetCapacity sets the maximum number of items that a list can hold. Defaults to 0, indicating no maximum limit. If
+// an item is inserted while the list is at capacity, the oldest item is removed.
+func (l *List) SetCapacity(cap int) {
+	l.capacity = max(cap, 0)
+
+	if l.capacity > 0 && len(l.items) > l.capacity {
+		toTrim := len(l.items) - l.capacity
+		for i := range toTrim {
+			l.RemoveAt(toTrim - 1 - i)
+		}
+	}
 }
 
 // SetEmptyText creates a label that is shown in the list when the list contains no items.

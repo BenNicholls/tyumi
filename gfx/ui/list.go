@@ -34,6 +34,8 @@ type List struct {
 
 	contentHeight int //total height of all list contents. used for viewport and scrollbar purposes
 	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
+
+	recalibrate bool // flag that indicates list elements need to be recalibrated before rendering
 }
 
 func NewList(size vec.Dims, pos vec.Coord, depth int) (l *List) {
@@ -53,6 +55,10 @@ func (l *List) Init(size vec.Dims, pos vec.Coord, depth int) {
 // Insert adds elements to the list. Inserted elements will be added to the end of the list and automatically
 // positioned.
 func (l *List) Insert(items ...element) {
+	if len(items) == 0 {
+		return
+	}
+
 	if l.items == nil {
 		l.items = make([]element, 0)
 	}
@@ -62,7 +68,7 @@ func (l *List) Insert(items ...element) {
 		l.AddChild(item)
 	}
 
-	l.calibrate()
+	l.recalibrate = true
 
 	if l.Count() == 1 {
 		l.Select(0)
@@ -82,16 +88,27 @@ func (l *List) InsertText(justify Justification, items ...string) {
 	}
 }
 
-// Remove removes a ui element from the list, if present.
-func (l *List) Remove(item element) {
-	itemIndex := slices.Index(l.items, item)
-	if itemIndex == -1 {
+// Remove removes ui elements from the list, if present.
+func (l *List) Remove(items ...element) {
+	for _, item := range items {
+		itemIndex := slices.Index(l.items, item)
+		if itemIndex == -1 {
+			continue
+		}
+
+		l.RemoveAt(itemIndex)
+	}
+}
+
+// RemoveAt removes the item at the provided index. If the index is out of range, does nothing.
+func (l *List) RemoveAt(index int) {
+	if index >= l.Count() || index < 0 {
 		return
 	}
 
-	l.RemoveChild(item)
-	l.items = slices.Delete(l.items, itemIndex, itemIndex+1)
-	if itemIndex <= l.selected {
+	l.RemoveChild(l.items[index])
+	l.items = slices.Delete(l.items, index, index+1)
+	if index <= l.selected {
 		l.Select(l.selected - 1)
 	}
 
@@ -99,7 +116,7 @@ func (l *List) Remove(item element) {
 		l.emptyLabel.Show()
 	}
 
-	l.calibrate()
+	l.recalibrate = true
 	l.Updated = true
 }
 
@@ -233,7 +250,7 @@ func (l *List) SetPadding(padding int) {
 	}
 
 	l.padding = padding
-	l.calibrate()
+	l.recalibrate = true
 }
 
 func (l *List) Select(selection int) {
@@ -318,6 +335,11 @@ func (l *List) ScrollToBottom() {
 func (l *List) prepareRender() {
 	if l.Updated {
 		l.forceRedraw = true
+	}
+
+	if l.recalibrate {
+		l.calibrate()
+		l.recalibrate = false
 	}
 
 	l.Element.prepareRender()

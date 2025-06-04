@@ -5,25 +5,25 @@ import (
 )
 
 var entities []Entity
-var freeIDs chan uint32
+var freeIndices chan uint32
 var generations []uint8
 
 const maxFreeIDs int = 32
 
-const INVALID_ID Entity = 0xffffffff
+const INVALID_ID Entity = 0
 const indexMask uint32 = 0x00ffffff
 const generationMask uint32 = 0xff000000
 
 func init() {
 	entities = make([]Entity, 0)
-	freeIDs = make(chan uint32, 256)
+	freeIndices = make(chan uint32, 256)
 	generations = make([]uint8, 0)
 }
 
 type Entity uint32
 
 func (e Entity) index() uint32 {
-	return uint32(e) & indexMask
+	return (uint32(e) & indexMask) - 1
 }
 
 func (e Entity) Valid() bool {
@@ -37,18 +37,18 @@ func (e Entity) Alive() bool {
 
 // Creates an Entity. Entities are just a number
 func CreateEntity() (e Entity) {
-	if len(freeIDs) < maxFreeIDs { //append to entities list, return ID with generation 0
-		e = Entity(len(entities))
+	if len(freeIndices) < maxFreeIDs { //append to entities list, return ID with generation 0
+		e = Entity(len(entities) + 1)
 		entities = append(entities, e)
 		generations = append(generations, 0)
 	} else { // take first free ID, retrieve generation for that slot, increment, compile ID, store new ID and gen, return
-		idx := <-freeIDs
+		idx := <-freeIndices
 		gen := uint32(generations[idx]) + 1
 		if gen == 255 {
 			log.Warning("GENERATION LIMIT REACHED!!! (If you see this, it's not a *big* deal but there's a very small chance a bug could occur going forward.)")
 		}
 		generations[idx] = uint8(gen)
-		e = Entity(idx | (gen << 24))
+		e = Entity((idx + 1) | (gen << 24))
 		entities[idx] = e
 	}
 
@@ -70,14 +70,14 @@ func RemoveEntity(e Entity) {
 }
 
 func addFreeID(idx uint32) {
-	if len(freeIDs) == cap(freeIDs) {
-		newChannel := make(chan uint32, int(float32(cap(freeIDs))*1.5))
-		for range len(freeIDs) {
-			newChannel <- <-freeIDs
+	if len(freeIndices) == cap(freeIndices) {
+		newChannel := make(chan uint32, int(float32(cap(freeIndices))*1.5))
+		for range len(freeIndices) {
+			newChannel <- <-freeIndices
 		}
-		freeIDs = newChannel
+		freeIndices = newChannel
 		log.Debug("FreeID channel resized!!")
 	}
 
-	freeIDs <- idx
+	freeIndices <- idx
 }

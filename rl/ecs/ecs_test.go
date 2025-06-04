@@ -8,6 +8,8 @@ import (
 )
 
 type testComponent struct {
+	Component
+
 	vec.Coord
 }
 
@@ -86,7 +88,6 @@ func TestAddRemoveAlterComponents(t *testing.T) {
 		if _, ok := GetComponent[testComponent](entity); ok {
 			continue
 		}
-		//testcomponent := entity.AddComponent(testComponentID).(*TestComponent)
 		testcomponent := AddComponent[testComponent](entity)
 		testcomponent.Coord = vec.Coord{int(entity), int(entity)}
 		componentsAdded++
@@ -99,6 +100,10 @@ func TestAddRemoveAlterComponents(t *testing.T) {
 			componentsFound++
 			if coord := (vec.Coord{int(entity), int(entity)}); test.Coord != coord {
 				t.Errorf("Improperly set position for entity, position is %v, wanted %v", test.Coord, coord)
+			}
+
+			if test.entity != entity {
+				t.Errorf("Improperly set entityID component. Found %v, wanted %v", test.entity, entity)
 			}
 		}
 	}

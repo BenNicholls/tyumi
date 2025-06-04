@@ -13,14 +13,14 @@ type componentID uint32
 var componentCaches []componentContainer
 var typeMap map[reflect.Type]componentID
 
+// this defines a component cache. component caches like to return the actual component type for add and get operations,
+// so we can't put those functions in the interface here.
 type componentContainer interface {
-	getComponent(id Entity) (Component, bool)
-	addComponent(id Entity) Component
 	removeComponent(id Entity)
 }
 
 func init() {
-	componentCaches = make([]componentContainer, 20)
+	componentCaches = make([]componentContainer, 0, 20)
 	typeMap = make(map[reflect.Type]componentID)
 }
 
@@ -29,7 +29,7 @@ type componentCache[T Component] struct {
 	indices    map[Entity]uint32 //index of entity index to component index in the cache. TODO: make this not a map someday.
 }
 
-func (cc componentCache[T]) getComponent(id Entity) (Component, bool) {
+func (cc componentCache[T]) getComponent(id Entity) (*T, bool) {
 	if !id.Alive() {
 		log.Error("Removed entity cannot get component!")
 		return nil, false
@@ -48,7 +48,7 @@ func (cc componentCache[T]) getComponent(id Entity) (Component, bool) {
 
 // adds a component for the specified entity and returns a pointer to it so you can edit it. if the component already
 // exists just returns a pointer to it
-func (cc *componentCache[T]) addComponent(id Entity) Component {
+func (cc *componentCache[T]) addComponent(id Entity) *T {
 	if comp, ok := cc.getComponent(id); ok {
 		return comp
 	}
@@ -84,6 +84,17 @@ func (cc *componentCache[T]) removeComponent(id Entity) {
 	cc.components = cc.components[:endIndex]
 }
 
+func getComponentCache[T Component]() (*componentCache[T], bool) {
+	componentType := reflect.TypeFor[T]()
+	componentID, ok := typeMap[componentType]
+	if !ok {
+		log.Error(componentType.Name(), " is not a registered component type!!!")
+		return nil, false
+	}
+
+	return componentCaches[componentID].(*componentCache[T]), true
+}
+
 // RegisterComponent registers a type to be used as a component for entities. Types MUST be registered before being
 // added to entities. Trying to add an unregistered component to an entity results in a panic.
 func RegisterComponent[T Component]() {
@@ -101,49 +112,38 @@ func AddComponent[T Component](entity_id Entity) (component *T) {
 		return
 	}
 
-	componentType := reflect.TypeFor[T]()
-	componentID, ok := typeMap[componentType]
-	if !ok {
-		log.Error(componentType.Name(), " is not a registered component type!!!")
-		panic("Bad component. (see log)")
+	if cache, ok := getComponentCache[T](); ok {
+		return cache.addComponent(entity_id)
+	} else {
+		panic("Could not add component! (see log)")
 	}
-
-	component = (componentCaches[componentID].addComponent(entity_id)).(*T)
-
-	return
 }
 
 // GetComponent retrieves the component of type T from an entity. If component is unregistered of if the entity does
 // not have the requested component, nil is returned and ok will be false.
-func GetComponent[T Component](entity_id Entity) (component *T, ok bool) {
+func GetComponent[T Component](entity_id Entity) (*T, bool) {
 	if !entity_id.Alive() {
 		log.Error("Cannot get component from dead/invalid entity")
-		return
+		return nil, false
 	}
 
-	componentType := reflect.TypeFor[T]()
-	componentID, found := typeMap[componentType]
-	if !found {
-		log.Error(componentType.Name(), " is not a registered component type!!!")
-		return
+	if cache, ok := getComponentCache[T](); !ok {
+		panic("Could not get component! (see log)")
+	} else {
+		if component, ok := cache.getComponent(entity_id); ok {
+			return component, true
+		} else {
+			return nil, false
+		}
 	}
-
-	if comp, found := componentCaches[componentID].getComponent(entity_id); found {
-		component, ok = comp.(*T)
-	}
-
-	return
 }
 
 // RemoveComponents removes the component of type T from the entity. If the entity does not have the requested component,
 // does nothing.
 func RemoveComponent[T Component](entity_id Entity) {
-	componentType := reflect.TypeFor[T]()
-	componentID, ok := typeMap[componentType]
-	if !ok {
-		log.Error(componentType.Name(), " is not a registered component type!!!")
-		return
+	if cache, ok := getComponentCache[T](); ok {
+		cache.removeComponent(entity_id)
+	} else {
+		panic("Could not remove component! (see log)")
 	}
-
-	componentCaches[componentID].removeComponent(entity_id)
 }

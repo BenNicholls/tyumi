@@ -102,6 +102,15 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 	}
 }
 
+func (tm *TileMap) GetEntityAt(pos vec.Coord) TileMapEntity {
+	tile := tm.getTile(pos)
+	if tile == nil {
+		return nil
+	}
+
+	return tile.entity
+}
+
 func (tm *TileMap) MoveEntity(entity TileMapEntity, to vec.Coord) {
 	from := entity.Position()
 	if !from.IsInside(tm) || !to.IsInside(tm) {

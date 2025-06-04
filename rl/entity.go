@@ -9,6 +9,7 @@ import (
 type TileMapEntity interface {
 	MoveTo(pos vec.Coord)
 	Position() vec.Coord
+	GetName() string
 	GetVisuals() gfx.Visuals
 }
 
@@ -46,6 +47,10 @@ func (e *Entity) Init(entity_type EntityType) {
 
 func (e Entity) GetVisuals() gfx.Visuals {
 	return entityDataCache.GetData(e.entityType).GetVisuals()
+}
+
+func (e Entity) GetName() string {
+	return entityDataCache.GetData(e.entityType).Name
 }
 
 func (e Entity) Position() vec.Coord {

@@ -2,6 +2,7 @@ package rl
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -16,9 +17,9 @@ type TileMap struct {
 func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	tm.size = size
 
-	tm.tiles = make([]Tile, size.Area())
-	for cursor := range vec.EachCoordInArea(tm) {
-		tm.SetTileType(cursor, defaultTile)
+	tm.tiles = make([]Tile, 0, size.Area())
+	for range tm.Bounds().Area() {
+		tm.tiles = append(tm.tiles, CreateTile(defaultTile))
 	}
 }
 
@@ -42,15 +43,19 @@ func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
 	return tm.tiles[pos.ToIndex(tm.size.W)]
 }
 
-func (tm *TileMap) getTile(pos vec.Coord) (tile_ptr *Tile) {
-	return &tm.tiles[pos.ToIndex(tm.size.W)]
-}
-
-func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
-	if !pos.IsInside(tm) {
+// Sets the tile at the provided position pos. If the set fails for whatever reason (pos out of bounds, etc.), the
+// provided tile entity is destroyed.
+func (tm TileMap) SetTile(pos vec.Coord, tile Tile) {
+	if !tile.Alive() {
 		return
 	}
 
+	if !pos.IsInside(tm) {
+		ecs.RemoveEntity(tile.Entity)
+		return
+	}
+
+	ecs.RemoveEntity(tm.tiles[pos.ToIndex(tm.size.W)].Entity)
 	tm.tiles[pos.ToIndex(tm.size.W)] = tile
 	tm.dirty = true
 }
@@ -69,25 +74,20 @@ func (tm *TileMap) AddEntity(entity TileMapEntity, pos vec.Coord) {
 		return
 	}
 
-	tile := tm.getTile(pos)
-	if !tile.IsPassable() {
+	tile := tm.GetTile(pos)
+	if !tile.Alive() || !tile.IsPassable() {
 		return
 	}
 
-	entity.MoveTo(pos)
-	tile.entity = entity
-	tm.dirty = true
+	if container := ecs.GetComponent[EntityContainerComponent](tile.Entity); container != nil && container.Empty() {
+		entity.MoveTo(pos)
+		container.TileMapEntity = entity
+		tm.dirty = true
+	}
 }
 
 func (tm *TileMap) RemoveEntity(entity TileMapEntity) {
-	pos := entity.Position()
-	if !pos.IsInside(tm) {
-		return
-	}
-
-	if tile := tm.getTile(pos); tile.entity == entity {
-		tm.RemoveEntityAt(pos)
-	}
+	tm.RemoveEntityAt(entity.Position())
 }
 
 func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
@@ -95,20 +95,21 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 		return
 	}
 
-	if tile := tm.getTile(pos); tile.entity != nil {
-		tile.entity.MoveTo(vec.Coord{-1, -1})
-		tile.entity = nil
+	tile := tm.GetTile(pos)
+	if container := ecs.GetComponent[EntityContainerComponent](tile.Entity); container != nil && !container.Empty() {
+		container.TileMapEntity.MoveTo(vec.Coord{-1, -1})
+		container.TileMapEntity = nil
 		tm.dirty = true
 	}
 }
 
 func (tm *TileMap) GetEntityAt(pos vec.Coord) TileMapEntity {
-	tile := tm.getTile(pos)
-	if tile == nil {
+	tile := tm.GetTile(pos)
+	if !tile.Valid() {
 		return nil
 	}
 
-	return tile.entity
+	return tile.GetEntity()
 }
 
 func (tm *TileMap) MoveEntity(entity TileMapEntity, to vec.Coord) {
@@ -117,14 +118,14 @@ func (tm *TileMap) MoveEntity(entity TileMapEntity, to vec.Coord) {
 		return
 	}
 
-	fromTile, toTile := tm.getTile(from), tm.getTile(to)
-	if fromTile.entity != entity || !toTile.IsPassable() {
+	fromTile, toTile := tm.GetTile(from), tm.GetTile(to)
+	if fromTile.GetEntity() != entity || !toTile.IsPassable() {
 		return
 	}
 
-	toTile.entity = fromTile.entity
-	fromTile.entity = nil
-	toTile.entity.MoveTo(to)
+	ecs.GetComponent[EntityContainerComponent](toTile.Entity).TileMapEntity = entity
+	fromTile.RemoveEntity()
+	entity.MoveTo(to)
 	tm.dirty = true
 }
 
@@ -142,7 +143,7 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 
 func (tm TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
 	tile := tm.GetTile(pos)
-	if tile.tileType == TILE_NONE {
+	if tile.GetTileType() == TILE_NONE {
 		return gfx.Visuals{Mode: gfx.DRAW_NONE}
 	} else {
 		return tile.GetVisuals()
@@ -151,6 +152,6 @@ func (tm TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
 
 func (tm TileMap) CopyToTileMap(dst_map *TileMap, offset vec.Coord) {
 	for cursor := range vec.EachCoordInArea(tm) {
-		dst_map.SetTile(cursor.Add(offset), tm.GetTile(cursor))
+		dst_map.SetTile(cursor.Add(offset), Tile{ecs.CopyEntity(tm.GetTile(cursor).Entity)})
 	}
 }

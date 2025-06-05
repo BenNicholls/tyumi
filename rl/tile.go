@@ -3,6 +3,7 @@ package rl
 import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/rl/ecs"
 )
 
 type TileType uint32
@@ -32,26 +33,47 @@ func init() {
 }
 
 type Tile struct {
-	tileType TileType
-	entity   TileMapEntity
+	ecs.Entity
 }
 
-func (t Tile) GetTileType() TileType {
-	return t.tileType
-}
+func CreateTile(tile_type TileType) (te Tile) {
+	te.Entity = ecs.CreateEntity()
+	ecs.AddComponent(te.Entity, TerrainComponent{TileType: tile_type})
 
-func (t *Tile) SetTileType(tileType TileType) {
-	if t.tileType == tileType {
-		return
+	if tileDataCache.GetData(tile_type).Passable {
+		ecs.AddComponent[EntityContainerComponent](te.Entity)
 	}
 
-	t.tileType = tileType
+	return
 }
 
-func (t Tile) GetVisuals() gfx.Visuals {
-	vis := tileDataCache.GetData(t.tileType).GetVisuals()
-	if t.entity != nil {
-		entityVisuals := t.entity.GetVisuals()
+func (te Tile) GetTileType() TileType {
+	return ecs.GetComponent[TerrainComponent](te.Entity).TileType
+}
+
+func (te Tile) SetTileType(tile_type TileType) {
+	ecs.GetComponent[TerrainComponent](te.Entity).TileType = tile_type
+	if passable := tileDataCache.GetData(tile_type).Passable; passable != ecs.HasComponent[EntityContainerComponent](te.Entity) {
+		if passable {
+			ecs.AddComponent[EntityContainerComponent](te.Entity)
+		} else {
+			ecs.RemoveComponent[EntityContainerComponent](te.Entity)
+		}
+	}
+}
+
+func (te Tile) IsPassable() bool {
+	return tileDataCache.GetData(te.GetTileType()).Passable && te.GetEntity() == nil
+}
+
+func (te Tile) IsTransparent() bool {
+	return !tileDataCache.GetData(te.GetTileType()).Opaque
+}
+
+func (te Tile) GetVisuals() gfx.Visuals {
+	vis := tileDataCache.GetData(te.GetTileType()).Visuals
+	if entity := te.GetEntity(); entity != nil {
+		entityVisuals := entity.GetVisuals()
 		vis.Glyph = entityVisuals.Glyph
 		vis.Colours.Fore = entityVisuals.Colours.Fore
 		if entityVisuals.Colours.Back != col.NONE {
@@ -62,10 +84,16 @@ func (t Tile) GetVisuals() gfx.Visuals {
 	return vis
 }
 
-func (t Tile) IsPassable() bool {
-	return t.entity == nil && tileDataCache.GetData(t.tileType).Passable
+func (te Tile) GetEntity() TileMapEntity {
+	if container := ecs.GetComponent[EntityContainerComponent](te.Entity); container != nil {
+		return container.TileMapEntity
+	} else {
+		return nil
+	}
 }
 
-func (t Tile) IsTransparent() bool {
-	return !tileDataCache.GetData(t.tileType).Opaque
+func (te Tile) RemoveEntity() {
+	if container := ecs.GetComponent[EntityContainerComponent](te.Entity); container != nil {
+		container.TileMapEntity = nil
+	}
 }

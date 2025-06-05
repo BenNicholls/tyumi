@@ -75,8 +75,11 @@ func (cc *componentCache[T]) removeComponent(id Entity) {
 
 	delete(cc.indices, id) // delete saved index for removed component
 	endIndex := len(cc.components) - 1
-	cc.components[idx] = cc.components[endIndex]          // overwrite old component with component on the end
-	cc.indices[cc.components[endIndex].GetEntity()] = idx // update index for component that was moved
+	if idx != uint32(endIndex) { // if removed entity is NOT the final entity in the component:
+		cc.components[idx] = cc.components[endIndex]     // overwrite removed component with component on the end
+		cc.indices[cc.components[idx].GetEntity()] = idx // update index for component that was moved
+	}
+
 	var zero T
 	cc.components[endIndex] = zero           // replace moved component data with zero value (just in case it was holding a pointer or something)
 	cc.components = cc.components[:endIndex] // reslice component list to new len

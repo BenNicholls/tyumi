@@ -24,17 +24,18 @@ func countAliveEntities() (count int) {
 }
 
 func TestEntityAddRemove(t *testing.T) {
+	batchAdds := 1000
 	totalRemoves := 0
 
-	for range 1000 {
+	for range batchAdds {
 		CreateEntity()
 	}
 
-	if count := countAliveEntities(); count != 1000 {
+	if count := countAliveEntities(); count != batchAdds {
 		t.Errorf("Alive entities = %d, wanted 1000", count)
 	}
 
-	for range 400 {
+	for range batchAdds / 2 {
 		if entity := util.PickOne(entities); entity != INVALID_ID {
 			RemoveEntity(entity)
 			if entity.Alive() {
@@ -45,19 +46,19 @@ func TestEntityAddRemove(t *testing.T) {
 		}
 	}
 
-	if count := countAliveEntities(); count != 1000-totalRemoves {
-		t.Errorf("Alive entities = %d, wanted %d", count, 1000-totalRemoves)
+	if count := countAliveEntities(); count != batchAdds-totalRemoves {
+		t.Errorf("Alive entities = %d, wanted %d", count, batchAdds-totalRemoves)
 	}
 
-	for range 1000 {
+	for range batchAdds {
 		CreateEntity()
 	}
 
-	if count := countAliveEntities(); count != 2000-totalRemoves {
-		t.Errorf("Alive entities = %d, wanted %d", count, 2000-totalRemoves)
+	if count := countAliveEntities(); count != 2*batchAdds-totalRemoves {
+		t.Errorf("Alive entities = %d, wanted %d", count, 2*batchAdds-totalRemoves)
 	}
 
-	for range 400 {
+	for range batchAdds / 2 {
 		if entity := util.PickOne(entities); entity != INVALID_ID {
 			RemoveEntity(entity)
 			if entity.Alive() {
@@ -68,8 +69,8 @@ func TestEntityAddRemove(t *testing.T) {
 		}
 	}
 
-	if count := countAliveEntities(); count != 2000-totalRemoves {
-		t.Errorf("Alive entities = %d, wanted %d", count, 2000-totalRemoves)
+	if count := countAliveEntities(); count != 2*batchAdds-totalRemoves {
+		t.Errorf("Alive entities = %d, wanted %d", count, 2*batchAdds-totalRemoves)
 	}
 }
 
@@ -88,6 +89,7 @@ func TestAddRemoveAlterComponents(t *testing.T) {
 		if _, ok := GetComponent[testComponent](entity); ok {
 			continue
 		}
+
 		testcomponent := AddComponent[testComponent](entity)
 		testcomponent.Coord = vec.Coord{int(entity), int(entity)}
 		componentsAdded++

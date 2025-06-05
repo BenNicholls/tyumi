@@ -55,6 +55,25 @@ func CreateEntity() (e Entity) {
 	return
 }
 
+// CopyEntity creates a new entity that is a copy of the provided entity. All of entity e's components are copied and
+// assigned to the new entity.
+func CopyEntity(e Entity) (copy Entity) {
+	if !e.Alive() {
+		log.Debug("Cannot copy dead entity!")
+		return
+	}
+
+	copy = CreateEntity()
+
+	for _, cache := range componentCaches {
+		if cache.hasComponent(e) {
+			cache.copyComponent(e, copy)
+		}
+	}
+
+	return
+}
+
 func RemoveEntity(e Entity) {
 	if !e.Alive() {
 		log.Debug("Double removing entity??")

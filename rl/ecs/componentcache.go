@@ -19,6 +19,8 @@ var typeMap map[reflect.Type]componentID
 // this defines a component cache. component caches like to return the actual component type for add and get operations,
 // so we can't put those functions in the interface here.
 type componentContainer interface {
+	copyComponent(id Entity, new_id Entity)
+	hasComponent(id Entity) bool
 	removeComponent(id Entity)
 }
 
@@ -76,6 +78,11 @@ func (cc *componentCache[T]) addComponent(id Entity, init ...T) {
 	}
 
 	cc.components = append(cc.components, newComponent)
+}
+
+// creates a copy of id's component, assigned to new_id
+func (cc *componentCache[T]) copyComponent(id, new_id Entity) {
+	cc.addComponent(new_id, cc.components[cc.indices[id]])
 }
 
 func (cc *componentCache[T]) hasComponent(id Entity) bool {

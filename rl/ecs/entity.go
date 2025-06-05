@@ -38,7 +38,7 @@ func (e Entity) Alive() bool {
 // Creates an Entity. Entities are just a number
 func CreateEntity() (e Entity) {
 	if len(freeIndices) < maxFreeIDs { //append to entities list, return ID with generation 0
-		e = Entity(len(entities) + 1)
+		e = Entity(len(entities) + 1) // REMEMBER: this is +1 because zero is the INVALID_ID
 		entities = append(entities, e)
 		generations = append(generations, 0)
 	} else { // take first free ID, retrieve generation for that slot, increment, compile ID, store new ID and gen, return

@@ -10,20 +10,24 @@ type componentType interface {
 	GetEntity() Entity
 }
 
+// The base for all components! Embed this into your custom components.
 type Component struct {
 	entity Entity
 }
 
+// Returns the entity this component is attached to.
 func (c Component) GetEntity() Entity {
 	return c.entity
 }
 
+// Used by the content caches when adding a component to set the component's entity id. Should never be used for anything
+// else!!
 func (c *Component) setEntity(e Entity) {
 	c.entity = e
 }
 
 // RegisterComponent registers a type to be used as a component for entities. Types MUST be registered before being
-// added to entities. Trying to add an unregistered component to an entity results in a panic.
+// added to entities. Trying to add, get, or remove an unregistered component to an entity results in a panic.
 func RegisterComponent[T componentType]() {
 	var newCache componentCache[T]
 	componentCaches = append(componentCaches, &newCache)
@@ -31,53 +35,40 @@ func RegisterComponent[T componentType]() {
 }
 
 // AddComponent adds a new component of type T to an entity. The component type must be registered; if not, a panic
-// occurs. The added component is returned, just in case you want to immediately set some values. If the entity already
-// has a component of this type, nothing is added and the already-there component is returned.
-func AddComponent[T componentType](entity_id Entity) (component *T) {
-	if !entity_id.Alive() {
+// occurs. Optionally, you can provide an already initialized component to be added. If the entity already has a
+// component of this type, nothing is added and the initValue, if present, is ignored.
+func AddComponent[T componentType](entity Entity, init_value ...T) {
+	if !entity.Alive() {
 		log.Error("Cannot add component to dead/invalid entity")
 		return
 	}
 
-	if cache, ok := getComponentCache[T](); ok {
-		component = cache.addComponent(entity_id)
-		var i any = component
-		if set, ok := i.(settableComponentType); ok {
-			set.setEntity(entity_id)
-		} else {
-			panic("BAD!!!")
-		}
-		return
-	} else {
-		panic("Could not add component! (see log)")
-	}
+	getComponentCache[T]().addComponent(entity, init_value...)
 }
 
-// GetComponent retrieves the component of type T from an entity. If component is unregistered of if the entity does
-// not have the requested component, nil is returned and ok will be false.
-func GetComponent[T componentType](entity_id Entity) (*T, bool) {
-	if !entity_id.Alive() {
+// GetComponent retrieves the component of type T from an entity. If the entity does not have the requested component,
+// returns nil.
+func GetComponent[T componentType](entity Entity) (component *T) {
+	if !entity.Alive() {
 		log.Error("Cannot get component from dead/invalid entity")
-		return nil, false
+		return nil
 	}
 
-	if cache, ok := getComponentCache[T](); !ok {
-		panic("Could not get component! (see log)")
-	} else {
-		if component, ok := cache.getComponent(entity_id); ok {
-			return component, true
-		} else {
-			return nil, false
-		}
-	}
+	return getComponentCache[T]().getComponent(entity)
 }
 
-// RemoveComponents removes the component of type T from the entity. If the entity does not have the requested component,
-// does nothing.
-func RemoveComponent[T componentType](entity_id Entity) {
-	if cache, ok := getComponentCache[T](); ok {
-		cache.removeComponent(entity_id)
-	} else {
-		panic("Could not remove component! (see log)")
+// HasComponent returns true if the entity contains the requested component.
+func HasComponent[T componentType](entity Entity) bool {
+	if !entity.Alive() {
+		log.Error("Cannot get component from dead/invalid entity")
+		return false
 	}
+
+	return getComponentCache[T]().hasComponent(entity)
+}
+
+// RemoveComponent removes the component of type T from the entity. If the entity does not have the requested component,
+// does nothing.
+func RemoveComponent[T componentType](entity Entity) {
+	getComponentCache[T]().removeComponent(entity)
 }

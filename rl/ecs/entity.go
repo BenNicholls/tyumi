@@ -22,24 +22,25 @@ func init() {
 
 type Entity uint32
 
-func (e Entity) index() uint32 {
-	return (uint32(e) & indexMask) - 1
+// Valid reports whether an entity ID is valid and properly formed.
+func Valid[EntityType ~uint32](entity EntityType) bool {
+	return entity != EntityType(INVALID_ID) && index(entity) < uint32(len(entities))
 }
 
-func (e Entity) Valid() bool {
-	return e != INVALID_ID
+// Alive reports whether an entity is valid and has not been removed from the ECS.
+func Alive[EntityType ~uint32](entity EntityType) bool {
+	return Valid(entity) && Entity(entity) == entities[index(entity)]
 }
 
-// Reports whether the entity is still active (has not been removed/deleted)
-func (e Entity) Alive() bool {
-	return e.Valid() && e == entities[e.index()]
+func index[EntityType ~uint32](entity EntityType) uint32 {
+	return (uint32(entity) & indexMask) - 1
 }
 
 // Creates an Entity. Entities are just a number
-func CreateEntity() (e Entity) {
+func CreateEntity() (entity Entity) {
 	if len(freeIndices) < maxFreeIDs { //append to entities list, return ID with generation 0
-		e = Entity(len(entities) + 1) // REMEMBER: this is +1 because zero is the INVALID_ID
-		entities = append(entities, e)
+		entity = Entity(len(entities) + 1) // REMEMBER: this is +1 because zero is the INVALID_ID
+		entities = append(entities, entity)
 		generations = append(generations, 0)
 	} else { // take first free ID, retrieve generation for that slot, increment, compile ID, store new ID and gen, return
 		idx := <-freeIndices
@@ -48,8 +49,8 @@ func CreateEntity() (e Entity) {
 			log.Warning("GENERATION LIMIT REACHED!!! (If you see this, it's not a *big* deal but there's a very small chance a bug could occur going forward.)")
 		}
 		generations[idx] = uint8(gen)
-		e = Entity((idx + 1) | (gen << 24))
-		entities[idx] = e
+		entity = Entity((idx + 1) | (gen << 24))
+		entities[idx] = entity
 	}
 
 	return
@@ -57,8 +58,8 @@ func CreateEntity() (e Entity) {
 
 // CopyEntity creates a new entity that is a copy of the provided entity. All of entity e's components are copied and
 // assigned to the new entity.
-func CopyEntity(e Entity) (copy Entity) {
-	if !e.Alive() {
+func CopyEntity[EntityType ~uint32](entity EntityType) (copy Entity) {
+	if !Alive(entity) {
 		log.Debug("Cannot copy dead entity!")
 		return
 	}
@@ -66,25 +67,26 @@ func CopyEntity(e Entity) (copy Entity) {
 	copy = CreateEntity()
 
 	for _, cache := range componentCaches {
-		if cache.hasComponent(e) {
-			cache.copyComponent(e, copy)
+		if cache.hasComponent(Entity(entity)) {
+			cache.copyComponent(Entity(entity), copy)
 		}
 	}
 
 	return
 }
 
-func RemoveEntity(e Entity) {
-	if !e.Alive() {
-		log.Debug("Double removing entity??")
+// RemoveEntity removes an entity from the ECS. All of its components will be removed and it will be set as dead.
+func RemoveEntity[EntityType ~uint32](entity EntityType) {
+	if !Alive(entity) {
+		log.Debug("Removing dead/invalid entity??")
 		return
 	}
 
-	entities[e.index()] = INVALID_ID
-	addFreeID(e.index())
+	entities[index(entity)] = INVALID_ID
+	addFreeID(index(entity))
 
 	for _, cache := range componentCaches {
-		cache.removeComponent(e)
+		cache.removeComponent(Entity(entity))
 	}
 }
 

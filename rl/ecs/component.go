@@ -37,38 +37,42 @@ func RegisterComponent[T componentType]() {
 // AddComponent adds a new component of type T to an entity. The component type must be registered; if not, a panic
 // occurs. Optionally, you can provide an already initialized component to be added. If the entity already has a
 // component of this type, nothing is added and the initValue, if present, is ignored.
-func AddComponent[T componentType](entity Entity, init_value ...T) {
-	if !entity.Alive() {
+func AddComponent[T componentType, EntityType ~uint32](entity EntityType, init_value ...T) {
+	if !Alive(entity) {
 		log.Error("Cannot add component to dead/invalid entity")
 		return
 	}
 
-	getComponentCache[T]().addComponent(entity, init_value...)
+	getComponentCache[T]().addComponent(Entity(entity), init_value...)
 }
 
 // GetComponent retrieves the component of type T from an entity. If the entity does not have the requested component,
 // returns nil.
-func GetComponent[T componentType](entity Entity) (component *T) {
-	if !entity.Alive() {
+func GetComponent[T componentType, EntityType ~uint32](entity EntityType) (component *T) {
+	if !Alive(entity) {
 		log.Error("Cannot get component from dead/invalid entity")
 		return nil
 	}
 
-	return getComponentCache[T]().getComponent(entity)
+	return getComponentCache[T]().getComponent(Entity(entity))
 }
 
 // HasComponent returns true if the entity contains the requested component.
-func HasComponent[T componentType](entity Entity) bool {
-	if !entity.Alive() {
-		log.Error("Cannot get component from dead/invalid entity")
+func HasComponent[T componentType, EntityType ~uint32](entity EntityType) bool {
+	if !Alive(entity) {
+		log.Error("Cannot query component of dead/invalid entity")
 		return false
 	}
 
-	return getComponentCache[T]().hasComponent(entity)
+	return getComponentCache[T]().hasComponent(Entity(entity))
 }
 
 // RemoveComponent removes the component of type T from the entity. If the entity does not have the requested component,
 // does nothing.
-func RemoveComponent[T componentType](entity Entity) {
-	getComponentCache[T]().removeComponent(entity)
+func RemoveComponent[T componentType, EntityType ~uint32](entity EntityType) {
+	if !Alive(entity) {
+		log.Error("Cannot remove component from dead/invalid entity.")
+	}
+
+	getComponentCache[T]().removeComponent(Entity(entity))
 }

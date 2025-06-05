@@ -32,32 +32,30 @@ func init() {
 	TILE_NONE = RegisterTileType(TileData{Name: "No Tile", Desc: "A void in the universe."})
 }
 
-type Tile struct {
-	ecs.Entity
-}
+type Tile ecs.Entity
 
 func CreateTile(tile_type TileType) (te Tile) {
-	te.Entity = ecs.CreateEntity()
-	ecs.AddComponent(te.Entity, TerrainComponent{TileType: tile_type})
+	te = Tile(ecs.CreateEntity())
+	ecs.AddComponent(te, TerrainComponent{TileType: tile_type})
 
 	if tileDataCache.GetData(tile_type).Passable {
-		ecs.AddComponent[EntityContainerComponent](te.Entity)
+		ecs.AddComponent[EntityContainerComponent](te)
 	}
 
 	return
 }
 
 func (te Tile) GetTileType() TileType {
-	return ecs.GetComponent[TerrainComponent](te.Entity).TileType
+	return ecs.GetComponent[TerrainComponent](te).TileType
 }
 
 func (te Tile) SetTileType(tile_type TileType) {
-	ecs.GetComponent[TerrainComponent](te.Entity).TileType = tile_type
-	if passable := tileDataCache.GetData(tile_type).Passable; passable != ecs.HasComponent[EntityContainerComponent](te.Entity) {
+	ecs.GetComponent[TerrainComponent](te).TileType = tile_type
+	if passable := tileDataCache.GetData(tile_type).Passable; passable != ecs.HasComponent[EntityContainerComponent](te) {
 		if passable {
-			ecs.AddComponent[EntityContainerComponent](te.Entity)
+			ecs.AddComponent[EntityContainerComponent](te)
 		} else {
-			ecs.RemoveComponent[EntityContainerComponent](te.Entity)
+			ecs.RemoveComponent[EntityContainerComponent](te)
 		}
 	}
 }
@@ -85,7 +83,7 @@ func (te Tile) GetVisuals() gfx.Visuals {
 }
 
 func (te Tile) GetEntity() TileMapEntity {
-	if container := ecs.GetComponent[EntityContainerComponent](te.Entity); container != nil {
+	if container := ecs.GetComponent[EntityContainerComponent](te); container != nil {
 		return container.TileMapEntity
 	} else {
 		return nil
@@ -93,7 +91,7 @@ func (te Tile) GetEntity() TileMapEntity {
 }
 
 func (te Tile) RemoveEntity() {
-	if container := ecs.GetComponent[EntityContainerComponent](te.Entity); container != nil {
+	if container := ecs.GetComponent[EntityContainerComponent](te); container != nil {
 		container.TileMapEntity = nil
 	}
 }

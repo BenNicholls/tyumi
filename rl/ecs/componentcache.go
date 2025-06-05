@@ -34,17 +34,12 @@ type componentCache[T componentType] struct {
 	indices    map[Entity]uint32 //index of entity index to component index in the cache. TODO: make this not a map someday.
 }
 
-func (cc componentCache[T]) getComponent(id Entity) *T {
-	if !id.Alive() {
-		log.Error("Removed entity cannot get component!")
+func (cc componentCache[T]) getComponent(entity Entity) *T {
+	if cc.indices == nil {
 		return nil
 	}
 
-	if cc.indices == nil || cc.components == nil {
-		return nil
-	}
-
-	if componentIdx, ok := cc.indices[id]; ok {
+	if componentIdx, ok := cc.indices[entity]; ok {
 		return &cc.components[componentIdx]
 	} else {
 		return nil
@@ -53,8 +48,8 @@ func (cc componentCache[T]) getComponent(id Entity) *T {
 
 // adds a component for the specified entity. optionally allows you to provide an initial value for the newly created
 // component
-func (cc *componentCache[T]) addComponent(id Entity, init ...T) {
-	if cc.hasComponent(id) {
+func (cc *componentCache[T]) addComponent(entity Entity, init ...T) {
+	if cc.hasComponent(entity) {
 		return
 	}
 
@@ -63,7 +58,7 @@ func (cc *componentCache[T]) addComponent(id Entity, init ...T) {
 		cc.components = make([]T, 0)
 	}
 
-	cc.indices[id] = uint32(len(cc.components))
+	cc.indices[entity] = uint32(len(cc.components))
 
 	var newComponent T
 	if len(init) > 0 {
@@ -72,7 +67,7 @@ func (cc *componentCache[T]) addComponent(id Entity, init ...T) {
 
 	var i any = &newComponent
 	if set, ok := i.(settableComponentType); ok {
-		set.setEntity(id)
+		set.setEntity(entity)
 	} else {
 		panic("COULD NOT SET ENTITY ID ON ADDED COMPONENT??? BAD!!!")
 	}
@@ -80,23 +75,23 @@ func (cc *componentCache[T]) addComponent(id Entity, init ...T) {
 	cc.components = append(cc.components, newComponent)
 }
 
-// creates a copy of id's component, assigned to new_id
-func (cc *componentCache[T]) copyComponent(id, new_id Entity) {
-	cc.addComponent(new_id, cc.components[cc.indices[id]])
+// creates a copy of entity's component, assigned to copy
+func (cc *componentCache[T]) copyComponent(entity, copy Entity) {
+	cc.addComponent(copy, cc.components[cc.indices[entity]])
 }
 
-func (cc *componentCache[T]) hasComponent(id Entity) bool {
-	_, ok := cc.indices[id]
+func (cc *componentCache[T]) hasComponent(entity Entity) bool {
+	_, ok := cc.indices[entity]
 	return ok
 }
 
-func (cc *componentCache[T]) removeComponent(id Entity) {
-	idx, ok := cc.indices[id]
+func (cc *componentCache[T]) removeComponent(entity Entity) {
+	idx, ok := cc.indices[entity]
 	if !ok {
 		return
 	}
 
-	delete(cc.indices, id) // delete saved index for removed component
+	delete(cc.indices, entity) // delete saved index for removed component
 	endIndex := len(cc.components) - 1
 	if idx != uint32(endIndex) { // if removed entity is NOT the final entity in the component:
 		cc.components[idx] = cc.components[endIndex]     // overwrite removed component with component on the end

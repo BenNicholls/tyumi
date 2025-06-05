@@ -38,7 +38,7 @@ func TestEntityAddRemove(t *testing.T) {
 	for range batchAdds / 2 {
 		if entity := util.PickOne(entities); entity != INVALID_ID {
 			RemoveEntity(entity)
-			if entity.Alive() {
+			if Alive(entity) {
 				t.Error("Entity remove failed")
 			} else {
 				totalRemoves++
@@ -61,7 +61,7 @@ func TestEntityAddRemove(t *testing.T) {
 	for range batchAdds / 2 {
 		if entity := util.PickOne(entities); entity != INVALID_ID {
 			RemoveEntity(entity)
-			if entity.Alive() {
+			if Alive(entity) {
 				t.Error("Entity remove failed")
 			} else {
 				totalRemoves++

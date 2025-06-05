@@ -46,16 +46,16 @@ func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
 // Sets the tile at the provided position pos. If the set fails for whatever reason (pos out of bounds, etc.), the
 // provided tile entity is destroyed.
 func (tm TileMap) SetTile(pos vec.Coord, tile Tile) {
-	if !tile.Alive() {
+	if !ecs.Alive(tile) {
 		return
 	}
 
 	if !pos.IsInside(tm) {
-		ecs.RemoveEntity(tile.Entity)
+		ecs.RemoveEntity(tile)
 		return
 	}
 
-	ecs.RemoveEntity(tm.tiles[pos.ToIndex(tm.size.W)].Entity)
+	ecs.RemoveEntity(tm.tiles[pos.ToIndex(tm.size.W)])
 	tm.tiles[pos.ToIndex(tm.size.W)] = tile
 	tm.dirty = true
 }
@@ -75,11 +75,11 @@ func (tm *TileMap) AddEntity(entity TileMapEntity, pos vec.Coord) {
 	}
 
 	tile := tm.GetTile(pos)
-	if !tile.Alive() || !tile.IsPassable() {
+	if !ecs.Alive(tile) || !tile.IsPassable() {
 		return
 	}
 
-	if container := ecs.GetComponent[EntityContainerComponent](tile.Entity); container != nil && container.Empty() {
+	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && container.Empty() {
 		entity.MoveTo(pos)
 		container.TileMapEntity = entity
 		tm.dirty = true
@@ -96,7 +96,7 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 	}
 
 	tile := tm.GetTile(pos)
-	if container := ecs.GetComponent[EntityContainerComponent](tile.Entity); container != nil && !container.Empty() {
+	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && !container.Empty() {
 		container.TileMapEntity.MoveTo(vec.Coord{-1, -1})
 		container.TileMapEntity = nil
 		tm.dirty = true
@@ -105,7 +105,7 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 
 func (tm *TileMap) GetEntityAt(pos vec.Coord) TileMapEntity {
 	tile := tm.GetTile(pos)
-	if !tile.Valid() {
+	if !ecs.Valid(tile) {
 		return nil
 	}
 
@@ -123,7 +123,7 @@ func (tm *TileMap) MoveEntity(entity TileMapEntity, to vec.Coord) {
 		return
 	}
 
-	ecs.GetComponent[EntityContainerComponent](toTile.Entity).TileMapEntity = entity
+	ecs.GetComponent[EntityContainerComponent](toTile).TileMapEntity = entity
 	fromTile.RemoveEntity()
 	entity.MoveTo(to)
 	tm.dirty = true
@@ -152,6 +152,6 @@ func (tm TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
 
 func (tm TileMap) CopyToTileMap(dst_map *TileMap, offset vec.Coord) {
 	for cursor := range vec.EachCoordInArea(tm) {
-		dst_map.SetTile(cursor.Add(offset), Tile{ecs.CopyEntity(tm.GetTile(cursor).Entity)})
+		dst_map.SetTile(cursor.Add(offset), Tile(ecs.CopyEntity(tm.GetTile(cursor))))
 	}
 }

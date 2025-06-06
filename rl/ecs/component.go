@@ -82,3 +82,18 @@ func RemoveComponent[T componentType, EntityType ~uint32](entity EntityType) {
 
 	getComponentCache[T]().removeComponent(Entity(entity))
 }
+
+// ToggleComponent will add a component to an entity if it does not have one (optionally using the providing init value),
+// otherwise it removes the component.
+func ToggleComponent[T componentType, ET ~uint32](entity ET, init ...T) {
+	if !Alive(entity) {
+		log.Error("Cannot toggle " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity.")
+	}
+
+	cache := getComponentCache[T]()
+	if cache.hasComponent(Entity(entity)) {
+		cache.removeComponent(Entity(entity))
+	} else {
+		cache.addComponent(Entity(entity), init...)
+	}
+}

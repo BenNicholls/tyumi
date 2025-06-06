@@ -38,12 +38,12 @@ func init() {
 
 type Tile ecs.Entity
 
-func CreateTile(tile_type TileType) (t Tile) {
-	t = Tile(ecs.CreateEntity())
-	ecs.AddComponent(t, TerrainComponent{TileType: tile_type})
+func CreateTile(tile_type TileType) (tile Tile) {
+	tile = Tile(ecs.CreateEntity())
+	ecs.AddComponent(tile, TerrainComponent{TileType: tile_type})
 
 	if tile_type.Data().Passable {
-		ecs.AddComponent[EntityContainerComponent](t)
+		ecs.AddComponent[EntityContainerComponent](tile)
 	}
 
 	return
@@ -55,12 +55,8 @@ func (t Tile) GetTileType() TileType {
 
 func (t Tile) SetTileType(tile_type TileType) {
 	ecs.GetComponent[TerrainComponent](t).TileType = tile_type
-	if passable := tile_type.Data().Passable; passable != ecs.HasComponent[EntityContainerComponent](t) {
-		if passable {
-			ecs.AddComponent[EntityContainerComponent](t)
-		} else {
-			ecs.RemoveComponent[EntityContainerComponent](t)
-		}
+	if tile_type.Data().Passable != ecs.HasComponent[EntityContainerComponent](t) {
+		ecs.ToggleComponent[EntityContainerComponent](t)
 	}
 }
 

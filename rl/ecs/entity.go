@@ -23,8 +23,8 @@ func init() {
 type Entity uint32
 
 // Valid reports whether an entity ID is valid and properly formed.
-func Valid[EntityType ~uint32](entity EntityType) (valid bool) {
-	valid = entity != EntityType(INVALID_ID)
+func Valid[ET ~uint32](entity ET) (valid bool) {
+	valid = entity != ET(INVALID_ID)
 	if Debug {
 		// if in debug mode, we also check to see if the id's index doesn't overflow the entity list. this should never
 		// be possible with actual ids from the ecs, but we do the check just in case some user acidentally passes
@@ -36,11 +36,11 @@ func Valid[EntityType ~uint32](entity EntityType) (valid bool) {
 }
 
 // Alive reports whether an entity is valid and has not been removed from the ECS.
-func Alive[EntityType ~uint32](entity EntityType) bool {
+func Alive[ET ~uint32](entity ET) bool {
 	return Valid(entity) && Entity(entity) == entities[index(entity)]
 }
 
-func index[EntityType ~uint32](entity EntityType) uint32 {
+func index[ET ~uint32](entity ET) uint32 {
 	return (uint32(entity) & indexMask) - 1
 }
 
@@ -72,7 +72,7 @@ func CreateEntity() (entity Entity) {
 
 // CopyEntity creates a new entity that is a copy of the provided entity. All of entity e's components are copied and
 // assigned to the new entity.
-func CopyEntity[EntityType ~uint32](entity EntityType) (copy Entity) {
+func CopyEntity[ET ~uint32](entity ET) (copy Entity) {
 	if !Alive(entity) {
 		log.Debug("ECS: Cannot copy dead entity!")
 		return
@@ -90,7 +90,7 @@ func CopyEntity[EntityType ~uint32](entity EntityType) (copy Entity) {
 }
 
 // RemoveEntity removes an entity from the ECS. All of its components will be removed and it will be set as dead.
-func RemoveEntity[EntityType ~uint32](entity EntityType) {
+func RemoveEntity[ET ~uint32](entity ET) {
 	if !Alive(entity) {
 		log.Debug("ECS: Removing dead/invalid entity??")
 		return

@@ -8,6 +8,10 @@ import (
 
 type TileType uint32
 
+func (tt TileType) Data() TileData {
+	return tileDataCache.GetData(tt)
+}
+
 type TileData struct {
 	Name     string
 	Desc     string
@@ -34,43 +38,43 @@ func init() {
 
 type Tile ecs.Entity
 
-func CreateTile(tile_type TileType) (te Tile) {
-	te = Tile(ecs.CreateEntity())
-	ecs.AddComponent(te, TerrainComponent{TileType: tile_type})
+func CreateTile(tile_type TileType) (t Tile) {
+	t = Tile(ecs.CreateEntity())
+	ecs.AddComponent(t, TerrainComponent{TileType: tile_type})
 
-	if tileDataCache.GetData(tile_type).Passable {
-		ecs.AddComponent[EntityContainerComponent](te)
+	if tile_type.Data().Passable {
+		ecs.AddComponent[EntityContainerComponent](t)
 	}
 
 	return
 }
 
-func (te Tile) GetTileType() TileType {
-	return ecs.GetComponent[TerrainComponent](te).TileType
+func (t Tile) GetTileType() TileType {
+	return ecs.GetComponent[TerrainComponent](t).TileType
 }
 
-func (te Tile) SetTileType(tile_type TileType) {
-	ecs.GetComponent[TerrainComponent](te).TileType = tile_type
-	if passable := tileDataCache.GetData(tile_type).Passable; passable != ecs.HasComponent[EntityContainerComponent](te) {
+func (t Tile) SetTileType(tile_type TileType) {
+	ecs.GetComponent[TerrainComponent](t).TileType = tile_type
+	if passable := tile_type.Data().Passable; passable != ecs.HasComponent[EntityContainerComponent](t) {
 		if passable {
-			ecs.AddComponent[EntityContainerComponent](te)
+			ecs.AddComponent[EntityContainerComponent](t)
 		} else {
-			ecs.RemoveComponent[EntityContainerComponent](te)
+			ecs.RemoveComponent[EntityContainerComponent](t)
 		}
 	}
 }
 
-func (te Tile) IsPassable() bool {
-	return tileDataCache.GetData(te.GetTileType()).Passable && te.GetEntity() == nil
+func (t Tile) IsPassable() bool {
+	return t.GetTileType().Data().Passable && t.GetEntity() == nil
 }
 
-func (te Tile) IsTransparent() bool {
-	return !tileDataCache.GetData(te.GetTileType()).Opaque
+func (t Tile) IsTransparent() bool {
+	return !t.GetTileType().Data().Opaque
 }
 
-func (te Tile) GetVisuals() gfx.Visuals {
-	vis := tileDataCache.GetData(te.GetTileType()).Visuals
-	if entity := te.GetEntity(); entity != nil {
+func (t Tile) GetVisuals() gfx.Visuals {
+	vis := t.GetTileType().Data().Visuals
+	if entity := t.GetEntity(); entity != nil {
 		entityVisuals := entity.GetVisuals()
 		vis.Glyph = entityVisuals.Glyph
 		vis.Colours.Fore = entityVisuals.Colours.Fore
@@ -82,16 +86,16 @@ func (te Tile) GetVisuals() gfx.Visuals {
 	return vis
 }
 
-func (te Tile) GetEntity() TileMapEntity {
-	if container := ecs.GetComponent[EntityContainerComponent](te); container != nil {
+func (t Tile) GetEntity() TileMapEntity {
+	if container := ecs.GetComponent[EntityContainerComponent](t); container != nil {
 		return container.TileMapEntity
 	} else {
 		return nil
 	}
 }
 
-func (te Tile) RemoveEntity() {
-	if container := ecs.GetComponent[EntityContainerComponent](te); container != nil {
+func (t Tile) RemoveEntity() {
+	if container := ecs.GetComponent[EntityContainerComponent](t); container != nil {
 		container.TileMapEntity = nil
 	}
 }

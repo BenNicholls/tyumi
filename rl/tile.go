@@ -32,7 +32,6 @@ var tileDataCache dataCache[TileData, TileType]
 var TILE_NONE TileType
 
 func init() {
-	tileDataCache.Init()
 	TILE_NONE = RegisterTileType(TileData{Name: "No Tile", Desc: "A void in the universe."})
 }
 

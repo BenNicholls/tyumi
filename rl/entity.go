@@ -32,9 +32,6 @@ func RegisterEntityType(entity_data EntityData) EntityType {
 	return entityDataCache.RegisterDataType(entity_data)
 }
 
-func init() {
-	entityDataCache.Init()
-}
 
 type Entity struct {
 	entityType EntityType

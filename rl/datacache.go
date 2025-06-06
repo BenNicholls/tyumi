@@ -6,10 +6,6 @@ type dataCache[D any, DT ~uint32] struct {
 	cache []D
 }
 
-func (dc *dataCache[D, DT]) Init() {
-	dc.cache = make([]D, 0)
-}
-
 func (dc dataCache[D, DT]) validType(data_type DT) bool {
 	return int(data_type) < len(dc.cache)
 }
@@ -24,6 +20,10 @@ func (dc dataCache[D, DT]) GetData(data_type DT) (data D) {
 }
 
 func (dc *dataCache[D, DT]) RegisterDataType(data D) DT {
+	if dc.cache == nil {
+		dc.cache = make([]D, 0)
+	}
+
 	dc.cache = append(dc.cache, data)
 	return DT(len(dc.cache) - 1)
 }

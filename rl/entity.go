@@ -3,17 +3,15 @@ package rl
 import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
 )
 
-type TileMapEntity interface {
-	MoveTo(pos vec.Coord)
-	Position() vec.Coord
-	GetName() string
-	GetVisuals() gfx.Visuals
-}
-
 type EntityType uint32
+
+func (et EntityType) Data() EntityData {
+	return entityDataCache.GetData(et)
+}
 
 type EntityData struct {
 	Name    string
@@ -32,32 +30,43 @@ func RegisterEntityType(entity_data EntityData) EntityType {
 	return entityDataCache.RegisterDataType(entity_data)
 }
 
+// Entity represents a tilemap object. Each tile can hold one entity (at most). Examples of entities would be things
+// like the player, enemies, furniture and other decorations, etc. DO NOT confuse these with ECS Entities, which can
+// literally be anything. I'm sorry for the name clash but I genuinely can't think of a better name for these right now.
+type Entity ecs.Entity
 
-type Entity struct {
-	entityType EntityType
-	position   vec.Coord
-}
+var INVALID_ENTITY = Entity(ecs.INVALID_ID)
 
-func (e *Entity) Init(entity_type EntityType) {
-	e.entityType = entity_type
+func CreateEntity(entity_type EntityType) (entity Entity) {
+	entity = Entity(ecs.CreateEntity())
+
+	ecs.AddComponent(entity, EntityComponent{EntityType: entity_type})
+	ecs.AddComponent(entity, PositionComponent{Coord: NOT_IN_TILEMAP})
+
+	return
 }
 
 func (e Entity) GetVisuals() gfx.Visuals {
-	return entityDataCache.GetData(e.entityType).GetVisuals()
+	return ecs.GetComponent[EntityComponent](e).EntityType.Data().GetVisuals()
 }
 
 func (e Entity) GetName() string {
-	return entityDataCache.GetData(e.entityType).Name
+	return ecs.GetComponent[EntityComponent](e).EntityType.Data().Name
 }
 
 func (e Entity) Position() vec.Coord {
-	return e.position
+	return ecs.GetComponent[PositionComponent](e).Coord
 }
 
-func (e *Entity) MoveTo(pos vec.Coord) {
-	e.position = pos
+func (e Entity) MoveTo(pos vec.Coord) {
+	position := ecs.GetComponent[PositionComponent](e)
+	if position.Static && (pos != NOT_IN_TILEMAP) {
+		return
+	}
+
+	position.Coord = pos
 }
 
 func (e Entity) IsInTilemap() bool {
-	return e.position != vec.Coord{-1, -1}
+	return ecs.GetComponent[PositionComponent](e).Coord != NOT_IN_TILEMAP
 }

@@ -60,7 +60,7 @@ func (t Tile) SetTileType(tile_type TileType) {
 }
 
 func (t Tile) IsPassable() bool {
-	return t.GetTileType().Data().Passable && t.GetEntity() == nil
+	return t.GetTileType().Data().Passable && t.GetEntity() == Entity(ecs.INVALID_ID)
 }
 
 func (t Tile) IsTransparent() bool {
@@ -69,7 +69,7 @@ func (t Tile) IsTransparent() bool {
 
 func (t Tile) GetVisuals() gfx.Visuals {
 	vis := t.GetTileType().Data().Visuals
-	if entity := t.GetEntity(); entity != nil {
+	if entity := t.GetEntity(); entity != Entity(ecs.INVALID_ID) {
 		entityVisuals := entity.GetVisuals()
 		vis.Glyph = entityVisuals.Glyph
 		vis.Colours.Fore = entityVisuals.Colours.Fore
@@ -81,16 +81,16 @@ func (t Tile) GetVisuals() gfx.Visuals {
 	return vis
 }
 
-func (t Tile) GetEntity() TileMapEntity {
+func (t Tile) GetEntity() Entity {
 	if container := ecs.GetComponent[EntityContainerComponent](t); container != nil {
-		return container.TileMapEntity
+		return container.Entity
 	} else {
-		return nil
+		return Entity(ecs.INVALID_ID)
 	}
 }
 
 func (t Tile) RemoveEntity() {
 	if container := ecs.GetComponent[EntityContainerComponent](t); container != nil {
-		container.TileMapEntity = nil
+		container.Remove()
 	}
 }

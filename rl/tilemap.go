@@ -8,6 +8,8 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+var NOT_IN_TILEMAP = vec.Coord{-1, -1}
+
 type TileMap struct {
 	size vec.Dims
 
@@ -77,7 +79,7 @@ func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
 	tm.dirty = true
 }
 
-func (tm *TileMap) AddEntity(entity TileMapEntity, pos vec.Coord) {
+func (tm *TileMap) AddEntity(entity Entity, pos vec.Coord) {
 	if !pos.IsInside(tm) {
 		return
 	}
@@ -89,12 +91,12 @@ func (tm *TileMap) AddEntity(entity TileMapEntity, pos vec.Coord) {
 
 	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && container.Empty() {
 		entity.MoveTo(pos)
-		container.TileMapEntity = entity
+		container.Add(entity)
 		tm.dirty = true
 	}
 }
 
-func (tm *TileMap) RemoveEntity(entity TileMapEntity) {
+func (tm *TileMap) RemoveEntity(entity Entity) {
 	tm.RemoveEntityAt(entity.Position())
 }
 
@@ -105,22 +107,22 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 
 	tile := tm.GetTile(pos)
 	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && !container.Empty() {
-		container.TileMapEntity.MoveTo(vec.Coord{-1, -1})
-		container.TileMapEntity = nil
+		container.Entity.MoveTo(NOT_IN_TILEMAP)
+		container.Remove()
 		tm.dirty = true
 	}
 }
 
-func (tm *TileMap) GetEntityAt(pos vec.Coord) TileMapEntity {
+func (tm *TileMap) GetEntityAt(pos vec.Coord) Entity {
 	tile := tm.GetTile(pos)
 	if !ecs.Valid(tile) {
-		return nil
+		return Entity(ecs.INVALID_ID)
 	}
 
 	return tile.GetEntity()
 }
 
-func (tm *TileMap) MoveEntity(entity TileMapEntity, to vec.Coord) {
+func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
 	from := entity.Position()
 	if !from.IsInside(tm) || !to.IsInside(tm) {
 		return
@@ -131,7 +133,7 @@ func (tm *TileMap) MoveEntity(entity TileMapEntity, to vec.Coord) {
 		return
 	}
 
-	ecs.GetComponent[EntityContainerComponent](toTile).TileMapEntity = entity
+	ecs.GetComponent[EntityContainerComponent](toTile).Entity = entity
 	fromTile.RemoveEntity()
 	entity.MoveTo(to)
 	tm.dirty = true

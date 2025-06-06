@@ -23,8 +23,16 @@ func init() {
 type Entity uint32
 
 // Valid reports whether an entity ID is valid and properly formed.
-func Valid[EntityType ~uint32](entity EntityType) bool {
-	return entity != EntityType(INVALID_ID) && index(entity) < uint32(len(entities))
+func Valid[EntityType ~uint32](entity EntityType) (valid bool) {
+	valid = entity != EntityType(INVALID_ID)
+	if Debug {
+		// if in debug mode, we also check to see if the id's index doesn't overflow the entity list. this should never
+		// be possible with actual ids from the ecs, but we do the check just in case some user acidentally passes
+		// in some other kind of uint32 from somewhere else
+		 valid = valid && (index(entity) < uint32(len(entities)))
+	}
+
+	return
 }
 
 // Alive reports whether an entity is valid and has not been removed from the ECS.
@@ -45,8 +53,14 @@ func CreateEntity() (entity Entity) {
 	} else { // take first free ID, retrieve generation for that slot, increment, compile ID, store new ID and gen, return
 		idx := <-freeIndices
 		gen := uint32(generations[idx]) + 1
-		if gen == 255 {
-			log.Warning("GENERATION LIMIT REACHED!!! (If you see this, it's not a *big* deal but there's a very small chance a bug could occur going forward.)")
+		if Debug && gen == 255 {
+			// if in debug mode, this check warns us when our generation number rolls over. this isn't necessarily an
+			// issue -- it can only cause a bug in a very case where the user is holding a removed id for a slot that
+			// has been reused exactly 255 times since being removed -- so it's not worth erroring out or anything, but
+			// while making the game this warning could be useful just as a smoke test if something starts going wrong.
+			// if this does end up causing bugs, we need to make a way to increase the number of generation bits in the
+			// id.
+			log.Warning("ECS: GENERATION LIMIT REACHED!!! (If you see this, it's not a *big* deal but there's a very small chance a bug could occur going forward.)")
 		}
 		generations[idx] = uint8(gen)
 		entity = Entity((idx + 1) | (gen << 24))
@@ -60,7 +74,7 @@ func CreateEntity() (entity Entity) {
 // assigned to the new entity.
 func CopyEntity[EntityType ~uint32](entity EntityType) (copy Entity) {
 	if !Alive(entity) {
-		log.Debug("Cannot copy dead entity!")
+		log.Debug("ECS: Cannot copy dead entity!")
 		return
 	}
 
@@ -78,7 +92,7 @@ func CopyEntity[EntityType ~uint32](entity EntityType) (copy Entity) {
 // RemoveEntity removes an entity from the ECS. All of its components will be removed and it will be set as dead.
 func RemoveEntity[EntityType ~uint32](entity EntityType) {
 	if !Alive(entity) {
-		log.Debug("Removing dead/invalid entity??")
+		log.Debug("ECS: Removing dead/invalid entity??")
 		return
 	}
 
@@ -97,7 +111,7 @@ func addFreeID(idx uint32) {
 			newChannel <- <-freeIndices
 		}
 		freeIndices = newChannel
-		log.Debug("FreeID channel resized!!")
+		log.Debug("ECS: FreeID channel resized!!")
 	}
 
 	freeIndices <- idx

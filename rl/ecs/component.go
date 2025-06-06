@@ -29,9 +29,15 @@ func (c *Component) setEntity(e Entity) {
 // RegisterComponent registers a type to be used as a component for entities. Types MUST be registered before being
 // added to entities. Trying to add, get, or remove an unregistered component to an entity results in a panic.
 func RegisterComponent[T componentType]() {
+	t := reflect.TypeFor[T]()
+	if _, ok := typeMap[t]; ok { // duplicate register
+		log.Debug("ECS: Duplicate component register! " + t.Name() + " already registered.")
+		return
+	}
+
 	var newCache componentCache[T]
 	componentCaches = append(componentCaches, &newCache)
-	typeMap[reflect.TypeFor[T]()] = componentID(len(componentCaches) - 1)
+	typeMap[t] = componentID(len(componentCaches) - 1)
 }
 
 // AddComponent adds a new component of type T to an entity. The component type must be registered; if not, a panic
@@ -39,7 +45,7 @@ func RegisterComponent[T componentType]() {
 // component of this type, nothing is added and the initValue, if present, is ignored.
 func AddComponent[T componentType, EntityType ~uint32](entity EntityType, init_value ...T) {
 	if !Alive(entity) {
-		log.Error("Cannot add component to dead/invalid entity")
+		log.Error("ECS: Cannot add " + reflect.TypeFor[T]().Name() + " component to dead/invalid entity")
 		return
 	}
 
@@ -50,7 +56,7 @@ func AddComponent[T componentType, EntityType ~uint32](entity EntityType, init_v
 // returns nil.
 func GetComponent[T componentType, EntityType ~uint32](entity EntityType) (component *T) {
 	if !Alive(entity) {
-		log.Error("Cannot get component from dead/invalid entity")
+		log.Error("Cannot get " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity")
 		return nil
 	}
 
@@ -60,7 +66,7 @@ func GetComponent[T componentType, EntityType ~uint32](entity EntityType) (compo
 // HasComponent returns true if the entity contains the requested component.
 func HasComponent[T componentType, EntityType ~uint32](entity EntityType) bool {
 	if !Alive(entity) {
-		log.Error("Cannot query component of dead/invalid entity")
+		log.Error("Cannot query " + reflect.TypeFor[T]().Name() + " component of dead/invalid entity")
 		return false
 	}
 
@@ -71,7 +77,7 @@ func HasComponent[T componentType, EntityType ~uint32](entity EntityType) bool {
 // does nothing.
 func RemoveComponent[T componentType, EntityType ~uint32](entity EntityType) {
 	if !Alive(entity) {
-		log.Error("Cannot remove component from dead/invalid entity.")
+		log.Error("Cannot remove " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity.")
 	}
 
 	getComponentCache[T]().removeComponent(Entity(entity))

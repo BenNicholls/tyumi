@@ -63,8 +63,8 @@ func (t Tile) IsPassable() bool {
 	return t.GetTileType().Data().Passable && t.GetEntity() == Entity(ecs.INVALID_ID)
 }
 
-func (t Tile) IsTransparent() bool {
-	return !t.GetTileType().Data().Opaque
+func (t Tile) IsOpaque() bool {
+	return t.GetTileType().Data().Opaque
 }
 
 func (t Tile) GetVisuals() gfx.Visuals {

@@ -2,9 +2,11 @@ package rl
 
 import (
 	"runtime"
+	"slices"
 
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/rl/ecs"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -13,8 +15,11 @@ var NOT_IN_TILEMAP = vec.Coord{-1, -1}
 type TileMap struct {
 	size vec.Dims
 
-	tiles []Tile
-	dirty bool // if the tilemap has been changed and needs to be redrawn
+	tiles                  []Tile
+	visibilityChangedTiles util.Set[vec.Coord]
+
+	entities []Entity
+	dirty    bool // if the tilemap has been changed and needs to be redrawn
 }
 
 // Initialize the TileMap. All tiles in the map will be set to defaultTile
@@ -31,6 +36,24 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 			ecs.RemoveEntity(tile)
 		}
 	}, tm.tiles)
+}
+
+// update tilemap-controlled systems
+func (tm *TileMap) Update() {
+	// FOV updates
+	for fov := range ecs.EachComponent[FOVComponent]() {
+		if !fov.Dirty {
+			for pos := range tm.visibilityChangedTiles.EachElement() {
+				fov.OnEnvironmentChange(pos)
+			}
+		}
+
+		if fov.Dirty {
+			fov.UpdateFOV(tm)
+		}
+	}
+
+	tm.visibilityChangedTiles.RemoveAll()
 }
 
 func (tm TileMap) Size() vec.Dims {
@@ -55,7 +78,7 @@ func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
 
 // Sets the tile at the provided position pos. If the set fails for whatever reason (pos out of bounds, etc.), the
 // provided tile entity is destroyed.
-func (tm TileMap) SetTile(pos vec.Coord, tile Tile) {
+func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
 	if !ecs.Alive(tile) {
 		return
 	}
@@ -65,7 +88,13 @@ func (tm TileMap) SetTile(pos vec.Coord, tile Tile) {
 		return
 	}
 
-	ecs.RemoveEntity(tm.tiles[pos.ToIndex(tm.size.W)])
+	oldTile := tm.tiles[pos.ToIndex(tm.size.W)]
+
+	if oldTile.IsOpaque() != tile.IsOpaque() {
+		tm.visibilityChangedTiles.Add(pos)
+	}
+
+	ecs.RemoveEntity(oldTile)
 	tm.tiles[pos.ToIndex(tm.size.W)] = tile
 	tm.dirty = true
 }
@@ -73,6 +102,17 @@ func (tm TileMap) SetTile(pos vec.Coord, tile Tile) {
 func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
 	if !pos.IsInside(tm) {
 		return
+	}
+
+	tile := tm.tiles[pos.ToIndex(tm.size.W)]
+
+	if tile.GetEntity() != INVALID_ENTITY && !tileType.Data().Passable {
+		// do not do the switch if there's an entity and new tiletype can't hold an entity
+		return
+	}
+
+	if tile.IsOpaque() != tileType.Data().Opaque {
+		tm.visibilityChangedTiles.Add(pos)
 	}
 
 	tm.tiles[pos.ToIndex(tm.size.W)].SetTileType(tileType)
@@ -92,7 +132,12 @@ func (tm *TileMap) AddEntity(entity Entity, pos vec.Coord) {
 	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && container.Empty() {
 		entity.MoveTo(pos)
 		container.Add(entity)
+		tm.entities = append(tm.entities, entity)
 		tm.dirty = true
+
+		if fov := ecs.GetComponent[FOVComponent](entity); fov != nil {
+			fov.Dirty = true
+		}
 	}
 }
 
@@ -108,6 +153,9 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 	tile := tm.GetTile(pos)
 	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && !container.Empty() {
 		container.Entity.MoveTo(NOT_IN_TILEMAP)
+		tm.entities = slices.DeleteFunc(tm.entities, func(e Entity) bool {
+			return e == container.Entity
+		})
 		container.Remove()
 		tm.dirty = true
 	}

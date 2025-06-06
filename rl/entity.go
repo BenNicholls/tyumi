@@ -65,6 +65,9 @@ func (e Entity) MoveTo(pos vec.Coord) {
 	}
 
 	position.Coord = pos
+	if fov := ecs.GetComponent[FOVComponent](e); fov != nil {
+		fov.Dirty = true
+	}
 }
 
 func (e Entity) IsInTilemap() bool {

@@ -265,6 +265,7 @@ func (r *Renderer) Render() {
 	r.renderer.Present()
 	r.renderer.SetDrawColor(r.clearColour.RGBA())
 	r.renderer.Clear()
+	r.renderer.SetDrawColor(r.backDrawColour.RGBA())
 
 	r.forceRedraw = false
 	r.frames++

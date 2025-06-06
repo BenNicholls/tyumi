@@ -1,6 +1,8 @@
 package rl
 
 import (
+	"runtime"
+
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
@@ -21,6 +23,12 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	for range tm.Bounds().Area() {
 		tm.tiles = append(tm.tiles, CreateTile(defaultTile))
 	}
+
+	runtime.AddCleanup(tm, func(tiles []Tile) {
+		for _, tile := range tiles {
+			ecs.RemoveEntity(tile)
+		}
+	}, tm.tiles)
 }
 
 func (tm TileMap) Size() vec.Dims {

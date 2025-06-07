@@ -9,6 +9,8 @@ import (
 type settableComponentType interface {
 	componentType
 	setEntity(e Entity)
+	Init()
+	Cleanup()
 }
 
 type componentID uint32
@@ -67,6 +69,7 @@ func (cc *componentCache[T]) addComponent(entity Entity, init ...T) {
 
 	var i any = &newComponent
 	if set, ok := i.(settableComponentType); ok {
+		set.Init()
 		set.setEntity(entity)
 	} else {
 		panic("COULD NOT SET ENTITY ID ON ADDED COMPONENT??? BAD!!!")
@@ -90,6 +93,10 @@ func (cc *componentCache[T]) removeComponent(entity Entity) {
 	if !ok {
 		return
 	}
+
+	// covertly convert component to the settable form and run a cleanup function if it is defined.
+	var i any = &cc.components[idx]
+	i.(settableComponentType).Cleanup()
 
 	delete(cc.indices, entity) // delete saved index for removed component
 	endIndex := len(cc.components) - 1

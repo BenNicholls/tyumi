@@ -1,6 +1,7 @@
 package rl
 
 import (
+	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/util"
@@ -8,11 +9,12 @@ import (
 )
 
 func init() {
-	ecs.RegisterComponent[PositionComponent]()
 	ecs.RegisterComponent[TerrainComponent]()
-	ecs.RegisterComponent[EntityComponent]()
 	ecs.RegisterComponent[EntityContainerComponent]()
+	ecs.RegisterComponent[EntityComponent]()
+	ecs.RegisterComponent[PositionComponent]()
 	ecs.RegisterComponent[FOVComponent]()
+	ecs.RegisterComponent[MemoryComponent]()
 }
 
 type PositionComponent struct {
@@ -53,7 +55,7 @@ func (ecc *EntityContainerComponent) Remove() {
 	ecc.Entity = Entity(ecs.INVALID_ID)
 }
 
-// FOVComponent is for anything that can see. 
+// FOVComponent is for anything that can see.
 type FOVComponent struct {
 	ecs.Component
 
@@ -111,4 +113,23 @@ func (fov *FOVComponent) UpdateFOV(tileMap *TileMap) {
 
 	tileMap.ShadowCast(pos, int(fov.SightRange), GetSpacesCast(&fov.FOV))
 	fov.Dirty = false
+}
+
+type MemoryComponent struct {
+	ecs.Component
+
+	Memory map[vec.Coord]gfx.Glyph
+}
+
+func (mc *MemoryComponent) Init() {
+	mc.Memory = make(map[vec.Coord]gfx.Glyph)
+}
+
+func (mc MemoryComponent) GetGlyph(pos vec.Coord) (glyph gfx.Glyph, ok bool) {
+	glyph, ok = mc.Memory[pos]
+	return
+}
+
+func (mc *MemoryComponent) AddGlyph(pos vec.Coord, glyph gfx.Glyph) {
+	mc.Memory[pos] = glyph
 }

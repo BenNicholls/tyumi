@@ -69,7 +69,7 @@ func (t Tile) IsOpaque() bool {
 
 func (t Tile) GetVisuals() gfx.Visuals {
 	vis := t.GetTileType().Data().Visuals
-	if entity := t.GetEntity(); entity != Entity(ecs.INVALID_ID) {
+	if entity := t.GetEntity(); entity != INVALID_ENTITY {
 		entityVisuals := entity.GetVisuals()
 		vis.Glyph = entityVisuals.Glyph
 		vis.Colours.Fore = entityVisuals.Colours.Fore

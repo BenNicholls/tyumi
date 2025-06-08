@@ -1,0 +1,18 @@
+{
+	"Event Handler": {
+		"scope": "go",
+		"prefix": ["handle", "eventhandler"],
+		"body": [
+			"func (${1:name} *${2:receiver}) handleEvents(e event.Event) (event_handled bool) {",
+			"\tswitch e.ID(){",
+			"\tcase ${3:event_id}:",
+			"\t\t",
+			"\tdefault:",
+			"\t\t//log.Debug(\"Event not handled\")",
+			"\t}",
+			"\n\treturn",
+			"}",
+		],
+		"description": "A default event handler for a type."
+	}
+}

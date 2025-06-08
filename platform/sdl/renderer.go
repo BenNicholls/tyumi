@@ -234,26 +234,21 @@ func (r *Renderer) Render() {
 		return
 	}
 
-	var src, dst sdl.Rect
 	t := r.renderer.GetRenderTarget()          //store window texture, we'll switch back to it once we're done with the buffer.
 	r.renderer.SetRenderTarget(r.canvasBuffer) //point renderer at buffer texture, we'll draw there
+
+	if r.showChanges {
+		r.backDrawColour = col.MakeOpaque(
+			uint8((r.frames*10)%255),
+			uint8(((r.frames+100)*10)%255),
+			uint8(((r.frames+200)*10)%255))
+	}
 
 	for cursor := range vec.EachCoordInArea(r.console) {
 		cell := r.console.GetCell(cursor)
 		if cell.Dirty || r.forceRedraw {
-			switch cell.Mode {
-			case gfx.DRAW_TEXT:
-				for c_i, char := range cell.Chars {
-					char := int(char)
-					dst = makeRect(cursor.X*r.tileSize+c_i*r.tileSize/2, cursor.Y*r.tileSize, r.tileSize/2, r.tileSize)
-					src = makeRect((char%32)*r.tileSize/2, (char/32)*r.tileSize, r.tileSize/2, r.tileSize)
-					r.copyToRenderer(gfx.DRAW_TEXT, src, dst, cell.Colours, char)
-				}
-			case gfx.DRAW_GLYPH:
-				glyph := int(cell.Glyph)
-				dst = makeRect(cursor.X*r.tileSize, cursor.Y*r.tileSize, r.tileSize, r.tileSize)
-				src = makeRect((glyph%16)*r.tileSize, (glyph/16)*r.tileSize, r.tileSize, r.tileSize)
-				r.copyToRenderer(gfx.DRAW_GLYPH, src, dst, cell.Colours, glyph)
+			if cell.Mode != gfx.DRAW_NONE {
+				r.copyToRenderer(cell.Visuals, cursor)
 			}
 		}
 	}
@@ -272,46 +267,44 @@ func (r *Renderer) Render() {
 }
 
 // Copies a rect of pixeldata from a source texture to a rect on the renderer's target.
-func (r *Renderer) copyToRenderer(mode gfx.DrawMode, src, dst sdl.Rect, colours col.Pair, g int) {
+func (r *Renderer) copyToRenderer(vis gfx.Visuals, pos vec.Coord) {
 	//change backcolour if it is different from previous draw
-	if colours.Back != r.backDrawColour {
-		r.backDrawColour = colours.Back
+	if !r.showChanges && vis.Colours.Back != r.backDrawColour {
+		r.backDrawColour = vis.Colours.Back
 		r.renderer.SetDrawColor(r.backDrawColour.RGBA())
 	}
 
-	if r.showChanges {
-		r.renderer.SetDrawColor(
-			uint8((r.frames*10)%255),
-			uint8(((r.frames+100)*10)%255),
-			uint8(((r.frames+200)*10)%255), 0xFF)
-	}
-
+	dst := makeRect(pos.X*r.tileSize, pos.Y*r.tileSize, r.tileSize, r.tileSize)
 	r.renderer.FillRect(&dst)
 
 	//if we're drawing a nothing character (space, whatever), skip next part.
-	if mode == gfx.DRAW_GLYPH {
-		if glyph := gfx.Glyph(g); glyph == gfx.GLYPH_NONE || glyph == gfx.GLYPH_SPACE {
-			return
-		}
-	} else if mode == gfx.DRAW_TEXT && g == 32 {
-		return
-	} else if colours.Fore == r.backDrawColour { //skip drawing foreground if it is the same as the background
+	if !vis.HasForegroundContent() {
 		return
 	}
 
 	//change texture color mod if it is different from previous draw, then draw glyph/text
-	if mode == gfx.DRAW_GLYPH {
-		if colours.Fore != r.foreDrawColourGlyph {
-			r.foreDrawColourGlyph = colours.Fore
+	switch vis.Mode {
+	case gfx.DRAW_GLYPH:
+		if vis.Colours.Fore != r.foreDrawColourGlyph {
+			r.foreDrawColourGlyph = vis.Colours.Fore
 			r.setTextureColour(r.glyphs, r.foreDrawColourGlyph)
 		}
+		src := makeRect(int(vis.Glyph%16)*r.tileSize, int(vis.Glyph/16)*r.tileSize, r.tileSize, r.tileSize)
 		r.renderer.Copy(r.glyphs, &src, &dst)
-	} else {
-		if colours.Fore != r.foreDrawColourText {
-			r.foreDrawColourText = colours.Fore
+	case gfx.DRAW_TEXT:
+		if vis.Colours.Fore != r.foreDrawColourText {
+			r.foreDrawColourText = vis.Colours.Fore
 			r.setTextureColour(r.font, r.foreDrawColourText)
 		}
-		r.renderer.Copy(r.font, &src, &dst)
+		dst.W = dst.W / 2
+		for i, char := range vis.Chars {
+			if char == 0 || char == gfx.TEXT_NONE {
+				continue
+			}
+			src := makeRect(int(char%32)*r.tileSize/2, int(char/32)*r.tileSize, r.tileSize/2, r.tileSize)
+			dst.X = dst.X + int32(i*(r.tileSize/2))
+			r.renderer.Copy(r.font, &src, &dst)
+		}
 	}
 }
 

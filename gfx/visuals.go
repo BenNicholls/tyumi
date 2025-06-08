@@ -63,6 +63,29 @@ func (v Visuals) IsTransparent() bool {
 	return v.Mode == DRAW_NONE || v.Colours.Back.IsTransparent()
 }
 
+// HasForegoundContent reports whether the visuals contains something in the foreground, either a renderable
+// glyph or some characters.
+func (v Visuals) HasForegroundContent() bool {
+	switch v.Mode {
+	case DRAW_GLYPH:
+		if v.Glyph == GLYPH_NONE || v.Glyph == GLYPH_SPACE {
+			return false
+		}
+	case DRAW_TEXT:
+		if (v.Chars[0] == 0 || v.Chars[0] == TEXT_NONE) && (v.Chars[1] == 0 || v.Chars[1] == TEXT_NONE) {
+			return false
+		}
+	case DRAW_NONE:
+		return false
+	}
+
+	if v.Colours.Fore == v.Colours.Back || v.Colours.Fore.A() == 0 {
+		return false
+	}
+
+	return true
+}
+
 func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
 	dst_canvas.DrawVisuals(offset, depth, v)
 }

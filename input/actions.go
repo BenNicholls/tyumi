@@ -7,7 +7,7 @@ import (
 	"github.com/bennicholls/tyumi/util"
 )
 
-var EV_ACTION = event.Register("Action Event", event.COMPLEX)
+var EV_ACTION = event.Register("Action Event")
 
 // The default action map. Tyumi packages that rely on actions will register action triggers here.
 var DefaultActionMap ActionMap
@@ -50,10 +50,7 @@ func fireActionEvent(action ActionID) {
 		return
 	}
 
-	event.Fire(&ActionEvent{
-		EventPrototype: event.New(EV_ACTION),
-		Action:         action,
-	})
+	event.Fire(EV_ACTION, &ActionEvent{Action: action})
 }
 
 type ActionKeyTrigger struct {

@@ -12,7 +12,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_CHOICE_CHANGED = event.Register("Choice Changed", event.SIMPLE)
+var EV_CHOICE_CHANGED = event.Register("Choice Changed")
 
 var ACTION_CHOICE_NEXT = input.RegisterAction("Select Next Choice")
 var ACTION_CHOICE_PREV = input.RegisterAction("Select Previous Choice")
@@ -70,7 +70,7 @@ func (cb *ChoiceBox) selectChoice(index int) {
 
 	cb.currentChoiceIndex = index
 	cb.ChangeText(cb.choices[cb.currentChoiceIndex])
-	event.FireSimple(EV_CHOICE_CHANGED)
+	event.Fire(EV_CHOICE_CHANGED)
 }
 
 func (cb *ChoiceBox) Prev() {

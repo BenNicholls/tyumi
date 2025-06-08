@@ -11,6 +11,7 @@ type Event interface {
 	String() string
 	Handled() bool
 	setHandled()
+	setID(id EventID)
 }
 
 type EventID uint32
@@ -25,17 +26,12 @@ type EventPrototype struct {
 	handled bool
 }
 
-func New(ID EventID) EventPrototype {
-	if !ID.valid() {
-		log.Warning("Attempted to create event with unregistered ID: ", ID)
-		return EventPrototype{id: 0}
-	}
-
-	return EventPrototype{id: ID}
-}
-
 func (e EventPrototype) ID() EventID {
 	return e.id
+}
+
+func (e *EventPrototype) setID(id EventID) {
+	e.id = id
 }
 
 func (e EventPrototype) Handled() bool {
@@ -57,25 +53,26 @@ func (e *EventPrototype) setHandled() {
 	e.handled = true
 }
 
-// fire the event into the void. the event will be sent to all listening event streams
-func Fire(e Event) {
-	if !e.ID().valid() {
-		log.Error("Attempted to fire unregistered event with ID ", e.ID())
+// Fire an event into the void. The event will be sent to all listening event streams. Optionally lets you provide
+// events to fire; use this to fire complex events that you create yourself. All provided events will have their IDs
+// set to the provided ID. If no event is provided, a simple event with the provided ID will be fired.
+func Fire(ID EventID, events ...Event) {
+	if !ID.valid() {
+		log.Error("Attempted to fire unregistered event with ID ", ID)
 		return
 	}
 
-	for s := range registeredEvents[e.ID()].listeners.EachElement() {
-		s.add(e)
+	if len(events) == 0 {
+		e := EventPrototype{id: ID}
+		for stream := range registeredEvents[ID].listeners.EachElement() {
+			stream.add(&e)
+		}
+	} else { // no provided event, fire a simple event with just the id
+		for _, e := range events {
+			e.setID(ID)
+			for stream := range registeredEvents[ID].listeners.EachElement() {
+				stream.add(e)
+			}
+		}
 	}
-}
-
-// fire a simple event into the void. Produces and error if the event was not registered as a simple event.
-func FireSimple(ID EventID) {
-	if registeredEvents[ID].eType != SIMPLE {
-		log.Error("Attempted to fire complex event with FireSimple(), id: ", ID)
-		return
-	}
-
-	simpleEvent := EventPrototype{id: ID}
-	Fire(&simpleEvent)
 }

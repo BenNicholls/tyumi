@@ -16,7 +16,7 @@ func (p *Platform) processEvents() {
 	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
 		switch e := sdlevent.(type) {
 		case *sdl.QuitEvent:
-			event.FireSimple(tyumi.EV_QUIT)
+			event.Fire(tyumi.EV_QUIT)
 			break //don't care about other input events if we're quitting
 		case *sdl.WindowEvent:
 			if e.Event == sdl.WINDOWEVENT_RESIZED {

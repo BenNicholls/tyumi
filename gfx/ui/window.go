@@ -11,7 +11,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_FOCUS_CHANGED = event.Register("Focus Changed", event.SIMPLE)
+var EV_FOCUS_CHANGED = event.Register("Focus Changed")
 
 var ACTION_FOCUS_NEXT = input.RegisterAction("Tab To Next Focusable Element")
 
@@ -267,7 +267,7 @@ func (wnd *Window) onSubNodeFocused(subnode element) {
 	}
 
 	wnd.focusedElement = subnode
-	event.FireSimple(EV_FOCUS_CHANGED)
+	event.Fire(EV_FOCUS_CHANGED)
 }
 
 func (wnd *Window) onSubNodeDefocused(subnode element) {

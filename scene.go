@@ -11,7 +11,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_CHANGESCENE = event.Register("Scene Change Event", event.COMPLEX)
+var EV_CHANGESCENE = event.Register("Scene Change Event")
 var currentScene scene
 var activeScene scene // the scene being updated, checked each frame
 
@@ -336,8 +336,5 @@ func ChangeScene(new_scene scene) {
 		return
 	}
 
-	event.Fire(&SceneChangeEvent{
-		EventPrototype: event.New(EV_CHANGESCENE),
-		newScene:       new_scene,
-	})
+	event.Fire(EV_CHANGESCENE, &SceneChangeEvent{newScene: new_scene})
 }

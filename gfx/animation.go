@@ -5,7 +5,7 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_ANIMATION_COMPLETE = event.Register("Animation Complete", event.SIMPLE)
+var EV_ANIMATION_COMPLETE = event.Register("Animation Complete")
 
 type AnimationEvent struct {
 	event.EventPrototype
@@ -14,11 +14,7 @@ type AnimationEvent struct {
 }
 
 func fireAnimationCompleteEvent(label string) {
-	animEvent := AnimationEvent{
-		EventPrototype: event.New(EV_ANIMATION_COMPLETE),
-		Label:          label,
-	}
-	event.Fire(&animEvent)
+	event.Fire(EV_ANIMATION_COMPLETE, &AnimationEvent{Label: label})
 }
 
 // Anything that can do animations on a Canvas

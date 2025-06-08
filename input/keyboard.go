@@ -27,7 +27,7 @@ type KeyboardEvent struct {
 }
 
 func fireKeyboardEvent(key_event KeyboardEvent) {
-	event.Fire(&key_event)
+	event.Fire(EV_KEYBOARD, &key_event)
 	key_event.fireActions()
 }
 
@@ -50,10 +50,7 @@ func (kbe KeyboardEvent) fireActions() {
 
 // Emits keypress event.
 func FireKeyPressEvent(key Keycode) {
-	fireKeyboardEvent(KeyboardEvent{
-		EventPrototype: event.New(EV_KEYBOARD),
-		Key:            key,
-	})
+	fireKeyboardEvent(KeyboardEvent{Key: key})
 }
 
 // Emits keyrelease event.
@@ -62,11 +59,7 @@ func FireKeyReleaseEvent(key Keycode) {
 		return
 	}
 
-	fireKeyboardEvent(KeyboardEvent{
-		EventPrototype: event.New(EV_KEYBOARD),
-		Key:            key,
-		PressType:      KEY_RELEASED,
-	})
+	fireKeyboardEvent(KeyboardEvent{Key: key, PressType: KEY_RELEASED})
 }
 
 // Emits key repeated event. The KeyPressType of repeat events is always KEY_PRESSED.
@@ -75,11 +68,7 @@ func FireKeyRepeatEvent(key Keycode) {
 		return
 	}
 
-	fireKeyboardEvent(KeyboardEvent{
-		EventPrototype: event.New(EV_KEYBOARD),
-		Key:            key,
-		Repeat:         true,
-	})
+	fireKeyboardEvent(KeyboardEvent{Key: key, Repeat: true})
 }
 
 // If the keyboard event represents a direction, returns a vec.Direction (or vec.DIR_NONE if not). Currently only does

@@ -208,8 +208,13 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
 		return gfx.Visuals{Mode: gfx.DRAW_NONE}
 	}
 
+	light := tm.globalLight
+	if light < 255 {
+		light = uint8(min(int(tile.GetLight()) + int(light), 255))
+	}
+
 	tv := tile.GetVisuals()
-	if light := tile.GetLight(); light > 0 {
+	if light > 0 {
 		tv.Colours.Fore = tv.Colours.Back.Lerp(tv.Colours.Fore, int(light), 255)
 		return tv
 	} else {

@@ -167,12 +167,26 @@ type LightSystem struct {
 
 	tileMap               *TileMap
 	changedVisbilityTiles util.Set[vec.Coord]
+	globalLight           uint8 // amount of light automatically applied to every tile. If 255, disables system.
 }
 
 func (ls *LightSystem) Init(tm *TileMap) {
 	ls.tileMap = tm
 	ls.Listen(EV_ENTITYMOVED, EV_TILECHANGEDVISIBILITY)
 	ls.SetEventHandler(ls.handleEvents)
+	ls.Enable()
+}
+
+// SetGlobalLight sets the amount of light automatically applied to all tiles. If 255, the lighting system is
+// disabled because all tiles will be completely lit at all times.
+func (ls *LightSystem) SetGlobalLight(light uint8) {
+	ls.globalLight = light
+
+	if ls.globalLight == 255 {
+		ls.Disable()
+	} else {
+		ls.Enable()
+	}
 }
 
 func (ls *LightSystem) handleEvents(e event.Event) (event_handled bool) {
@@ -193,7 +207,7 @@ func (ls *LightSystem) handleEvents(e event.Event) (event_handled bool) {
 }
 
 func (ls *LightSystem) Update() {
-	if ls.tileMap == nil {
+	if !ls.Enabled || ls.tileMap == nil {
 		return
 	}
 

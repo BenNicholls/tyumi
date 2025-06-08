@@ -73,11 +73,21 @@ func (tm *TileMap) scan(pos vec.Coord, row int, slope1, slope2 float32, radius i
 }
 
 // type specifying precisely what you can pass to the shadowcaster. parameters here are the info that the shadowcaster
-// will deliver
-type Cast func(m *TileMap, pos vec.Coord, d, r int)
+// will deliver. d2 is the distance squared from the center of the cast.
+type Cast func(tm *TileMap, pos vec.Coord, d2, r int)
 
-// Collects coords of all spaces visited by the shadowcater into the provided set.
-func GetSpacesCast(spaces *util.Set[vec.Coord]) Cast {
+// Collects coords of all spaces visited by the shadowcater into the provided slice. Reslices the slice down
+// before running the cast.
+func GetSpacesCast(spaces []vec.Coord) Cast {
+	spaces = spaces[:1]
+	return func(tm *TileMap, pos vec.Coord, d, r int) {
+		spaces = append(spaces, pos)
+	}
+}
+
+// Collects coords of all spaces visited by the shadowcater into the provided set. Clears the set before
+// running the cast, so any contents in there will be destroyed.
+func GetSpacesSetCast(spaces *util.Set[vec.Coord]) Cast {
 	spaces.RemoveAll()
 	return func(tm *TileMap, pos vec.Coord, d, r int) {
 		spaces.Add(pos)

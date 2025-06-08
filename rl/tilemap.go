@@ -4,19 +4,23 @@ import (
 	"runtime"
 	"slices"
 
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/rl/ecs"
-	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
 var NOT_IN_TILEMAP = vec.Coord{-1, -1}
 
 type TileMap struct {
-	size vec.Dims
+	LightSystem
+	FOVSystem
 
-	tiles                  []Tile
-	visibilityChangedTiles util.Set[vec.Coord]
+	Ready bool // set this to true once level generation is complete! suppresses events while false.
+
+	size  vec.Dims
+	tiles []Tile
 
 	entities []Entity
 	dirty    bool // if the tilemap has been changed and needs to be redrawn
@@ -24,6 +28,9 @@ type TileMap struct {
 
 // Initialize the TileMap. All tiles in the map will be set to defaultTile
 func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
+	tm.LightSystem.Init(tm)
+	tm.FOVSystem.Init(tm)
+
 	tm.size = size
 
 	tm.tiles = make([]Tile, 0, size.Area())
@@ -35,25 +42,16 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 		for _, tile := range tiles {
 			ecs.RemoveEntity(tile)
 		}
+
+		tm.LightSystem.Shutdown()
+		tm.FOVSystem.Shutdown()
 	}, tm.tiles)
 }
 
 // update tilemap-controlled systems
 func (tm *TileMap) Update() {
-	// FOV updates
-	for fov := range ecs.EachComponent[FOVComponent]() {
-		if !fov.Dirty {
-			for pos := range tm.visibilityChangedTiles.EachElement() {
-				fov.OnEnvironmentChange(pos)
-			}
-		}
-
-		if fov.Dirty {
-			fov.UpdateFOV(tm)
-		}
-	}
-
-	tm.visibilityChangedTiles.RemoveAll()
+	tm.LightSystem.Update()
+	tm.FOVSystem.Update()
 }
 
 func (tm TileMap) Size() vec.Dims {
@@ -91,7 +89,9 @@ func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
 	oldTile := tm.tiles[pos.ToIndex(tm.size.W)]
 
 	if oldTile.IsOpaque() != tile.IsOpaque() {
-		tm.visibilityChangedTiles.Add(pos)
+		if tm.Ready {
+			event.Fire(EV_TILECHANGEDVISIBILITY, &TileChangedVisibilityEvent{Pos: pos})
+		}
 	}
 
 	ecs.RemoveEntity(oldTile)
@@ -112,7 +112,9 @@ func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
 	}
 
 	if tile.IsOpaque() != tileType.Data().Opaque {
-		tm.visibilityChangedTiles.Add(pos)
+		if tm.Ready {
+			event.Fire(EV_TILECHANGEDVISIBILITY, &TileChangedVisibilityEvent{Pos: pos})
+		}
 	}
 
 	tm.tiles[pos.ToIndex(tm.size.W)].SetTileType(tileType)
@@ -134,10 +136,6 @@ func (tm *TileMap) AddEntity(entity Entity, pos vec.Coord) {
 		container.Add(entity)
 		tm.entities = append(tm.entities, entity)
 		tm.dirty = true
-
-		if fov := ecs.GetComponent[FOVComponent](entity); fov != nil {
-			fov.Dirty = true
-		}
 	}
 }
 
@@ -184,11 +182,16 @@ func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
 	ecs.GetComponent[EntityContainerComponent](toTile).Entity = entity
 	fromTile.RemoveEntity()
 	entity.MoveTo(to)
+	event.Fire(EV_ENTITYMOVED, &EntityMovedEvent{Entity: entity, From: from, To: to})
 	tm.dirty = true
 }
 
 func (tm TileMap) Dirty() bool {
 	return tm.dirty
+}
+
+func (tm *TileMap) SetDirty() {
+	tm.dirty = true
 }
 
 func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
@@ -199,12 +202,18 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	tm.dirty = false
 }
 
-func (tm TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
+func (tm *TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
 	tile := tm.GetTile(pos)
 	if tile.GetTileType() == TILE_NONE {
 		return gfx.Visuals{Mode: gfx.DRAW_NONE}
+	}
+
+	tv := tile.GetVisuals()
+	if light := tile.GetLight(); light > 0 {
+		tv.Colours.Fore = tv.Colours.Back.Lerp(tv.Colours.Fore, int(light), 255)
+		return tv
 	} else {
-		return tile.GetVisuals()
+		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, tv.Colours.Back})
 	}
 }
 

@@ -71,11 +71,10 @@ func (t Tile) GetVisuals() gfx.Visuals {
 	vis := t.GetTileType().Data().Visuals
 	if entity := t.GetEntity(); entity != INVALID_ENTITY {
 		entityVisuals := entity.GetVisuals()
-		vis.Glyph = entityVisuals.Glyph
-		vis.Colours.Fore = entityVisuals.Colours.Fore
 		if entityVisuals.Colours.Back != col.NONE {
-			vis.Colours.Back = entityVisuals.Colours.Back
+			entityVisuals.Colours.Back = vis.Colours.Back
 		}
+		return entityVisuals
 	}
 
 	return vis
@@ -93,4 +92,30 @@ func (t Tile) RemoveEntity() {
 	if container := ecs.GetComponent[EntityContainerComponent](t); container != nil {
 		container.Remove()
 	}
+}
+
+// Applies a delta to the light level on a tile.
+func (t Tile) ModLight(delta int) {
+	if delta > 0 {
+		t.AddLight(uint8(delta))
+	} else if delta < 0 {
+		t.RemoveLight(uint8(-delta))
+	}
+}
+
+func (t Tile) AddLight(light uint8) {
+	ecs.GetComponent[TerrainComponent](t).LightLevel += uint16(light)
+}
+
+func (t Tile) RemoveLight(light uint8) {
+	terrain := ecs.GetComponent[TerrainComponent](t)
+	if terrain.LightLevel < uint16(light) {
+		terrain.LightLevel = 0
+	} else {
+		terrain.LightLevel -= uint16(light)
+	}
+}
+
+func (t Tile) GetLight() uint8 {
+	return uint8(min(255, ecs.GetComponent[TerrainComponent](t).LightLevel))
 }

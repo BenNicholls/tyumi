@@ -67,7 +67,7 @@ func (tm *TileMap) Clean() {
 }
 
 func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
-	if !pos.IsInside(tm) {
+	if !tm.Bounds().Contains(pos) {
 		return
 	}
 

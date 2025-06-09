@@ -16,6 +16,7 @@ var events event.Stream //the main event stream for engine-level events
 var tick int                          //count of number of ticks since engine was initialized
 var frameTargetDuration time.Duration // target duration of each frame, based on user-set framerate
 var frameTime time.Time
+var overclock bool // if true, no framerate limiting is enforced
 
 func init() {
 	SetFramerate(60)
@@ -23,6 +24,10 @@ func init() {
 
 // Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.
 func SetFramerate(f int) {
+	if f == 0 {
+		overclock = true
+		return
+	}
 	f = util.Clamp(f, 1, 1000)
 	frameTargetDuration = time.Duration(1000/float64(f)) * time.Millisecond
 }

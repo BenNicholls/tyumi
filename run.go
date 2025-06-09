@@ -11,6 +11,8 @@ import (
 
 var running bool
 var ProfilingEnabled bool // Enables CPU profiling. Only works in debug mode.
+var fpsTicks int
+var fpsTime time.Time
 
 // This is the gameloop
 func Run() {
@@ -28,6 +30,8 @@ func Run() {
 	if Debug {
 		events.Listen(input.EV_KEYBOARD)
 	}
+
+	fpsTime = time.Now()
 
 	for running = true; running; {
 		beginFrame()
@@ -85,7 +89,18 @@ func render() {
 
 func endFrame() {
 	//framerate limiter, so the cpu doesn't implode
-	time.Sleep(frameTargetDuration - time.Since(frameTime))
+	if Debug && ProfilingEnabled {
+		if time.Since(fpsTime) > time.Second {
+			log.Debug("FPS: ", tick-fpsTicks)
+			fpsTicks = tick
+			fpsTime = time.Now()
+		}
+	}
+
+	if !overclock {
+		time.Sleep(frameTargetDuration - time.Since(frameTime))
+	}
+
 	tick++
 }
 

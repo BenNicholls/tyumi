@@ -6,12 +6,18 @@ import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
+	"github.com/pkg/profile"
 )
 
 var running bool
+var ProfilingEnabled bool // Enables CPU profiling. Only works in debug mode.
 
 // This is the gameloop
 func Run() {
+	if Debug && ProfilingEnabled {
+		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
+	}
+
 	if !isInitialized() {
 		log.Error("Tyumi must shut down now. Bye Bye.")
 		return

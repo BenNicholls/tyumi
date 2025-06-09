@@ -1,6 +1,9 @@
 package util
 
-import "iter"
+import (
+	"iter"
+	"slices"
+)
 
 // Set is a container that holds elements of a type E. Elements can be added and removed, and duplicate adds are no-ops.
 type Set[E comparable] struct {
@@ -168,4 +171,95 @@ func (s Set[E]) EachElement() iter.Seq[E] {
 			}
 		}
 	}
+}
+
+type OrderedSet[E comparable] struct {
+	Set[E]
+
+	order []E
+}
+
+func (os *OrderedSet[E]) Add(elems ...E) {
+	if os.order == nil {
+		os.order = make([]E, 0)
+	}
+
+	for _, elem := range elems {
+		if !os.Contains(elem) {
+			os.order = append(os.order, elem)
+		}
+	}
+
+	os.Set.Add(elems...)
+}
+
+func (os *OrderedSet[E]) AddSet(s Set[E]) {
+	for elem := range s.elements {
+		os.Add(elem)
+	}
+}
+
+func (os *OrderedSet[E]) Remove(elems ...E) {
+	os.Set.Remove(elems...)
+
+	for _, elem := range elems {
+		os.order = slices.DeleteFunc(os.order, func(e E) bool {
+			return e == elem
+		})
+	}
+}
+
+func (os *OrderedSet[E]) RemoveAt(idx int) {
+	if idx < 0 || idx >= len(os.order) {
+		panic("Index out of range!")
+	}
+
+	os.Set.Remove(os.order[idx])
+	os.order = slices.Delete(os.order, idx, idx+1)
+}
+
+func (os *OrderedSet[E]) RemoveFunc(del func(E) bool) {
+	f := func (elem E) bool {
+		if del(elem) {
+			os.Set.Remove(elem)
+			return true
+		}
+
+		return false
+	}
+
+	os.order = slices.DeleteFunc(os.order, f)
+}
+
+func (os *OrderedSet[E]) RemoveSet(s Set[E]) {
+	os.Set.RemoveSet(s)
+
+	for elem := range s.elements {
+		os.order = slices.DeleteFunc(os.order, func(e E) bool {
+			return e == elem
+		})
+	}
+}
+
+func (os *OrderedSet[E]) RemoveAll() {
+	os.Set.RemoveAll()
+	os.order = os.order[0:0]
+}
+
+func (os *OrderedSet[E]) EachElement() iter.Seq2[int, E] {
+	return func(yield func(int, E) bool) {
+		for i, elem := range os.order {
+			if !yield(i, elem) {
+				return
+			}
+		}
+	}
+}
+
+func (os *OrderedSet[E]) At(idx int) E {
+	if idx < 0 || idx >= len(os.order) {
+		panic("Index out of range!")
+	}
+
+	return os.order[idx]
 }

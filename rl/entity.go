@@ -14,11 +14,12 @@ func (et EntityType) Data() EntityData {
 }
 
 type EntityData struct {
-	Name       string // Generic name of the entity.
-	Desc       string // Generic description for the entity
-	Visuals    gfx.Visuals
-	SightRange uint8
-	HasMemory  bool
+	Name           string // Generic name of the entity.
+	Desc           string // Generic description for the entity
+	Visuals        gfx.Visuals
+	SightRange     uint8
+	TracksEntities bool
+	HasMemory      bool
 }
 
 var entityDataCache dataCache[EntityData, EntityType]
@@ -41,7 +42,8 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 	ecs.AddComponent(entity, PositionComponent{Coord: NOT_IN_TILEMAP})
 
 	if sight := entity_type.Data().SightRange; sight > 0 {
-		ecs.AddComponent(entity, FOVComponent{SightRange: sight})
+		ecs.AddComponent(entity, FOVComponent{SightRange: sight,
+			TrackEntities: entity_type.Data().TracksEntities})
 	}
 
 	if entity_type.Data().HasMemory {
@@ -65,12 +67,14 @@ func (e Entity) Position() vec.Coord {
 
 func (e Entity) MoveTo(pos vec.Coord) {
 	position := ecs.GetComponent[PositionComponent](e)
-	if position.Static && (pos != NOT_IN_TILEMAP) {
+	if position.Static && pos != NOT_IN_TILEMAP {
 		return
 	}
 
+	if position.Coord != NOT_IN_TILEMAP {
+		event.Fire(EV_ENTITYMOVED, &EntityMovedEvent{Entity: e, From: position.Coord, To: pos})
+	}
 	position.Coord = pos
-	event.Fire(EV_ENTITYMOVED, &EntityMovedEvent{Entity: e, From: NOT_IN_TILEMAP, To: pos})
 }
 
 func (e Entity) IsInTilemap() bool {

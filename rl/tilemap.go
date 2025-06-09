@@ -182,7 +182,6 @@ func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
 	ecs.GetComponent[EntityContainerComponent](toTile).Entity = entity
 	fromTile.RemoveEntity()
 	entity.MoveTo(to)
-	event.Fire(EV_ENTITYMOVED, &EntityMovedEvent{Entity: entity, From: from, To: to})
 	tm.dirty = true
 }
 
@@ -210,7 +209,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
 
 	light := tm.globalLight
 	if light < 255 {
-		light = uint8(min(int(tile.GetLight()) + int(light), 255))
+		light = uint8(min(int(tile.GetLight())+int(light), 255))
 	}
 
 	tv := tile.GetVisuals()

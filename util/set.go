@@ -142,6 +142,28 @@ func (s Set[E]) Union(s2 Set[E]) (union Set[E]) {
 	return
 }
 
+// Difference returns s - s2
+func (s Set[E]) Difference(s2 Set[E]) (difference Set[E]) {
+	if len(s.elements) == 0 {
+		return
+	}
+
+	if len(s2.elements) == 0 {
+		for elem := range s.EachElement() {
+			difference.Add(elem)
+		}
+		return
+	}
+
+	for elem := range s.EachElement() {
+		if !s2.Contains(elem) {
+			difference.Add(elem)
+		}
+	}
+
+	return
+}
+
 func (s Set[E]) EachElement() iter.Seq[E] {
 	return func(yield func(E) bool) {
 		for elem := range s.elements {

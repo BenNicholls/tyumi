@@ -15,11 +15,14 @@ func init() {
 type FOVComponent struct {
 	ecs.Component
 
-	Blind      bool  // if true, no fov is possible
-	Omniscient bool  // if true, all tiles are reported as within the FOV. good for testing. overrides blind.
-	Dirty      bool  // if true, FOV needs to recompute
-	SightRange uint8 // range of FOV in tiles
-	field      util.Set[vec.Coord]
+	Blind         bool  // if true, no fov is possible
+	Omniscient    bool  // if true, all tiles are reported as within the FOV. good for testing. overrides blind.
+	Dirty         bool  // if true, FOV needs to recompute
+	SightRange    uint8 // range of FOV in tiles
+	TrackEntities bool
+
+	field    util.Set[vec.Coord]
+	entities util.Set[Entity]
 }
 
 func (fov *FOVComponent) Init() {
@@ -118,9 +121,31 @@ func (fs *FOVSystem) handleEvents(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_ENTITYMOVED:
 		moveEvent := e.(*EntityMovedEvent)
-		if fov := ecs.GetComponent[FOVComponent](moveEvent.Entity); fov != nil {
-			fov.Dirty = true
+
+		for fov := range ecs.EachComponent[FOVComponent]() {
+			if Entity(fov.GetEntity()) == moveEvent.Entity {
+				fov.Dirty = true
+				continue
+			}
+
+			if fov.TrackEntities {
+				if fov.InFOV(moveEvent.From) && !fov.InFOV(moveEvent.To) {
+					// entity moved away
+					fov.entities.Remove(moveEvent.Entity)
+					event.Fire(EV_LOSTSIGHT, &EntitySightEvent{
+						Viewer:        Entity(fov.GetEntity()),
+						TrackedEntity: moveEvent.Entity})
+				} else if fov.InFOV(moveEvent.To) && !fov.InFOV(moveEvent.From) {
+					//entity moved into the fov
+					fov.entities.Add(moveEvent.Entity)
+					event.Fire(EV_GAINEDSIGHT, &EntitySightEvent{
+						Viewer:        Entity(fov.GetEntity()),
+						TrackedEntity: moveEvent.Entity})
+				}
+			}
+
 		}
+
 		return true
 	case EV_TILECHANGEDVISIBILITY:
 		visEvent := e.(*TileChangedVisibilityEvent)
@@ -151,6 +176,38 @@ func (fs *FOVSystem) Update() {
 
 		if fov.Dirty {
 			fov.UpdateFOV(fs.tileMap)
+
+			if fov.TrackEntities {
+				var newEntities util.Set[Entity]
+
+				for entity := range ecs.EachEntityWith[EntityComponent]() {
+					if entity == fov.GetEntity() { // don't track self
+						continue
+					}
+
+					if pos := ecs.GetComponent[PositionComponent](entity).Coord; fov.InFOV(pos) {
+						newEntities.Add(Entity(entity))
+					}
+				}
+
+				if !fov.entities.Equals(newEntities) {
+					lostSight := fov.entities.Difference(newEntities)
+					for entity := range lostSight.EachElement() {
+						event.Fire(EV_LOSTSIGHT, &EntitySightEvent{
+							Viewer:        Entity(fov.GetEntity()),
+							TrackedEntity: entity})
+					}
+
+					gainedSight := newEntities.Difference(fov.entities)
+					for entity := range gainedSight.EachElement() {
+						event.Fire(EV_GAINEDSIGHT, &EntitySightEvent{
+							Viewer:        Entity(fov.GetEntity()),
+							TrackedEntity: entity})
+					}
+				}
+
+				fov.entities = newEntities
+			}
 		}
 	}
 

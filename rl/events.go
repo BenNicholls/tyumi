@@ -7,6 +7,8 @@ import (
 
 var EV_ENTITYMOVED = event.Register("Entity moved.")
 var EV_TILECHANGEDVISIBILITY = event.Register("A Tile Changed visibility state (opaque or transparent)")
+var EV_LOSTSIGHT = event.Register("An entity has lost sight of another entity.")
+var EV_GAINEDSIGHT = event.Register("An entity has gained sight of another entity.")
 
 type EntityMovedEvent struct {
 	event.EventPrototype
@@ -23,4 +25,11 @@ type TileChangedVisibilityEvent struct {
 	event.EventPrototype
 
 	Pos vec.Coord
+}
+
+type EntitySightEvent struct {
+	event.EventPrototype
+
+	Viewer        Entity
+	TrackedEntity Entity
 }

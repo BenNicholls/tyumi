@@ -14,3 +14,14 @@ func EachComponent[T componentType]() iter.Seq[*T] {
 		}
 	}
 }
+
+func EachEntityWith[T componentType]() iter.Seq2[Entity, *T] {
+	cache := getComponentCache[T]()
+	return func(yield func(Entity, *T) bool) {
+		for i := range cache.components {
+			if !yield(cache.components[i].GetEntity(), &cache.components[i]) {
+				return
+			}
+		}
+	}
+}

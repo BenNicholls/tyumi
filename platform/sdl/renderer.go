@@ -253,7 +253,7 @@ func (r *Renderer) Render() {
 	}
 
 	//collect rects and coords, sorted by colour
-	for cursor := range vec.EachCoordInArea(r.console) {
+	for cursor := range r.console.Bounds().EachCoord() {
 		cell := r.console.GetCell(cursor)
 		if !(cell.Dirty || r.forceRedraw) || cell.Mode == gfx.DRAW_NONE {
 			continue

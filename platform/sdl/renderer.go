@@ -286,15 +286,15 @@ func (r *Renderer) copyToRenderer(vis gfx.Visuals, pos vec.Coord) {
 	switch vis.Mode {
 	case gfx.DRAW_GLYPH:
 		if vis.Colours.Fore != r.foreDrawColourGlyph {
+			r.setTextureColour(r.glyphs, vis.Colours.Fore, r.foreDrawColourGlyph.A() != vis.Colours.Fore.A())
 			r.foreDrawColourGlyph = vis.Colours.Fore
-			r.setTextureColour(r.glyphs, r.foreDrawColourGlyph)
 		}
 		src := makeRect(int(vis.Glyph%16)*r.tileSize, int(vis.Glyph/16)*r.tileSize, r.tileSize, r.tileSize)
 		r.renderer.Copy(r.glyphs, &src, &dst)
 	case gfx.DRAW_TEXT:
 		if vis.Colours.Fore != r.foreDrawColourText {
+			r.setTextureColour(r.font, vis.Colours.Fore, r.foreDrawColourText.A() != vis.Colours.Fore.A())
 			r.foreDrawColourText = vis.Colours.Fore
-			r.setTextureColour(r.font, r.foreDrawColourText)
 		}
 		dst.W = dst.W / 2
 		for i, char := range vis.Chars {
@@ -308,9 +308,11 @@ func (r *Renderer) copyToRenderer(vis gfx.Visuals, pos vec.Coord) {
 	}
 }
 
-func (r *Renderer) setTextureColour(tex *sdl.Texture, colour col.Colour) {
+func (r *Renderer) setTextureColour(tex *sdl.Texture, colour col.Colour, update_alpha bool) {
 	tex.SetColorMod(colour.R(), colour.G(), colour.B())
-	tex.SetAlphaMod(colour.A())
+	if update_alpha {
+		tex.SetAlphaMod(colour.A())
+	}
 }
 
 func (r *Renderer) ForceRedraw() {

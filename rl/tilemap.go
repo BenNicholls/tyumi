@@ -169,6 +169,10 @@ func (tm *TileMap) GetEntityAt(pos vec.Coord) Entity {
 }
 
 func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
+	if entity == INVALID_ENTITY {
+		return
+	}
+
 	from := entity.Position()
 	if !from.IsInside(tm) || !to.IsInside(tm) {
 		return

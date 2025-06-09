@@ -33,7 +33,7 @@ type element interface {
 	finalizeRender()
 	drawChildren()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
-	isRedrawing() bool
+	IsRedrawing() bool
 
 	acceptsInput() bool
 	HandleKeypress(*input.KeyboardEvent) (event_handled bool)
@@ -344,7 +344,7 @@ func (e *Element) ForceRedraw() {
 	e.forceRedraw = true
 }
 
-func (e *Element) isRedrawing() bool {
+func (e *Element) IsRedrawing() bool {
 	return e.forceRedraw
 }
 

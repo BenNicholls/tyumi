@@ -76,7 +76,7 @@ func (wnd *Window) Render() {
 		if element.getCanvas().Dirty() {
 			element.renderIfDirty()
 		}
-		if element.IsUpdated() || element.isRedrawing() {
+		if element.IsUpdated() || element.IsRedrawing() {
 			element.Render()
 		}
 		element.renderAnimations()

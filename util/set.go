@@ -27,7 +27,7 @@ func (s *Set[E]) Add(elems ...E) {
 
 // Adds the elements of another set to the Set. Operationally this is the same as a Union, except it works in-place.
 func (s *Set[E]) AddSet(s2 Set[E]) {
-	for elem := range s2.EachElement() {
+	for elem := range s2.elements {
 		s.Add(elem)
 	}
 }
@@ -38,7 +38,7 @@ func (s Set[E]) Equals(s2 Set[E]) bool {
 		return false
 	}
 
-	for elem := range s.EachElement() {
+	for elem := range s.elements {
 		if !s2.Contains(elem) {
 			return false
 		}
@@ -48,10 +48,6 @@ func (s Set[E]) Equals(s2 Set[E]) bool {
 }
 
 func (s Set[E]) Contains(elem E) bool {
-	if len(s.elements) == 0 {
-		return false
-	}
-
 	_, ok := s.elements[elem]
 	return ok
 }
@@ -62,7 +58,7 @@ func (s Set[E]) ContainsAll(elems ...E) bool {
 	}
 
 	for _, elem := range elems {
-		if _, ok := s.elements[elem]; !ok {
+		if !s.Contains(elem) {
 			return false
 		}
 	}
@@ -76,7 +72,7 @@ func (s Set[E]) ContainsAny(elems ...E) bool {
 	}
 
 	for _, elem := range elems {
-		if _, ok := s.elements[elem]; ok {
+		if s.Contains(elem) {
 			return true
 		}
 	}
@@ -109,7 +105,7 @@ func (s *Set[E]) RemoveAll() {
 		return
 	}
 
-	s.elements = make(map[E]bool)
+	clear(s.elements)
 }
 
 func (s Set[E]) Intersection(s2 Set[E]) (intersection Set[E]) {

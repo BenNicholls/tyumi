@@ -79,7 +79,7 @@ type Cast func(tm *TileMap, pos vec.Coord, d2, r int)
 // Collects coords of all spaces visited by the shadowcater into the provided slice. Reslices the slice down
 // before running the cast.
 func GetSpacesCast(spaces []vec.Coord) Cast {
-	spaces = spaces[:1]
+	spaces = spaces[0:0]
 	return func(tm *TileMap, pos vec.Coord, d, r int) {
 		spaces = append(spaces, pos)
 	}

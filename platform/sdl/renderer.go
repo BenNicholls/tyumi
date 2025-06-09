@@ -26,11 +26,13 @@ type Renderer struct {
 
 	frames int // frames rendered. NOTE: this can differ from engine.tick since the renderer may not render every tick
 
-	//store render colours so we don't have to set them for every renderer.Copy()
-	clearColour         col.Colour
-	backDrawColour      col.Colour
-	foreDrawColourText  col.Colour
-	foreDrawColourGlyph col.Colour
+	clearColour col.Colour
+	debugColour col.Colour // for background when show changes is on
+
+	// caches for draw batching
+	bg       map[col.Colour][]sdl.Rect
+	fgGlyphs map[col.Colour]map[gfx.Glyph][]vec.Coord
+	fgText   map[col.Colour]map[uint8][]sdl.Rect
 
 	console *gfx.Canvas
 
@@ -68,6 +70,10 @@ func (r *Renderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string)
 	if err != nil {
 		return err
 	}
+
+	r.bg = make(map[col.Colour][]sdl.Rect)
+	r.fgGlyphs = make(map[col.Colour]map[gfx.Glyph][]vec.Coord)
+	r.fgText = make(map[col.Colour]map[uint8][]sdl.Rect)
 
 	r.ready = true
 
@@ -197,6 +203,8 @@ func (r *Renderer) createCanvasBuffer() (err error) {
 }
 
 func (r *Renderer) onWindowResize() {
+	r.renderer.SetDrawColor(r.clearColour.RGBA())
+	r.renderer.Clear()
 	r.forceRedraw = true
 }
 
@@ -238,19 +246,110 @@ func (r *Renderer) Render() {
 	r.renderer.SetRenderTarget(r.canvasBuffer) //point renderer at buffer texture, we'll draw there
 
 	if r.showChanges {
-		r.backDrawColour = col.MakeOpaque(
+		r.debugColour = col.MakeOpaque(
 			uint8((r.frames*10)%255),
 			uint8(((r.frames+100)*10)%255),
 			uint8(((r.frames+200)*10)%255))
 	}
 
+	//collect rects and coords, sorted by colour
 	for cursor := range vec.EachCoordInArea(r.console) {
 		cell := r.console.GetCell(cursor)
-		if cell.Dirty || r.forceRedraw {
-			if cell.Mode != gfx.DRAW_NONE {
-				r.copyToRenderer(cell.Visuals, cursor)
-			}
+		if !(cell.Dirty || r.forceRedraw) || cell.Mode == gfx.DRAW_NONE {
+			continue
 		}
+
+		bgColour := cell.Colours.Back
+		if r.showChanges {
+			bgColour = r.debugColour
+		}
+
+		if _, ok := r.bg[bgColour]; !ok {
+			r.bg[bgColour] = make([]sdl.Rect, 0)
+		}
+
+		rect := makeRect(cursor.X*r.tileSize, cursor.Y*r.tileSize, r.tileSize, r.tileSize)
+		r.bg[bgColour] = append(r.bg[bgColour], rect)
+
+		if !cell.HasForegroundContent() {
+			continue
+		}
+
+		fgColour := cell.Colours.Fore
+
+		switch cell.Mode {
+		case gfx.DRAW_GLYPH:
+			if _, ok := r.fgGlyphs[fgColour]; !ok {
+				r.fgGlyphs[fgColour] = make(map[gfx.Glyph][]vec.Coord)
+			}
+
+			glyphMap, glyph := r.fgGlyphs[fgColour], cell.Glyph
+			if _, ok := glyphMap[glyph]; !ok {
+				glyphMap[glyph] = make([]vec.Coord, 0)
+			}
+
+			glyphMap[glyph] = append(glyphMap[glyph], cursor)
+			r.fgGlyphs[fgColour] = glyphMap
+		case gfx.DRAW_TEXT:
+			if _, ok := r.fgText[fgColour]; !ok {
+				r.fgText[fgColour] = make(map[uint8][]sdl.Rect)
+			}
+
+			textMap := r.fgText[fgColour]
+			for c_i, char := range cell.Chars {
+				if _, ok := textMap[char]; !ok {
+					textMap[char] = make([]sdl.Rect, 0)
+				}
+
+				dst := makeRect(cursor.X*r.tileSize+c_i*r.tileSize/2, cursor.Y*r.tileSize, r.tileSize/2, r.tileSize)
+				textMap[char] = append(textMap[char], dst)
+			}
+
+			r.fgText[fgColour] = textMap
+		}
+	}
+
+	// apply background cell fills
+	for colour, rects := range r.bg {
+		if len(rects) == 0 {
+			continue
+		}
+		r.renderer.SetDrawColor(colour.RGBA())
+		r.renderer.FillRects(rects)
+		r.bg[colour] = rects[0:0]
+	}
+
+	currentDrawColour := col.NONE
+
+	// copy glyphs
+	src := makeRect(0, 0, r.tileSize, r.tileSize)
+	for colour, glyphMap := range r.fgGlyphs {
+		r.setTextureColour(r.glyphs, colour, colour.A() != currentDrawColour.A())
+		currentDrawColour = colour
+		for glyph, coords := range glyphMap {
+			src.X, src.Y = int32(int(glyph%16)*r.tileSize), int32(int(glyph/16)*r.tileSize)
+			for _, pos := range coords {
+				dst := makeRect(pos.X*r.tileSize, pos.Y*r.tileSize, r.tileSize, r.tileSize)
+				r.renderer.Copy(r.glyphs, &src, &dst)
+			}
+			glyphMap[glyph] = coords[0:0]
+		}
+		r.fgGlyphs[colour] = glyphMap
+	}
+
+	// copy text
+	src.W = src.W / 2
+	for colour, textMap := range r.fgText {
+		r.setTextureColour(r.font, colour, colour.A() != currentDrawColour.A())
+		currentDrawColour = colour
+		for char, rects := range textMap {
+			src.X, src.Y = int32(int(char%32)*r.tileSize/2), int32(int(char/32)*r.tileSize)
+			for _, rect := range rects {
+				r.renderer.Copy(r.font, &src, &rect)
+			}
+			textMap[char] = rects[0:0]
+		}
+		r.fgText[colour] = textMap
 	}
 
 	r.console.Clean()
@@ -258,54 +357,9 @@ func (r *Renderer) Render() {
 	r.renderer.SetRenderTarget(t) //point renderer at window again
 	r.renderer.Copy(r.canvasBuffer, nil, nil)
 	r.renderer.Present()
-	r.renderer.SetDrawColor(r.clearColour.RGBA())
-	r.renderer.Clear()
-	r.renderer.SetDrawColor(r.backDrawColour.RGBA())
 
 	r.forceRedraw = false
 	r.frames++
-}
-
-// Copies a rect of pixeldata from a source texture to a rect on the renderer's target.
-func (r *Renderer) copyToRenderer(vis gfx.Visuals, pos vec.Coord) {
-	//change backcolour if it is different from previous draw
-	if !r.showChanges && vis.Colours.Back != r.backDrawColour {
-		r.backDrawColour = vis.Colours.Back
-		r.renderer.SetDrawColor(r.backDrawColour.RGBA())
-	}
-
-	dst := makeRect(pos.X*r.tileSize, pos.Y*r.tileSize, r.tileSize, r.tileSize)
-	r.renderer.FillRect(&dst)
-
-	//if we're drawing a nothing character (space, whatever), skip next part.
-	if !vis.HasForegroundContent() {
-		return
-	}
-
-	//change texture color mod if it is different from previous draw, then draw glyph/text
-	switch vis.Mode {
-	case gfx.DRAW_GLYPH:
-		if vis.Colours.Fore != r.foreDrawColourGlyph {
-			r.setTextureColour(r.glyphs, vis.Colours.Fore, r.foreDrawColourGlyph.A() != vis.Colours.Fore.A())
-			r.foreDrawColourGlyph = vis.Colours.Fore
-		}
-		src := makeRect(int(vis.Glyph%16)*r.tileSize, int(vis.Glyph/16)*r.tileSize, r.tileSize, r.tileSize)
-		r.renderer.Copy(r.glyphs, &src, &dst)
-	case gfx.DRAW_TEXT:
-		if vis.Colours.Fore != r.foreDrawColourText {
-			r.setTextureColour(r.font, vis.Colours.Fore, r.foreDrawColourText.A() != vis.Colours.Fore.A())
-			r.foreDrawColourText = vis.Colours.Fore
-		}
-		dst.W = dst.W / 2
-		for i, char := range vis.Chars {
-			if char == 0 || char == gfx.TEXT_NONE {
-				continue
-			}
-			src := makeRect(int(char%32)*r.tileSize/2, int(char/32)*r.tileSize, r.tileSize/2, r.tileSize)
-			dst.X = dst.X + int32(i*(r.tileSize/2))
-			r.renderer.Copy(r.font, &src, &dst)
-		}
-	}
 }
 
 func (r *Renderer) setTextureColour(tex *sdl.Texture, colour col.Colour, update_alpha bool) {

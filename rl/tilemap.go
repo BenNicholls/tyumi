@@ -2,7 +2,6 @@ package rl
 
 import (
 	"runtime"
-	"slices"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
@@ -16,20 +15,25 @@ var NOT_IN_TILEMAP = vec.Coord{-1, -1}
 type TileMap struct {
 	LightSystem
 	FOVSystem
+	vec.DirtyTracker
 
 	Ready bool // set this to true once level generation is complete! suppresses events while false.
 
 	size  vec.Dims
 	tiles []Tile
 
-	entities []Entity
-	dirty    bool // if the tilemap has been changed and needs to be redrawn
+	//entities []Entity
+}
+
+func (tm *TileMap) getMap() *TileMap {
+	return tm
 }
 
 // Initialize the TileMap. All tiles in the map will be set to defaultTile
 func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	tm.LightSystem.Init(tm)
 	tm.FOVSystem.Init(tm)
+	tm.DirtyTracker.Init(size)
 
 	tm.size = size
 
@@ -62,10 +66,6 @@ func (tm TileMap) Bounds() vec.Rect {
 	return tm.size.Bounds()
 }
 
-func (tm *TileMap) Clean() {
-	tm.dirty = false
-}
-
 func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
 	if !tm.Bounds().Contains(pos) {
 		return
@@ -96,7 +96,7 @@ func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
 
 	ecs.RemoveEntity(oldTile)
 	tm.tiles[pos.ToIndex(tm.size.W)] = tile
-	tm.dirty = true
+	tm.SetDirty(pos)
 }
 
 func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
@@ -118,7 +118,7 @@ func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
 	}
 
 	tm.tiles[pos.ToIndex(tm.size.W)].SetTileType(tileType)
-	tm.dirty = true
+	tm.SetDirty(pos)
 }
 
 func (tm *TileMap) AddEntity(entity Entity, pos vec.Coord) {
@@ -134,8 +134,7 @@ func (tm *TileMap) AddEntity(entity Entity, pos vec.Coord) {
 	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && container.Empty() {
 		entity.MoveTo(pos)
 		container.Add(entity)
-		tm.entities = append(tm.entities, entity)
-		tm.dirty = true
+		tm.SetDirty(pos)
 	}
 }
 
@@ -151,11 +150,8 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 	tile := tm.GetTile(pos)
 	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && !container.Empty() {
 		container.Entity.MoveTo(NOT_IN_TILEMAP)
-		tm.entities = slices.DeleteFunc(tm.entities, func(e Entity) bool {
-			return e == container.Entity
-		})
 		container.Remove()
-		tm.dirty = true
+		tm.SetDirty(pos)
 	}
 }
 
@@ -184,17 +180,11 @@ func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
 	}
 
 	ecs.GetComponent[EntityContainerComponent](toTile).Entity = entity
-	fromTile.RemoveEntity()
+	tm.SetDirty(to)
+	ecs.GetComponent[EntityContainerComponent](fromTile).Entity = INVALID_ENTITY
+	tm.SetDirty(from)
+
 	entity.MoveTo(to)
-	tm.dirty = true
-}
-
-func (tm TileMap) Dirty() bool {
-	return tm.dirty
-}
-
-func (tm *TileMap) SetDirty() {
-	tm.dirty = true
 }
 
 func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
@@ -202,7 +192,7 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 		dst_canvas.DrawVisuals(cursor, depth, tm.CalcTileVisuals(cursor.Subtract(offset)))
 	}
 
-	tm.dirty = false
+	tm.Clean()
 }
 
 func (tm *TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {

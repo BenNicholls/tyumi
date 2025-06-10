@@ -104,6 +104,7 @@ func (lsc *LightSourceComponent) removeAppliedLight(tm *TileMap) {
 		if light != 0 {
 			tm.GetTile(pos).RemoveLight(light)
 			lsc.litTiles[pos] = 0
+			tm.SetDirty(pos)
 		}
 	}
 }
@@ -157,6 +158,7 @@ func (lsc *LightSourceComponent) applyLight(tm *TileMap) {
 		light := max(0, int(lsc.Power)-int(source.DistanceTo(pos)*float64(lsc.FalloffRate)))
 		if delta := light - int(oldLight); delta != 0 {
 			tm.GetTile(pos).ModLight(delta)
+			tm.SetDirty(pos)
 		}
 		lsc.litTiles[pos] = uint8(light)
 	}
@@ -236,7 +238,6 @@ func (ls *LightSystem) Update() {
 	for light := range ecs.EachComponent[LightSourceComponent]() {
 		if light.Dirty {
 			light.applyLight(ls.tileMap)
-			ls.tileMap.dirty = true
 		}
 	}
 }

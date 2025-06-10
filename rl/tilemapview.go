@@ -10,6 +10,7 @@ type drawableTileMap interface {
 	vec.Bounded
 	gfx.DrawableReporter
 	CalcTileVisuals(tile_pos vec.Coord) gfx.Visuals
+	getMap() *TileMap
 }
 
 type TileMapView struct {
@@ -85,12 +86,16 @@ func (tmv *TileMapView) Render() {
 	}
 
 	offset := tmv.cameraOffset.Scale(-1)
+	tilemap := tmv.tilemap.getMap()
 	for cursor := range vec.EachCoordInIntersection(tmv, tmv.tilemap.Bounds().Translated(offset)) {
-		tileVisuals := tmv.tilemap.CalcTileVisuals(cursor.Subtract(offset))
-		if tileVisuals.Mode == gfx.DRAW_NONE {
-			tmv.DrawVisuals(cursor, 0, tmv.DefaultVisuals())
-		} else {
-			tmv.DrawVisuals(cursor, 0, tileVisuals)
+		tileCursor := cursor.Subtract(offset)
+		if tmv.IsRedrawing() || tilemap.IsDirtyAt(tileCursor) {
+			tileVisuals := tmv.tilemap.CalcTileVisuals(tileCursor)
+			if tileVisuals.Mode == gfx.DRAW_NONE {
+				tmv.DrawVisuals(cursor, 0, tmv.DefaultVisuals())
+			} else {
+				tmv.DrawVisuals(cursor, 0, tileVisuals)
+			}
 		}
 	}
 

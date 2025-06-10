@@ -15,7 +15,7 @@ var NOT_IN_TILEMAP = vec.Coord{-1, -1}
 type TileMap struct {
 	LightSystem
 	FOVSystem
-	vec.DirtyTracker
+	gfx.DirtyTracker
 
 	Ready bool // set this to true once level generation is complete! suppresses events while false.
 

@@ -54,7 +54,6 @@ func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
 	for dstCursor := range vec.EachCoordInIntersection(dst_canvas, c.Bounds().Translated(offset)) {
 		srcCursor := dstCursor.Subtract(offset)
 		cell := c.getCell(srcCursor)
-		cell.Dirty = false
 		if cell.Visuals.Mode == DRAW_NONE {
 			continue
 		}
@@ -65,7 +64,7 @@ func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
 		}
 	}
 
-	c.dirty = false
+	c.Clean()
 }
 
 func (c *Canvas) DrawVisuals(pos vec.Coord, depth int, visuals Visuals) {

@@ -255,7 +255,7 @@ func (r *Renderer) Render() {
 	//collect rects and coords, sorted by colour
 	for cursor := range r.console.Bounds().EachCoord() {
 		cell := r.console.GetCell(cursor)
-		if !(cell.Dirty || r.forceRedraw) || cell.Mode == gfx.DRAW_NONE {
+		if !(r.console.IsDirtyAt(cursor) || r.forceRedraw) || cell.Mode == gfx.DRAW_NONE {
 			continue
 		}
 

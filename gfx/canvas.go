@@ -12,10 +12,11 @@ import (
 // All canvas drawing options are z-depth sensitive. They will never draw a lower z value cell over a higher one.
 // The clear function can be used to set a region of a canvas back to -1 z level so you can redraw over it.
 type Canvas struct {
+	DirtyTracker
+
 	cells            []Cell
 	depthmap         []int
-	dirty            bool //true if any cells in the Canvas are dirty and need to be drawn out. TODO: replace this with a dirty bitset
-	transparentCells int  //number of cells with some sort of transparency. if >0, the whole canvas is reported as transparent
+	transparentCells int //number of cells with some sort of transparency. if >0, the whole canvas is reported as transparent
 
 	size   vec.Dims
 	offset vec.Coord //coordinate of the top-left corner. generally (0,0)
@@ -80,6 +81,7 @@ func (c *Canvas) Resize(new_size vec.Dims) {
 	c.size = new_size
 	c.cells = make([]Cell, c.size.Area())
 	c.depthmap = make([]int, c.size.Area())
+	c.DirtyTracker.Init(c.size)
 	c.transparentCells = c.size.Area()
 	c.Clear()
 }
@@ -100,14 +102,6 @@ func (c *Canvas) SetOrigin(pos vec.Coord) {
 	}
 
 	c.offset.X, c.offset.Y = -pos.X, -pos.Y
-}
-
-// Clean sets all cells in the canvas as clean (dirty = false).
-func (c *Canvas) Clean() {
-	for i := range c.cells {
-		c.cells[i].Dirty = false
-	}
-	c.dirty = false
 }
 
 func (c *Canvas) cellIndex(pos vec.Coord) int {
@@ -183,7 +177,7 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 
 	transparent_before := cell.IsTransparent()
 	cell.Visuals = vis
-	cell.Dirty = true
+	c.SetDirty(pos)
 	if transparent_after := cell.IsTransparent(); transparent_after != transparent_before {
 		if transparent_after {
 			c.transparentCells += 1
@@ -191,7 +185,6 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 			c.transparentCells -= 1
 		}
 	}
-	c.dirty = true
 }
 
 func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour col.Colour) {
@@ -266,13 +259,14 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 			}
 		}
 	}
-
-	c.dirty = true
 }
 
-// reports whether the canvas should be drawn out
-func (c Canvas) Dirty() bool {
-	return c.dirty
+func (c *Canvas) IsDirtyAt(pos vec.Coord) bool {
+	return c.DirtyTracker.IsDirtyAt(pos.Subtract(c.offset))
+}
+
+func (c *Canvas) SetDirty(pos vec.Coord) {
+	c.DirtyTracker.SetDirty(pos.Subtract(c.offset))
 }
 
 func (c Canvas) IsTransparent() bool {

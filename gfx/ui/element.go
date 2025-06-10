@@ -476,7 +476,7 @@ func (e *Element) drawChildren() {
 	}
 
 	for coord := range borderLinks.EachElement() {
-		if e.GetCell(coord).Dirty { // this check may be too restrictive...
+		if e.getCanvas().IsDirtyAt(coord) { // this check may be too restrictive...
 			e.linkBorderCell(coord, e.GetDepth(coord))
 		}
 	}

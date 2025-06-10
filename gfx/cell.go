@@ -7,8 +7,6 @@ import (
 // A single tile in a canvas.
 type Cell struct {
 	Visuals
-
-	Dirty bool //this will be true if the cell has been changed since the last time its canvas has been drawn out
 }
 
 // Sets the properties of a cell all at once for Glyph Mode.
@@ -29,9 +27,6 @@ func (c *Cell) SetForeColour(colour col.Colour) {
 	}
 
 	c.Colours.Fore = colour
-	if c.Mode != DRAW_NONE {
-		c.Dirty = true
-	}
 }
 
 func (c *Cell) SetBackColour(colour col.Colour) {
@@ -40,9 +35,6 @@ func (c *Cell) SetBackColour(colour col.Colour) {
 	}
 
 	c.Colours.Back = colour
-	if c.Mode != DRAW_NONE {
-		c.Dirty = true
-	}
 }
 
 func (c *Cell) SetColours(colours col.Pair) {
@@ -51,9 +43,6 @@ func (c *Cell) SetColours(colours col.Pair) {
 	}
 
 	c.Colours = colours
-	if c.Mode != DRAW_NONE {
-		c.Dirty = true
-	}
 }
 
 func (c *Cell) SetGlyph(glyph Glyph) {
@@ -63,7 +52,6 @@ func (c *Cell) SetGlyph(glyph Glyph) {
 
 	c.Mode = DRAW_GLYPH
 	c.Glyph = glyph
-	c.Dirty = true
 }
 
 func (c *Cell) SetText(char1, char2 uint8) {
@@ -81,7 +69,6 @@ func (c *Cell) SetText(char1, char2 uint8) {
 
 	c.Mode = DRAW_TEXT
 	c.Chars[0], c.Chars[1] = char1, char2
-	c.Dirty = true
 }
 
 func (c *Cell) SetChar(char uint8, char_pos TextCellPosition) {
@@ -93,7 +80,6 @@ func (c *Cell) SetChar(char uint8, char_pos TextCellPosition) {
 	if char != TEXT_DEFAULT {
 		c.Chars[int(char_pos)] = char
 	}
-	c.Dirty = true
 }
 
 func (c *Cell) SetBlank() {
@@ -105,7 +91,6 @@ func (c *Cell) SetBlank() {
 	c.Glyph = GLYPH_NONE
 	c.Chars = [2]uint8{0, 0}
 	c.Colours = col.Pair{col.WHITE, col.BLACK}
-	c.Dirty = true
 }
 
 // Sets the cell's Visuals to vis all at once
@@ -115,7 +100,6 @@ func (c *Cell) SetVisuals(visuals Visuals) {
 	}
 
 	c.Visuals = visuals
-	c.Dirty = true
 }
 
 // Re-inits a cell back to default blankness.

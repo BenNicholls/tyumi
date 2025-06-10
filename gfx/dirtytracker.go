@@ -1,10 +1,11 @@
-package vec
+package gfx
 
 import (
 	"iter"
 	"slices"
 
 	"github.com/bennicholls/tyumi/util"
+	"github.com/bennicholls/tyumi/vec"
 )
 
 // DirtyTracker is an embeddable type that implements tracking of dirty coordinates in a grid.
@@ -13,12 +14,12 @@ type DirtyTracker struct {
 	stride int
 }
 
-func (ft *DirtyTracker) Init(size Dims) {
+func (ft *DirtyTracker) Init(size vec.Dims) {
 	ft.dirty.Init(size.Area())
 	ft.stride = size.W
 }
 
-func (ft DirtyTracker) IsDirtyAt(pos Coord) bool {
+func (ft DirtyTracker) IsDirtyAt(pos vec.Coord) bool {
 	return ft.dirty.Get(pos.ToIndex(ft.stride))
 }
 
@@ -26,7 +27,7 @@ func (ft DirtyTracker) Dirty() bool {
 	return !ft.dirty.IsEmpty()
 }
 
-func (ft *DirtyTracker) SetDirty(pos Coord) {
+func (ft *DirtyTracker) SetDirty(pos vec.Coord) {
 	ft.dirty.Set(pos.ToIndex(ft.stride))
 }
 
@@ -48,8 +49,8 @@ func (ft *DirtyTracker) Clean() {
 // Apart from having a different Init() function signature, this is a direct drop-in replacement for the regular
 // DirtyTracker.
 type SpecialDirtyTracker struct {
-	singles util.OrderedSet[Coord]
-	areas   []Rect
+	singles util.OrderedSet[vec.Coord]
+	areas   []vec.Rect
 
 	MaxSingles int
 	MaxAreas   int
@@ -58,10 +59,10 @@ type SpecialDirtyTracker struct {
 func (dt *SpecialDirtyTracker) Init(max_singles, max_areas int) {
 	dt.MaxSingles = max_singles
 	dt.MaxAreas = max_areas
-	dt.areas = make([]Rect, 0, max_areas)
+	dt.areas = make([]vec.Rect, 0, max_areas)
 }
 
-func (dt *SpecialDirtyTracker) SetDirty(pos Coord) {
+func (dt *SpecialDirtyTracker) SetDirty(pos vec.Coord) {
 	if dt.IsDirtyAt(pos) {
 		return
 	}
@@ -72,7 +73,7 @@ func (dt *SpecialDirtyTracker) SetDirty(pos Coord) {
 		return
 	}
 
-	var bestNew, bestExpanded Rect
+	var bestNew, bestExpanded vec.Rect
 	var expandedDelta, area1 int
 
 	// find best rect that combines 2 singles
@@ -101,11 +102,11 @@ func (dt *SpecialDirtyTracker) SetDirty(pos Coord) {
 	}
 
 	if bestNew.Area() < expandedDelta && bestNew.Area() != 0 {
-		dt.singles.RemoveFunc(func(single Coord) bool {
+		dt.singles.RemoveFunc(func(single vec.Coord) bool {
 			return bestNew.Contains(single)
 		})
 
-		dt.areas = slices.DeleteFunc(dt.areas, func(area Rect) bool {
+		dt.areas = slices.DeleteFunc(dt.areas, func(area vec.Rect) bool {
 			return area.IsInside(bestNew)
 		})
 
@@ -113,17 +114,17 @@ func (dt *SpecialDirtyTracker) SetDirty(pos Coord) {
 	} else if bestExpanded.Area() != 0 {
 		dt.areas[area1] = bestExpanded
 		//remove singles that are inside the new expanded area
-		dt.singles.RemoveFunc(func(single Coord) bool {
+		dt.singles.RemoveFunc(func(single vec.Coord) bool {
 			return bestExpanded.Contains(single)
 		})
 
 		//remove any areas consumed by the new expanded area
-		dt.areas = slices.DeleteFunc(dt.areas, func(area Rect) bool {
+		dt.areas = slices.DeleteFunc(dt.areas, func(area vec.Rect) bool {
 			return area.IsInside(bestExpanded)
 		})
 	}
 
-	slices.SortFunc(dt.areas, func(r1, r2 Rect) int {
+	slices.SortFunc(dt.areas, func(r1, r2 vec.Rect) int {
 		a1, a2 := r1.Area(), r2.Area()
 		if a1 < a2 {
 			return -1
@@ -135,11 +136,11 @@ func (dt *SpecialDirtyTracker) SetDirty(pos Coord) {
 	})
 }
 
-func (dt *SpecialDirtyTracker) calcBestNewRect() (best Rect) {
+func (dt *SpecialDirtyTracker) calcBestNewRect() (best vec.Rect) {
 	minArea := 1000000
 	for i := range dt.singles.Count() {
 		for j := i + 1; j < dt.singles.Count(); j++ {
-			rect := CalcRectContainingCoords(dt.singles.At(i), dt.singles.At(j))
+			rect := vec.CalcRectContainingCoords(dt.singles.At(i), dt.singles.At(j))
 			if area := rect.Area(); area < minArea {
 				best = rect
 				if area == 2 {
@@ -153,7 +154,7 @@ func (dt *SpecialDirtyTracker) calcBestNewRect() (best Rect) {
 	return
 }
 
-func (dt *SpecialDirtyTracker) IsDirtyAt(pos Coord) bool {
+func (dt *SpecialDirtyTracker) IsDirtyAt(pos vec.Coord) bool {
 	if dt.singles.Contains(pos) {
 		return true
 	}
@@ -183,8 +184,8 @@ func (dt *SpecialDirtyTracker) Clean() {
 	dt.areas = dt.areas[0:0]
 }
 
-func (dt *SpecialDirtyTracker) EachDirtyCoord() iter.Seq[Coord] {
-	return func(yield func(Coord) bool) {
+func (dt *SpecialDirtyTracker) EachDirtyCoord() iter.Seq[vec.Coord] {
+	return func(yield func(vec.Coord) bool) {
 		for _, coord := range dt.singles.EachElement() {
 			if !yield(coord) {
 				return

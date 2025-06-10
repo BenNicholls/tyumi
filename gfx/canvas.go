@@ -14,7 +14,7 @@ import (
 type Canvas struct {
 	DirtyTracker
 
-	cells            []Cell
+	cells            []Visuals
 	depthmap         []int
 	transparentCells int //number of cells with some sort of transparency. if >0, the whole canvas is reported as transparent
 
@@ -79,7 +79,7 @@ func (c *Canvas) Resize(new_size vec.Dims) {
 	}
 
 	c.size = new_size
-	c.cells = make([]Cell, c.size.Area())
+	c.cells = make([]Visuals, c.size.Area())
 	c.depthmap = make([]int, c.size.Area())
 	c.DirtyTracker.Init(c.size)
 	c.transparentCells = c.size.Area()
@@ -115,7 +115,7 @@ func (c *Canvas) cellIndex(pos vec.Coord) int {
 // GetCell returns the cell at pos. Returns an empty cell if pos is out of bounds.
 // Note that this function just returns the value of the requested cell, not a reference,
 // so you can't change the cell this way. Use the Canvas.Draw* functions for that!
-func (c *Canvas) GetCell(pos vec.Coord) (cell Cell) {
+func (c *Canvas) GetCell(pos vec.Coord) (cell Visuals) {
 	if !c.InBounds(pos) {
 		return
 	}
@@ -124,8 +124,9 @@ func (c *Canvas) GetCell(pos vec.Coord) (cell Cell) {
 	return
 }
 
-func (c *Canvas) getCell(pos vec.Coord) *Cell {
-	return &c.cells[c.cellIndex(pos)]
+// Just a quicker internal version of GetCell that skils the bounds check. Since we know what we're doing... don't we?
+func (c *Canvas) getCell(pos vec.Coord) Visuals {
+	return c.cells[c.cellIndex(pos)]
 }
 
 func (c *Canvas) GetDepth(pos vec.Coord) int {
@@ -171,36 +172,36 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 			vis.Chars[1] = cell.Chars[1]
 		}
 	}
-	if cell.Visuals == vis {
+	if cell == vis {
 		return
 	}
 
-	transparent_before := cell.IsTransparent()
-	cell.Visuals = vis
-	c.SetDirty(pos)
-	if transparent_after := cell.IsTransparent(); transparent_after != transparent_before {
-		if transparent_after {
+	if trans :=vis.IsTransparent(); cell.IsTransparent() != trans {
+		if trans {
 			c.transparentCells += 1
 		} else {
 			c.transparentCells -= 1
 		}
 	}
+
+	c.cells[c.cellIndex(pos)] = vis
+	c.SetDirty(pos)
 }
 
 func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour col.Colour) {
-	v := c.getCell(pos).Visuals
+	v := c.getCell(pos)
 	v.Colours.Fore = colour
 	c.setCell(pos, depth, v)
 }
 
 func (c *Canvas) setBackColour(pos vec.Coord, depth int, colour col.Colour) {
-	v := c.getCell(pos).Visuals
+	v := c.getCell(pos)
 	v.Colours.Back = colour
 	c.setCell(pos, depth, v)
 }
 
 func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
-	v := c.getCell(pos).Visuals
+	v := c.getCell(pos)
 	v.Colours = colours
 	if v.Mode == DRAW_NONE && colours.Back != col.NONE {
 		v.Mode = DRAW_GLYPH
@@ -209,14 +210,14 @@ func (c *Canvas) setColours(pos vec.Coord, depth int, colours col.Pair) {
 }
 
 func (c *Canvas) setGlyph(pos vec.Coord, depth int, glyph Glyph) {
-	v := c.getCell(pos).Visuals
+	v := c.getCell(pos)
 	v.Mode = DRAW_GLYPH
 	v.Glyph = glyph
 	c.setCell(pos, depth, v)
 }
 
 func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 uint8) {
-	v := c.getCell(pos).Visuals
+	v := c.getCell(pos)
 	v.Mode = DRAW_TEXT
 	v.Chars[0], v.Chars[1] = char1, char2
 	c.setCell(pos, depth, v)
@@ -224,7 +225,7 @@ func (c *Canvas) setText(pos vec.Coord, depth int, char1, char2 uint8) {
 
 // Changes a single character on the canvas at position (x,y) in text mode.
 func (c *Canvas) setChar(pos vec.Coord, depth int, char uint8, char_pos TextCellPosition) {
-	v := c.getCell(pos).Visuals
+	v := c.getCell(pos)
 	v.Mode = DRAW_TEXT
 	switch char_pos {
 	case DRAW_TEXT_LEFT:
@@ -291,7 +292,7 @@ func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 
 	copy.SetDefaultVisuals(c.defaultVisuals)
 	for cursor := range vec.EachCoordInIntersection(c, area) {
-		copy.setCell(cursor.Subtract(area.Coord), c.getDepth(cursor), c.getCell(cursor).Visuals)
+		copy.setCell(cursor.Subtract(area.Coord), c.getDepth(cursor), c.getCell(cursor))
 	}
 
 	return

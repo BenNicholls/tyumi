@@ -19,8 +19,7 @@ func (c *Canvas) DrawEffect(effect Effect, areas ...vec.Rect) {
 
 	for _, area := range areas {
 		for cursor := range vec.EachCoordInIntersection(c, area) {
-			cell := c.getCell(cursor)
-			v := effect(cell.Visuals)
+			v := effect(c.getCell(cursor))
 			c.setCell(cursor, c.getDepth(cursor), v)
 		}
 	}

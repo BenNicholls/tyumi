@@ -54,13 +54,13 @@ func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
 	for dstCursor := range vec.EachCoordInIntersection(dst_canvas, c.Bounds().Translated(offset)) {
 		srcCursor := dstCursor.Subtract(offset)
 		cell := c.getCell(srcCursor)
-		if cell.Visuals.Mode == DRAW_NONE {
+		if cell.Mode == DRAW_NONE {
 			continue
 		}
 
 		//draw cell if depth is higher, or if the cell in the destination canvas is DRAW_NONE
 		if dst_canvas.getDepth(dstCursor) <= depth || dst_canvas.getCell(dstCursor).Mode == DRAW_NONE {
-			dst_canvas.setCell(dstCursor, depth, cell.Visuals)
+			dst_canvas.setCell(dstCursor, depth, cell)
 		}
 	}
 

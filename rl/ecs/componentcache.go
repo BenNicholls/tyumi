@@ -22,7 +22,6 @@ var typeMap map[reflect.Type]componentID
 // so we can't put those functions in the interface here.
 type componentContainer interface {
 	copyComponent(id Entity, new_id Entity)
-	hasComponent(id Entity) bool
 	removeComponent(id Entity)
 }
 
@@ -33,34 +32,22 @@ func init() {
 
 type componentCache[T componentType] struct {
 	components []T
-	indices    map[Entity]uint32 //index of entity index to component index in the cache. TODO: make this not a map someday.
-}
-
-func (cc componentCache[T]) getComponent(entity Entity) *T {
-	if cc.indices == nil {
-		return nil
-	}
-
-	if componentIdx, ok := cc.indices[entity]; ok {
-		return &cc.components[componentIdx]
-	} else {
-		return nil
-	}
+	compID     componentID
 }
 
 // adds a component for the specified entity. optionally allows you to provide an initial value for the newly created
 // component
 func (cc *componentCache[T]) addComponent(entity Entity, init ...T) {
-	if cc.hasComponent(entity) {
+	info := entity.info()
+	if info.hasComponent(cc.compID) {
 		return
 	}
 
-	if cc.indices == nil {
-		cc.indices = make(map[Entity]uint32)
+	if cc.components == nil {
 		cc.components = make([]T, 0)
 	}
 
-	cc.indices[entity] = uint32(len(cc.components))
+	info.setComponentIndex(cc.compID, uint32(len(cc.components)))
 
 	var newComponent T
 	if len(init) > 0 {
@@ -80,29 +67,27 @@ func (cc *componentCache[T]) addComponent(entity Entity, init ...T) {
 
 // creates a copy of entity's component, assigned to copy
 func (cc *componentCache[T]) copyComponent(entity, copy Entity) {
-	cc.addComponent(copy, cc.components[cc.indices[entity]])
-}
-
-func (cc *componentCache[T]) hasComponent(entity Entity) bool {
-	_, ok := cc.indices[entity]
-	return ok
+	if compIdx, ok := entity.info().getComponentIndex(cc.compID); ok {
+		cc.addComponent(copy, cc.components[compIdx])
+	}
 }
 
 func (cc *componentCache[T]) removeComponent(entity Entity) {
-	idx, ok := cc.indices[entity]
+	idx, ok := entity.info().getComponentIndex(cc.compID)
 	if !ok {
 		return
 	}
+
+	entity.info().removeComponentIndex(cc.compID)
 
 	// covertly convert component to the settable form and run a cleanup function if it is defined.
 	var i any = &cc.components[idx]
 	i.(settableComponentType).Cleanup()
 
-	delete(cc.indices, entity) // delete saved index for removed component
 	endIndex := len(cc.components) - 1
 	if idx != uint32(endIndex) { // if removed entity is NOT the final entity in the component:
-		cc.components[idx] = cc.components[endIndex]     // overwrite removed component with component on the end
-		cc.indices[cc.components[idx].GetEntity()] = idx // update index for component that was moved
+		cc.components[idx] = cc.components[endIndex]                            // overwrite removed component with component on the end
+		cc.components[idx].GetEntity().info().setComponentIndex(cc.compID, idx) // update index for component that was moved
 	}
 
 	var zero T
@@ -110,7 +95,7 @@ func (cc *componentCache[T]) removeComponent(entity Entity) {
 	cc.components = cc.components[:endIndex] // reslice component list to new len
 }
 
-func getComponentCache[T componentType]() *componentCache[T] {
+func getComponentID[T componentType]() componentID {
 	componentType := reflect.TypeFor[T]()
 	componentID, ok := typeMap[componentType]
 	if !ok {
@@ -118,5 +103,9 @@ func getComponentCache[T componentType]() *componentCache[T] {
 		panic("Unregistered component detected! (see log)")
 	}
 
-	return componentCaches[componentID].(*componentCache[T])
+	return componentID
+}
+
+func getComponentCache[T componentType]() *componentCache[T] {
+	return componentCaches[getComponentID[T]()].(*componentCache[T])
 }

@@ -14,8 +14,8 @@ type testComponent struct {
 }
 
 func countAliveEntities() (count int) {
-	for _, entity := range entities {
-		if entity != INVALID_ID {
+	for _, info := range entities {
+		if info.entity != INVALID_ID {
 			count++
 		}
 	}
@@ -36,7 +36,7 @@ func TestEntityAddRemove(t *testing.T) {
 	}
 
 	for range batchAdds / 2 {
-		if entity := util.PickOne(entities); entity != INVALID_ID {
+		if entity := util.PickOne(entities).entity; entity != INVALID_ID {
 			RemoveEntity(entity)
 			if Alive(entity) {
 				t.Error("Entity remove failed")
@@ -59,7 +59,7 @@ func TestEntityAddRemove(t *testing.T) {
 	}
 
 	for range batchAdds / 2 {
-		if entity := util.PickOne(entities); entity != INVALID_ID {
+		if entity := util.PickOne(entities).entity; entity != INVALID_ID {
 			RemoveEntity(entity)
 			if Alive(entity) {
 				t.Error("Entity remove failed")

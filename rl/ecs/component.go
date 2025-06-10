@@ -46,8 +46,9 @@ func RegisterComponent[T componentType]() {
 	}
 
 	var newCache componentCache[T]
+	newCache.compID = componentID(len(componentCaches))
+	typeMap[t] = newCache.compID
 	componentCaches = append(componentCaches, &newCache)
-	typeMap[t] = componentID(len(componentCaches) - 1)
 }
 
 // AddComponent adds a new component of type T to an entity. The component type must be registered; if not, a panic
@@ -70,7 +71,14 @@ func GetComponent[T componentType, ET ~uint32](entity ET) (component *T) {
 		return nil
 	}
 
-	return getComponentCache[T]().getComponent(Entity(entity))
+	compID := getComponentID[T]()
+	componentIndex, ok := Entity(entity).info().getComponentIndex(compID)
+	if !ok {
+		return nil
+	}
+
+	cache := componentCaches[compID].(*componentCache[T])
+	return &cache.components[componentIndex]
 }
 
 // HasComponent returns true if the entity contains the requested component.
@@ -80,7 +88,7 @@ func HasComponent[T componentType, ET ~uint32](entity ET) bool {
 		return false
 	}
 
-	return getComponentCache[T]().hasComponent(Entity(entity))
+	return Entity(entity).info().hasComponent(getComponentID[T]())
 }
 
 // RemoveComponent removes the component of type T from the entity. If the entity does not have the requested component,
@@ -100,10 +108,9 @@ func ToggleComponent[T componentType, ET ~uint32](entity ET, init ...T) {
 		log.Error("Cannot toggle " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity.")
 	}
 
-	cache := getComponentCache[T]()
-	if cache.hasComponent(Entity(entity)) {
-		cache.removeComponent(Entity(entity))
+	if compID := getComponentID[T](); Entity(entity).info().hasComponent(compID) {
+		getComponentCache[T]().removeComponent(Entity(entity))
 	} else {
-		cache.addComponent(Entity(entity), init...)
+		getComponentCache[T]().addComponent(Entity(entity), init...)
 	}
 }

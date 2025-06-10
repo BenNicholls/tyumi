@@ -1,10 +1,12 @@
 package ecs
 
 import (
+	"slices"
+
 	"github.com/bennicholls/tyumi/log"
 )
 
-var entities []Entity
+var entities []entityInfo
 var freeIndices chan uint32
 var generations []uint8
 
@@ -15,12 +17,16 @@ const indexMask uint32 = 0x00ffffff
 const generationMask uint32 = 0xff000000
 
 func init() {
-	entities = make([]Entity, 0)
+	entities = make([]entityInfo, 0)
 	freeIndices = make(chan uint32, 256)
 	generations = make([]uint8, 0)
 }
 
 type Entity uint32
+
+func (e Entity) info() *entityInfo {
+	return &entities[index(e)]
+}
 
 // Valid reports whether an entity ID is valid and properly formed.
 func Valid[ET ~uint32](entity ET) (valid bool) {
@@ -29,7 +35,7 @@ func Valid[ET ~uint32](entity ET) (valid bool) {
 		// if in debug mode, we also check to see if the id's index doesn't overflow the entity list. this should never
 		// be possible with actual ids from the ecs, but we do the check just in case some user acidentally passes
 		// in some other kind of uint32 from somewhere else
-		 valid = valid && (index(entity) < uint32(len(entities)))
+		valid = valid && (index(entity) < uint32(len(entities)))
 	}
 
 	return
@@ -37,7 +43,7 @@ func Valid[ET ~uint32](entity ET) (valid bool) {
 
 // Alive reports whether an entity is valid and has not been removed from the ECS.
 func Alive[ET ~uint32](entity ET) bool {
-	return Valid(entity) && Entity(entity) == entities[index(entity)]
+	return Valid(entity) && Entity(entity) == entities[index(entity)].entity
 }
 
 func index[ET ~uint32](entity ET) uint32 {
@@ -48,7 +54,11 @@ func index[ET ~uint32](entity ET) uint32 {
 func CreateEntity() (entity Entity) {
 	if len(freeIndices) < maxFreeIDs { //append to entities list, return ID with generation 0
 		entity = Entity(len(entities) + 1) // REMEMBER: this is +1 because zero is the INVALID_ID
-		entities = append(entities, entity)
+		info := entityInfo{
+			entity:           entity,
+			componentIndices: make([]uint32, 0),
+		}
+		entities = append(entities, info)
 		generations = append(generations, 0)
 	} else { // take first free ID, retrieve generation for that slot, increment, compile ID, store new ID and gen, return
 		idx := <-freeIndices
@@ -64,7 +74,7 @@ func CreateEntity() (entity Entity) {
 		}
 		generations[idx] = uint8(gen)
 		entity = Entity((idx + 1) | (gen << 24))
-		entities[idx] = entity
+		entities[idx].entity = entity
 	}
 
 	return
@@ -80,9 +90,9 @@ func CopyEntity[ET ~uint32](entity ET) (copy Entity) {
 
 	copy = CreateEntity()
 
-	for _, cache := range componentCaches {
-		if cache.hasComponent(Entity(entity)) {
-			cache.copyComponent(Entity(entity), copy)
+	for compID, idx := range Entity(entity).info().componentIndices {
+		if idx != 0 {
+			componentCaches[compID].copyComponent(Entity(entity), copy)
 		}
 	}
 
@@ -96,12 +106,16 @@ func RemoveEntity[ET ~uint32](entity ET) {
 		return
 	}
 
-	entities[index(entity)] = INVALID_ID
+	Entity(entity).info().entity = INVALID_ID
 	addFreeID(index(entity))
 
-	for _, cache := range componentCaches {
-		cache.removeComponent(Entity(entity))
+	for compID, idx := range Entity(entity).info().componentIndices {
+		if idx != 0 {
+			componentCaches[compID].removeComponent(Entity(entity))
+		}
 	}
+
+	clear(Entity(entity).info().componentIndices)
 }
 
 func addFreeID(idx uint32) {
@@ -115,4 +129,49 @@ func addFreeID(idx uint32) {
 	}
 
 	freeIndices <- idx
+}
+
+type entityInfo struct {
+	entity           Entity
+	componentIndices []uint32 //
+}
+
+func (ei entityInfo) getComponentIndex(comp_id componentID) (uint32, bool) {
+	if int(comp_id) >= len(ei.componentIndices) {
+		return 0, false
+	}
+
+	if idx := ei.componentIndices[comp_id]; idx == 0 {
+		return 0, false
+	} else {
+		return idx - 1, true
+	}
+}
+
+func (ei *entityInfo) setComponentIndex(comp_id componentID, idx uint32) {
+	if int(comp_id) >= cap(ei.componentIndices) {
+		ei.componentIndices = slices.Grow(ei.componentIndices, int(comp_id)-cap(ei.componentIndices)+1)
+	}
+
+	if int(comp_id) >= len(ei.componentIndices) {
+		ei.componentIndices = ei.componentIndices[:int(comp_id)+1]
+	}
+
+	ei.componentIndices[comp_id] = idx + 1 // indexes are stored incremented by 1 so 0 can indicate no component.
+}
+
+func (ei *entityInfo) removeComponentIndex(comp_id componentID) {
+	if int(comp_id) >= len(ei.componentIndices) {
+		return
+	}
+
+	ei.componentIndices[comp_id] = 0
+}
+
+func (ei entityInfo) hasComponent(comp_id componentID) bool {
+	if int(comp_id) >= len(ei.componentIndices) {
+		return false
+	}
+
+	return ei.componentIndices[comp_id] != 0
 }

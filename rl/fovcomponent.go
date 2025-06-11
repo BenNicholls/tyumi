@@ -66,18 +66,6 @@ func (fov *FOVComponent) SetSightRange(sight_range uint8) {
 	fov.Dirty = true
 }
 
-// call this when a change that could affect FOV happens. If the change is within the current FOV, sets the dirty flag
-// so FOV is recomputed before being accessed again.
-func (fov *FOVComponent) OnEnvironmentChange(pos vec.Coord) {
-	if fov.Dirty || fov.Blind || fov.Omniscient {
-		return
-	}
-
-	if fov.field.Contains(pos) {
-		fov.Dirty = true
-	}
-}
-
 func (fov *FOVComponent) InFOV(pos vec.Coord) bool {
 	if fov.Omniscient {
 		return true
@@ -86,22 +74,6 @@ func (fov *FOVComponent) InFOV(pos vec.Coord) bool {
 	}
 
 	return fov.field.Contains(pos)
-}
-
-// Runs the shadowcaster for the tilemap and updates this entity's FOV set.
-func (fov *FOVComponent) UpdateFOV(tileMap *TileMap) {
-	fov.Dirty = false
-
-	if fov.Blind || fov.Omniscient {
-		return
-	}
-
-	pos := ecs.Get[PositionComponent](fov.GetEntity()).Coord
-	if pos == NOT_IN_TILEMAP {
-		return
-	}
-
-	tileMap.ShadowCast(pos, int(fov.SightRange), GetSpacesSetCast(&fov.field))
 }
 
 type FOVSystem struct {
@@ -121,29 +93,29 @@ func (fs *FOVSystem) handleEvents(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_ENTITYMOVED:
 		moveEvent := e.(*EntityMovedEvent)
-
 		for fov := range ecs.EachComponent[FOVComponent]() {
 			if Entity(fov.GetEntity()) == moveEvent.Entity {
 				fov.Dirty = true
 				continue
 			}
 
-			if fov.TrackEntities {
-				if fov.InFOV(moveEvent.From) && !fov.InFOV(moveEvent.To) {
-					// entity moved away
-					fov.entities.Remove(moveEvent.Entity)
-					event.Fire(EV_LOSTSIGHT, &EntitySightEvent{
-						Viewer:        Entity(fov.GetEntity()),
-						TrackedEntity: moveEvent.Entity})
-				} else if fov.InFOV(moveEvent.To) && !fov.InFOV(moveEvent.From) {
-					//entity moved into the fov
-					fov.entities.Add(moveEvent.Entity)
-					event.Fire(EV_GAINEDSIGHT, &EntitySightEvent{
-						Viewer:        Entity(fov.GetEntity()),
-						TrackedEntity: moveEvent.Entity})
-				}
+			if !fov.TrackEntities {
+				continue
 			}
 
+			if fov.InFOV(moveEvent.From) && !fov.InFOV(moveEvent.To) { // entity moved away
+				fov.entities.Remove(moveEvent.Entity)
+				event.Fire(EV_LOSTSIGHT, &EntitySightEvent{
+					Viewer:        Entity(fov.GetEntity()),
+					TrackedEntity: moveEvent.Entity},
+				)
+			} else if fov.InFOV(moveEvent.To) && !fov.InFOV(moveEvent.From) { //entity moved into the fov
+				fov.entities.Add(moveEvent.Entity)
+				event.Fire(EV_GAINEDSIGHT, &EntitySightEvent{
+					Viewer:        Entity(fov.GetEntity()),
+					TrackedEntity: moveEvent.Entity},
+				)
+			}
 		}
 
 		return true
@@ -175,7 +147,7 @@ func (fs *FOVSystem) Update() {
 		}
 
 		if fov.Dirty {
-			fov.UpdateFOV(fs.tileMap)
+			fs.computeFOV(fov)
 
 			if fov.TrackEntities {
 				var newEntities util.Set[Entity]
@@ -204,12 +176,27 @@ func (fs *FOVSystem) Update() {
 							Viewer:        Entity(fov.GetEntity()),
 							TrackedEntity: entity})
 					}
-				}
 
-				fov.entities = newEntities
+					fov.entities = newEntities
+				}
 			}
 		}
 	}
 
 	fs.changedVisbilityTiles.RemoveAll()
+}
+
+func (fs *FOVSystem) computeFOV(fov *FOVComponent) {
+	fov.Dirty = false
+
+	if fov.Blind || fov.Omniscient {
+		return
+	}
+
+	pos := ecs.Get[PositionComponent](fov.GetEntity()).Coord
+	if pos == NOT_IN_TILEMAP {
+		return
+	}
+
+	fs.tileMap.ShadowCast(pos, int(fov.SightRange), GetSpacesSetCast(&fov.field))
 }

@@ -15,13 +15,12 @@ import (
 var BorderDepth int = 50
 
 type Border struct {
-	enabled bool
-	title   string
-	hint    string
-	colours col.Pair
-
+	enabled     bool
+	dirty       bool
 	styleFlag   borderStyleFlag
 	customStyle *BorderStyle
+	colours     col.Pair
+	title, hint string
 
 	//SCROLLBAR STUFF. for now, only vertical scrollbar for lists and the like.
 	scrollbar                 bool //whether the scrollbar is enabled. scrollbar will be drawn whenever content doesn't fit
@@ -30,8 +29,6 @@ type Border struct {
 
 	internalLinks             util.Set[vec.Coord]
 	internalLinksRecalculated bool // true if the internallinks have been changed this frame. cleared during finalizerender()
-
-	dirty bool
 }
 
 // Sets the border style flag. Options are:
@@ -201,14 +198,12 @@ func (e *Element) drawBorder() {
 
 	//decorate and draw title
 	if e.Border.title != "" {
-		decoratedTitle := style.DecorateText(e.Border.title, style.TitleJustification)
-		var offset int
-		switch style.TitleJustification {
-		case JUSTIFY_LEFT:
-			offset = 0
-		case JUSTIFY_CENTER:
+		decoratedTitle := style.decorateText(e.Border.title, style.TitleAlignment)
+		offset := 0
+		switch style.TitleAlignment {
+		case ALIGN_CENTER:
 			offset = (e.size.W - len(decoratedTitle)/2) / 2
-		case JUSTIFY_RIGHT:
+		case ALIGN_RIGHT:
 			offset = e.size.W - len([]rune(decoratedTitle))/2 - 1
 		}
 		e.DrawText(vec.Coord{offset, -1}, BorderDepth+1, decoratedTitle, style.Colours, gfx.DRAW_TEXT_LEFT)
@@ -216,14 +211,12 @@ func (e *Element) drawBorder() {
 
 	//decorate and draw hint
 	if e.Border.hint != "" {
-		decoratedHint := style.DecorateText(e.Border.hint, style.HintJustification)
-		var offset int
-		switch style.HintJustification {
-		case JUSTIFY_LEFT:
-			offset = 0
-		case JUSTIFY_CENTER:
+		decoratedHint := style.decorateText(e.Border.hint, style.HintAlignment)
+		offset := 0
+		switch style.HintAlignment {
+		case ALIGN_CENTER:
 			offset = (e.size.W - len(decoratedHint)/2) / 2
-		case JUSTIFY_RIGHT:
+		case ALIGN_RIGHT:
 			offset = e.size.W - len([]rune(decoratedHint))/2
 		}
 		e.DrawText(vec.Coord{offset, rect.H - 2}, BorderDepth+1, decoratedHint, style.Colours, 0)

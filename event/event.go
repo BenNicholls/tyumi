@@ -62,17 +62,18 @@ func Fire(ID EventID, events ...Event) {
 		return
 	}
 
-	if len(events) == 0 {
+	if len(events) == 0 { // no provided event, fire a simple event with just the id
 		e := EventPrototype{id: ID}
 		for stream := range registeredEvents[ID].listeners.EachElement() {
 			stream.add(&e)
 		}
-	} else { // no provided event, fire a simple event with just the id
-		for _, e := range events {
-			e.setID(ID)
-			for stream := range registeredEvents[ID].listeners.EachElement() {
-				stream.add(e)
-			}
+		return
+	}
+
+	for _, e := range events {
+		e.setID(ID)
+		for stream := range registeredEvents[ID].listeners.EachElement() {
+			stream.add(e)
 		}
 	}
 }

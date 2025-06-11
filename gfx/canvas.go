@@ -41,7 +41,7 @@ func (c *Canvas) Init(size vec.Dims) {
 
 // Returns true if the canvas has been initialized and is non-zero in size
 func (c Canvas) Ready() bool {
-	return c.cells != nil && len(c.cells) != 0
+	return len(c.cells) != 0
 }
 
 func (c Canvas) String() string {
@@ -154,16 +154,20 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 	c.setDepth(pos, depth)
 
 	cell := c.getCell(pos)
-	if vis.Colours.Fore == COL_DEFAULT {
+	switch vis.Colours.Fore {
+	case COL_DEFAULT:
 		vis.Colours.Fore = c.defaultVisuals.Colours.Fore
-	} else if vis.Colours.Fore == col.NONE {
+	case col.NONE:
 		vis.Colours.Fore = cell.Colours.Fore
 	}
-	if vis.Colours.Back == COL_DEFAULT {
+
+	switch vis.Colours.Back {
+	case COL_DEFAULT:
 		vis.Colours.Back = c.defaultVisuals.Colours.Back
-	} else if vis.Colours.Back == col.NONE {
+	case col.NONE:
 		vis.Colours.Back = cell.Colours.Back
 	}
+
 	if vis.Mode == DRAW_TEXT {
 		if vis.Chars[0] == TEXT_DEFAULT {
 			vis.Chars[0] = cell.Chars[0]
@@ -172,11 +176,12 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 			vis.Chars[1] = cell.Chars[1]
 		}
 	}
+	
 	if cell == vis {
 		return
 	}
 
-	if trans :=vis.IsTransparent(); cell.IsTransparent() != trans {
+	if trans := vis.IsTransparent(); cell.IsTransparent() != trans {
 		if trans {
 			c.transparentCells += 1
 		} else {

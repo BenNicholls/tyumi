@@ -12,7 +12,7 @@ import (
 // Pow is an integer power function. Doesn't ~~do~~ negative exponents. Totally does 0 though.
 func Pow(value, exponent int) int {
 	v := 1
-	for i := 0; i < exponent; i++ {
+	for range exponent {
 		v = v * value
 	}
 	return v

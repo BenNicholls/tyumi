@@ -13,11 +13,12 @@ func (p *Platform) processEvents() {
 	//save mouse position so we can detect if we've moved to a new cell and fire a mouse move event
 	new_mouse_pos := p.mouse_position
 
+eventLoop:
 	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
 		switch e := sdlevent.(type) {
 		case *sdl.QuitEvent:
 			event.Fire(tyumi.EV_QUIT)
-			break //don't care about other input events if we're quitting
+			break eventLoop //don't care about other input events if we're quitting
 		case *sdl.WindowEvent:
 			if e.Event == sdl.WINDOWEVENT_RESIZED {
 				p.renderer.onWindowResize()
@@ -46,6 +47,4 @@ func (p *Platform) processEvents() {
 		input.FireMouseMoveEvent(new_mouse_pos, new_mouse_pos.Subtract(p.mouse_position))
 		p.mouse_position = new_mouse_pos
 	}
-
-	return
 }

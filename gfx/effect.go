@@ -9,9 +9,8 @@ import (
 // passed to Canvas.DrawEffect() to apply the effect to areas of the canvas
 type Effect func(Visuals) Visuals
 
-// Applies the provided effect to each cell within the provided areas. If no areas are provided,
-// applies it to the whole canvas. If multiple areas overlap, the effect will be applied multiple
-// times!
+// Applies the provided effect to each cell within the provided areas. If no areas are provided, applies it to the whole
+// canvas. If multiple areas overlap, the effect will be applied multiple times!
 func (c *Canvas) DrawEffect(effect Effect, areas ...vec.Rect) {
 	if len(areas) == 0 {
 		areas = append(areas, c.Bounds())

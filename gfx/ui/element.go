@@ -78,18 +78,18 @@ type Element struct {
 	gfx.Canvas
 	util.TreeNode[element]
 	event.Stream
-	Border      Border //the element's border data. use EnableBorder() to turn on
 	Updated     bool   //indicates this object's state has changed and needs to be re-rendered.
 	AcceptInput bool   // if true, the element will be sent inputs when in a window with SendEventsToUnfocused = true
 	OnRender    func() // a callback, called when the element renders (unless the element has custom rendering logic)
+	Border      Border //the element's border data. use EnableBorder() to turn on
 
+	visible     bool           //visibility, controlled via Show() and Hide()
+	focused     bool           //focus state. by default, only focused elements receive input
+	forceRedraw bool           //indicates this object needs to clear and render everything from zero
 	position    vec.Coord      //position relative to parent
 	size        vec.Dims       //size of the drawable area of the element
 	depth       int            //depth for the UI system, relative to the element's parent.
 	id          ElementID      //a unique ID for the element
-	visible     bool           //visibility, controlled via Show() and Hide()
-	focused     bool           //focus state. by default, only focused elements receive input
-	forceRedraw bool           //indicates this object needs to clear and render everything from zero
 	label       string         //an optional identifier for the element
 	animations  []gfx.Animator //animations on this element. these are updated once per frame while playing
 }
@@ -282,9 +282,7 @@ func (e *Element) RemoveAllChildren() {
 // Update() can be overriden to update the state of the UI Element. Update() is called on each tick. If the element's
 // state is changed and need to be redrawn, you can set its Updated flag to true to trigger a render on the next frame.
 // Note that the element's animations are updated separately and do not need to be managed here.
-func (e *Element) Update() {
-	return
-}
+func (e *Element) Update() {}
 
 // Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour. If
 // this method has not been overriden, it attempts to call the user-provided OnRender() callback, if any.
@@ -374,9 +372,7 @@ func (e *Element) prepareRender() {
 }
 
 // this is called during rendering if you want code run in the case a child-draw occurs and dirties the canvas.
-func (e *Element) renderIfDirty() {
-	return
-}
+func (e *Element) renderIfDirty() {}
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
 func (e *Element) finalizeRender() {
@@ -440,8 +436,7 @@ func (e *Element) drawChildren() {
 	// collect opaque and transparent children, sort accordingly, and recombine into a drawlist.
 	// opaque children can be drawn high to low to prevent overdraw, but transparent ones must be drawn low to high
 	// like Bob Ross would.
-	var opaque []element
-	var transparent []element
+	var opaque, transparent []element
 
 	for _, child := range e.GetChildren() {
 		if !child.IsVisible() {
@@ -471,12 +466,12 @@ func (e *Element) drawChildren() {
 		child.Draw(&e.Canvas)
 	}
 
-	if !e.Canvas.Dirty() {
+	if !e.Dirty() {
 		return
 	}
 
 	for coord := range borderLinks.EachElement() {
-		if e.getCanvas().IsDirtyAt(coord) { // this check may be too restrictive...
+		if e.IsDirtyAt(coord) { // this check may be too restrictive...
 			e.linkBorderCell(coord, e.GetDepth(coord))
 		}
 	}
@@ -495,7 +490,7 @@ func (e *Element) AddAnimation(animation gfx.Animator) {
 
 	e.animations = append(e.animations, animation)
 
-	//if we're added a blocking animation during an update, make sure the window knows to stop updating
+	//if we're adding a blocking animation during an update, make sure the window knows to stop updating
 	if animation.IsBlocking() && animation.IsPlaying() {
 		if wnd := e.getWindow(); wnd != nil {
 			wnd.onBlockingAnimationAdded()

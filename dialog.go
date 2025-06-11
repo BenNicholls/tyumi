@@ -42,7 +42,7 @@ func (md *MessageDialog) Init(title, message string) {
 	md.Scene.InitCentered(vec.Dims{mainConsole.Size().W / 2, 12})
 	md.Window().EnableBorder()
 
-	messageText := ui.NewTextbox(vec.Dims{md.Window().Size().W, ui.FIT_TEXT}, vec.Coord{0, 1}, 0, message, ui.JUSTIFY_CENTER)
+	messageText := ui.NewTextbox(vec.Dims{md.Window().Size().W, ui.FIT_TEXT}, vec.Coord{0, 1}, 0, message, ui.ALIGN_CENTER)
 	md.Window().AddChild(messageText)
 	messageText.MoveTo(vec.Coord{0, (9 - messageText.Size().H) / 2})
 	messageText.CenterHorizontal()

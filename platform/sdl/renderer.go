@@ -52,13 +52,13 @@ func (r *Renderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string)
 	r.window, err = sdl.CreateWindow(title, sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, 800, 600, sdl.WINDOW_OPENGL|sdl.WINDOW_RESIZABLE)
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to create window. sdl: ", sdl.GetError())
-		return errors.New("Failed to create window.")
+		return errors.New("failed to create window")
 	}
 
 	r.renderer, err = sdl.CreateRenderer(r.window, -1, sdl.RENDERER_ACCELERATED)
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to create renderer. sdl: ", sdl.GetError())
-		return errors.New("Failed to create renderer.")
+		return errors.New("failed to create renderer")
 	}
 
 	r.renderer.SetLogicalSize(800, 600)
@@ -121,7 +121,7 @@ func (r *Renderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 		r.tileSize = int(gw / 16)
 		if r.console == nil {
 			log.Error("SDL RENDERER: Console not initialized, cannot determine screen size.")
-			err = errors.New("Console not intialized")
+			err = errors.New("console not intialized")
 			return
 		}
 		console_size := r.console.Size()
@@ -144,14 +144,13 @@ func (r *Renderer) ChangeFonts(glyphPath, fontPath string) (err error) {
 func (r *Renderer) loadTexture(path string) (*sdl.Texture, error) {
 	bmpImage, err := sdl.LoadBMP(path)
 	defer bmpImage.Free()
-
-	image, err := bmpImage.ConvertFormat(sdl.PIXELFORMAT_RGBA8888, 0)
-	defer image.Free()
-
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to load image: ", sdl.GetError())
-		return nil, errors.New("Failed to load image")
+		return nil, errors.New("failed to load image")
 	}
+
+	image, _ := bmpImage.ConvertFormat(sdl.PIXELFORMAT_RGBA8888, 0)
+	defer image.Free()
 
 	keyColour := color.NRGBA{255, 0, 255, 255}
 	transparent := color.NRGBA{0, 0, 0, 0}
@@ -175,14 +174,14 @@ func (r *Renderer) loadTexture(path string) (*sdl.Texture, error) {
 	texture, err := r.renderer.CreateTextureFromSurface(image)
 	if err != nil {
 		log.Error("SDL RENDERER: Failed to create texture: ", sdl.GetError())
-		return nil, errors.New("Failed to create texture")
+		return nil, errors.New("failed to create texture")
 	}
 
 	err = texture.SetBlendMode(sdl.BLENDMODE_BLEND)
 	if err != nil {
 		texture.Destroy()
 		log.Error("SDL RENDERER: Failed to set blendmode: ", sdl.GetError())
-		return nil, errors.New("Failed to set blendmode")
+		return nil, errors.New("failed to set blendmode")
 	}
 
 	return texture, nil
@@ -249,13 +248,14 @@ func (r *Renderer) Render() {
 		r.debugColour = col.MakeOpaque(
 			uint8((r.frames*10)%255),
 			uint8(((r.frames+100)*10)%255),
-			uint8(((r.frames+200)*10)%255))
+			uint8(((r.frames+200)*10)%255),
+		)
 	}
 
 	//collect rects and coords, sorted by colour
 	for cursor := range r.console.Bounds().EachCoord() {
 		cell := r.console.GetCell(cursor)
-		if !(r.console.IsDirtyAt(cursor) || r.forceRedraw) || cell.Mode == gfx.DRAW_NONE {
+		if (!r.console.IsDirtyAt(cursor) && !r.forceRedraw) || cell.Mode == gfx.DRAW_NONE {
 			continue
 		}
 
@@ -375,9 +375,6 @@ func (r *Renderer) ForceRedraw() {
 
 func (r *Renderer) ToggleDebugMode(m string) {
 	switch m {
-	case "fps":
-		//sdlr.showFPS = !sdlr.showFPS
-		log.Warning("SDL RENDERER: FPS display doesn't work, largely due to laziness. Oops.")
 	case "changes":
 		r.showChanges = !r.showChanges
 		log.Debug("SDL RENDERER: Enabled cell change display debug mode.")

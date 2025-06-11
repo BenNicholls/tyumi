@@ -23,7 +23,7 @@ type Button struct {
 }
 
 func (b *Button) Init(size vec.Dims, pos vec.Coord, depth int, text string, on_press func()) {
-	b.Textbox.Init(size, pos, depth, text, JUSTIFY_CENTER)
+	b.Textbox.Init(size, pos, depth, text, ALIGN_CENTER)
 	b.TreeNode.Init(b)
 
 	b.OnPressCallback = on_press

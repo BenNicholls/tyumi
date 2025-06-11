@@ -137,16 +137,12 @@ func (s *Scene) init(size vec.Dims, pos vec.Coord, bordered bool) {
 
 // Update is run each tick, after input has been handled and before UI is updated/rendered. Override this function
 // with your primary game code!
-func (s *Scene) Update() {
-	return
-}
+func (s *Scene) Update() {}
 
 // UpdateUI is called before each frame is rendered, allowing you to apply ui changes for rendering all at once if
 // you prefer. Otherwise you can implement Update() functions on the individual UI elements themselves and have them
 // control their own behaviour.
-func (s *Scene) UpdateUI() {
-	return
-}
+func (s *Scene) UpdateUI() {}
 
 func (s *Scene) OpenDialog(subScene dialog) {
 	if !subScene.Ready() {
@@ -194,9 +190,7 @@ func (s *Scene) cleanup() {
 // Shutdown is called when the scene is no longer needed and should cleanly pack itself away (for example, when
 // switching to another scene or closing the program). Override this function and use it to free resources, save things
 // to disk, whatever you need to do.
-func (s *Scene) Shutdown() {
-	return
-}
+func (s *Scene) Shutdown() {}
 
 func (s *Scene) Window() *ui.Window {
 	return s.window

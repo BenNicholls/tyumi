@@ -9,46 +9,47 @@ import (
 
 const FIT_TEXT int = 50000
 
-// Determines how to justify text
-type Justification int
+// Determines how to align text
+type Alignment uint8
 
 const (
-	JUSTIFY_LEFT Justification = iota
-	JUSTIFY_CENTER
-	JUSTIFY_RIGHT
+	ALIGN_LEFT Alignment = iota
+	ALIGN_CENTER
+	ALIGN_RIGHT
 )
 
 type Textbox struct {
 	Element
 
-	text       string //text to be displayed
-	justify    Justification
-	lines      []string //text after it has been word wrapped
-	textMode   gfx.TextMode
 	fit_width  bool
 	fit_height bool
+	alignment  Alignment
+	textMode   gfx.TextMode
+	text       string   //text to be displayed
+	lines      []string //text after it has been word wrapped
 }
 
 // Creates a textbox. You can set the width or height to FIT_TEXT to have the textbox compute the dimensions for you. If
 // width is set to FIT_TEXT, the box will ensure the entire text fits on 1 line (aka height will be 1). Setting height =
 // FIT_TEXT will wrap the text at the provided width, and the textbox will have height = however many lines are required.
-func NewTextbox(size vec.Dims, pos vec.Coord, depth int, text string, justify Justification) (tb *Textbox) {
+func NewTextbox(size vec.Dims, pos vec.Coord, depth int, text string, align Alignment) (tb *Textbox) {
 	tb = new(Textbox)
-	tb.Init(size, pos, depth, text, justify)
+	tb.Init(size, pos, depth, text, align)
 
-	return tb
+	return
 }
 
 // Creates a textbox, defaulting to centered text and enabling the default border.
 func NewTitleTextbox(size vec.Dims, pos vec.Coord, depth int, text string) (tb *Textbox) {
 	tb = new(Textbox)
 	tb.InitTitle(size, pos, depth, text)
+
 	return
 }
 
-func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, justify Justification) {
+func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, align Alignment) {
 	tb.text = text
-	tb.justify = justify
+	tb.alignment = align
 	tb.lines = make([]string, 0)
 
 	if size.W == FIT_TEXT {
@@ -66,7 +67,7 @@ func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, ju
 }
 
 func (tb *Textbox) InitTitle(size vec.Dims, pos vec.Coord, depth int, text string) {
-	tb.Init(size, pos, depth, text, JUSTIFY_CENTER)
+	tb.Init(size, pos, depth, text, ALIGN_CENTER)
 	tb.EnableBorder()
 }
 
@@ -133,9 +134,9 @@ func (tb *Textbox) wrapText() {
 func (tb Textbox) getTextMode() gfx.TextMode {
 	if tb.textMode == gfx.TEXTMODE_DEFAULT {
 		return gfx.DefaultTextMode
-	} else {
-		return tb.textMode
 	}
+
+	return tb.textMode
 }
 
 func (tb *Textbox) Render() {
@@ -143,8 +144,8 @@ func (tb *Textbox) Render() {
 	for i, line := range tb.lines {
 		x_offset := 0
 		pos := vec.Coord{0, i}
-		switch tb.justify {
-		case JUSTIFY_CENTER:
+		switch tb.alignment {
+		case ALIGN_CENTER:
 			switch tb.getTextMode() {
 			case gfx.TEXTMODE_FULL:
 				x_offset = (tb.size.W - len(line)) / 2
@@ -153,7 +154,7 @@ func (tb *Textbox) Render() {
 				x_offset = (tb.size.W*2 - len(line)) / 2
 				pos.X = x_offset / 2
 			}
-		case JUSTIFY_RIGHT:
+		case ALIGN_RIGHT:
 			switch tb.getTextMode() {
 			case gfx.TEXTMODE_FULL:
 				x_offset = tb.size.W - len(line)

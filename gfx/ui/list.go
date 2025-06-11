@@ -87,9 +87,9 @@ func (l *List) Insert(items ...element) {
 }
 
 // InsertText adds simple textboxes to the list, one for each string passed.
-func (l *List) InsertText(justify Justification, items ...string) {
+func (l *List) InsertText(align Alignment, items ...string) {
 	for _, item := range items {
-		l.Insert(NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, justify))
+		l.Insert(NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, align))
 	}
 }
 
@@ -171,7 +171,7 @@ func (l *List) SetEmptyText(text string) {
 			return
 		}
 
-		l.emptyLabel = NewTextbox(vec.Dims{l.size.W - 2, FIT_TEXT}, vec.ZERO_COORD, 1, text, JUSTIFY_CENTER)
+		l.emptyLabel = NewTextbox(vec.Dims{l.size.W - 2, FIT_TEXT}, vec.ZERO_COORD, 1, text, ALIGN_CENTER)
 		l.AddChild(l.emptyLabel)
 		l.emptyLabel.Center()
 	} else {

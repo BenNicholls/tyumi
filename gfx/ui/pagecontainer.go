@@ -185,13 +185,11 @@ func (p *Page) initPage(size vec.Dims, title string) {
 	p.EnableBorder()
 	p.Border.SetStyle(BORDER_STYLE_INHERIT)
 
-	p.tab = NewTextbox(vec.Dims{FIT_TEXT, 1}, vec.Coord{1, 1}, 5, title, JUSTIFY_LEFT)
+	p.tab = NewTextbox(vec.Dims{FIT_TEXT, 1}, vec.Coord{1, 1}, 5, title, ALIGN_LEFT)
 	p.tab.EnableBorder()
 	p.tab.Border.SetStyle(BORDER_STYLE_INHERIT)
 
 	p.deactivate()
-
-	return
 }
 
 func newPage(size vec.Dims, title string) (p *Page) {
@@ -218,11 +216,7 @@ func (p *Page) deactivate() {
 }
 
 // No-op. Pages cannot be moved relative to their container.
-func (p *Page) Move(dx, dy int) {
-	return
-}
+func (p *Page) Move(dx, dy int) {}
 
 // No-op. Pages cannot be moved relative to their container.
-func (p *Page) MoveTo(pos vec.Coord) {
-	return
-}
+func (p *Page) MoveTo(pos vec.Coord) {}

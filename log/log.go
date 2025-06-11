@@ -13,7 +13,7 @@ var onMessageCallback func(e Entry)   // callback for when a message is logged
 var printLogs bool                    // print log messages to console
 var minimumLogLevel level = LVL_DEBUG // only log messages of this level or higher
 
-type level int
+type level uint8
 
 const (
 	LVL_DEBUG level = iota
@@ -44,7 +44,7 @@ type Entry struct {
 }
 
 func (e Entry) String() string {
-	return "[" + e.Time.Format(time.TimeOnly) + "] " + e.Level.String() + ": " + e.Message
+	return fmt.Sprintf("[%s] %s: %s", e.Time.Format(time.TimeOnly), e.Level, e.Message)
 }
 
 func init() {
@@ -52,7 +52,7 @@ func init() {
 }
 
 func log(level level, messages ...any) {
-	if level < minimumLogLevel {
+	if level < minimumLogLevel || len(messages) == 0 {
 		return
 	}
 

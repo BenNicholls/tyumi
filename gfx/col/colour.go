@@ -15,9 +15,9 @@ type Colour uint32
 func (c Colour) String() string {
 	if name, ok := ColourNames[c]; ok {
 		return name
-	} else {
-		return fmt.Sprintf("(%v, %v, %v, %v)", c.A(), c.R(), c.G(), c.B())
 	}
+
+	return fmt.Sprintf("(%v, %v, %v, %v)", c.A(), c.R(), c.G(), c.B())
 }
 
 // Make returns an ARGB8888 colour formed from provided uint8 components.
@@ -79,7 +79,11 @@ func (c Colour) Lerp(c2 Colour, val, steps int) Colour {
 		return c
 	}
 
-	return MakeOpaque(util.Lerp(c.R(), c2.R(), val, steps), util.Lerp(c.G(), c2.G(), val, steps), util.Lerp(c.B(), c2.B(), val, steps))
+	return MakeOpaque(
+		util.Lerp(c.R(), c2.R(), val, steps),
+		util.Lerp(c.G(), c2.G(), val, steps),
+		util.Lerp(c.B(), c2.B(), val, steps),
+	)
 }
 
 // Random returns a random opaque colour.
@@ -89,8 +93,7 @@ func Random() Colour {
 
 // A Pair of colours, fore and back
 type Pair struct {
-	Fore Colour
-	Back Colour
+	Fore, Back Colour
 }
 
 func (p Pair) String() string {
@@ -104,12 +107,11 @@ func (p Pair) Lerp(p2 Pair, val, steps int) Pair {
 
 type Gradient []Colour
 
-// Generate a palette with num items, passing from colour c1 to c2. The colours are
+// Generate a gredient with num items, passing from colour c1 to c2. The colours are
 // lineraly interpolated evenly from one to the next. Gradient is NOT circular.
-// TODO: Circular palette function?
+// TODO: Circular gradient function?
 func GenerateGradient(num int, c1, c2 Colour) (p Gradient) {
 	p = make(Gradient, num)
-
 	for i := range num {
 		p[i] = c1.Lerp(c2, i, num-1)
 	}

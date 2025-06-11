@@ -159,13 +159,10 @@ func (t TreeNode[T]) ChildCount() int {
 // tree and if any return false, stops the walk for that node and all of its children.
 // THINK: should there be non-depth-first versions?
 func WalkTree[T TreeType[T]](node T, fn func(T), predicates ...func(T) bool) {
-	if predicates != nil {
-		for i := range predicates {
-			if !predicates[i](node) {
-				return
-			}
+	for i := range predicates {
+		if !predicates[i](node) {
+			return
 		}
-
 	}
 
 	for _, child := range node.GetChildren() {
@@ -182,11 +179,9 @@ func WalkTree[T TreeType[T]](node T, fn func(T), predicates ...func(T) bool) {
 // Walks the tree, calling function f on all subnodes in the tree below the provided node.
 // This is identical to Walktree, except it doesn't call f on the root node.
 func WalkSubTrees[T TreeType[T]](node T, fn func(T), predicates ...func(T) bool) {
-	if predicates != nil {
-		for i := range predicates {
-			if !predicates[i](node) {
-				return
-			}
+	for i := range predicates {
+		if !predicates[i](node) {
+			return
 		}
 	}
 

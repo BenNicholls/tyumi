@@ -40,12 +40,15 @@ func (i *Image) LoadImage(path string) {
 	}
 
 	i.image = gfx.ImportXPData(path)
-	if i.image.Ready() {
-		if i.image.Size() != i.Size() {
-			i.Resize(i.image.Size())
-		}
-		i.Updated = true
+	if !i.image.Ready() {
+		return
 	}
+
+	if i.image.Size() != i.Size() {
+		i.Resize(i.image.Size())
+	}
+
+	i.Updated = true
 }
 
 func (i *Image) Render() {

@@ -19,8 +19,8 @@ func WrapText(text string, width int, maxlines ...int) (lines []string) {
 
 	currentLine := ""
 
-	for _, broken := range strings.Split(text, "/n") {
-		for _, s := range strings.Split(broken, " ") {
+	for broken := range strings.SplitSeq(text, "/n") {
+		for s := range strings.SplitSeq(broken, " ") {
 			s = strings.TrimSpace(s) //get rid of nasty tabs and other weird whitespace.
 
 			//super long word make-it-not-break hack.

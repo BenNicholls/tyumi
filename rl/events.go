@@ -5,10 +5,12 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_ENTITYMOVED = event.Register("Entity moved.")
-var EV_TILECHANGEDVISIBILITY = event.Register("A Tile Changed visibility state (opaque or transparent)")
-var EV_LOSTSIGHT = event.Register("An entity has lost sight of another entity.")
-var EV_GAINEDSIGHT = event.Register("An entity has gained sight of another entity.")
+var (
+	EV_ENTITYMOVED           = event.Register("Entity moved.")
+	EV_TILECHANGEDVISIBILITY = event.Register("A Tile Changed visibility state (opaque or transparent)")
+	EV_LOSTSIGHT             = event.Register("An entity has lost sight of another entity.")
+	EV_GAINEDSIGHT           = event.Register("An entity has gained sight of another entity.")
+)
 
 type EntityMovedEvent struct {
 	event.EventPrototype

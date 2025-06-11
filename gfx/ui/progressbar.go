@@ -16,7 +16,7 @@ type ProgressBar struct {
 }
 
 func (pb *ProgressBar) Init(size vec.Dims, pos vec.Coord, depth int, progress_colour col.Colour, text string) {
-	pb.Textbox.Init(size, pos, depth, text, JUSTIFY_CENTER)
+	pb.Textbox.Init(size, pos, depth, text, ALIGN_CENTER)
 	pb.TreeNode.Init(pb)
 
 	pb.progressColour = progress_colour
@@ -29,11 +29,12 @@ func (pb ProgressBar) GetProgress() int {
 
 // Returns a value [0,1] representing the progress value of the progressbar.
 func (pb ProgressBar) GetProgressNormalized() float64 {
-	if pb.progress == 100 {
+	switch pb.progress {
+	case 100:
 		return 1
-	} else if pb.progress == 0 {
+	case 0:
 		return 0
-	} else {
+	default:
 		return float64(pb.progress) / 100
 	}
 }

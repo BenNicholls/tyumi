@@ -11,9 +11,10 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_FOCUS_CHANGED = event.Register("Focus Changed")
-
-var ACTION_FOCUS_NEXT = input.RegisterAction("Tab To Next Focusable Element")
+var (
+	EV_FOCUS_CHANGED  = event.Register("Focus Changed")
+	ACTION_FOCUS_NEXT = input.RegisterAction("Tab To Next Focusable Element")
+)
 
 func init() {
 	input.DefaultActionMap.AddSimpleKeyAction(ACTION_FOCUS_NEXT, input.K_TAB)

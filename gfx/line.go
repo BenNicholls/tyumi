@@ -61,11 +61,12 @@ func (c *Canvas) CalcLinkedGlyph(src_glyph Glyph, dst_pos vec.Coord, depth int) 
 			}
 		case DRAW_TEXT:
 			//some special cases for linking with titles/hints of ui borders
-			if dir == vec.DIR_RIGHT {
+			switch dir {
+			case vec.DIR_RIGHT:
 				if neighbourCell.Chars[0] == TEXT_BORDER_DECO_LEFT || neighbourCell.Chars[0] == TEXT_BORDER_LR {
 					linkFlags |= LINK_R
 				}
-			} else if dir == vec.DIR_LEFT {
+			case vec.DIR_LEFT:
 				if neighbourCell.Chars[1] == TEXT_BORDER_DECO_RIGHT || neighbourCell.Chars[1] == TEXT_BORDER_LR {
 					linkFlags |= LINK_L
 				}
@@ -87,7 +88,7 @@ func (c *Canvas) LinkCell(pos vec.Coord) {
 	}
 }
 
-type LineType int
+type LineType int8
 
 const (
 	LINETYPE_THIN LineType = iota

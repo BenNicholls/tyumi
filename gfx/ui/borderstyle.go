@@ -5,7 +5,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx/col"
 )
 
-type borderStyleFlag int
+type borderStyleFlag uint8
 
 const (
 	BORDER_STYLE_DEFAULT borderStyleFlag = iota //use default style
@@ -24,15 +24,15 @@ type BorderStyle struct {
 	TextDecorationR   uint8 //character to print on the right of titles/hints
 	TextDecorationPad uint8 //character to pad title/hint in case the decorated string isn't an even number of chars
 
-	Colours            col.Pair      //colours for the border. use gfx.COL_DEFAULT to use the default colours of the ui element instead
-	DisableLink        bool          //toggle this to disable linking.
-	TitleJustification Justification //justification for the title. default styles use JUSTIFY_LEFT
-	HintJustification  Justification //justification for the hint. default styles use JUSTIFY_RIGHT
+	Colours        col.Pair  //colours for the border. use gfx.COL_DEFAULT to use the default colours of the ui element instead
+	DisableLink    bool      //toggle this to disable linking.
+	TitleAlignment Alignment //alignment for the title. default styles use ALIGN_LEFT
+	HintAlignment  Alignment //alignment for the hint. default styles use ALIGN_RIGHT
 
 	//scrollbar styling stuff should go here as well
 }
 
-// GetGlyph returns the appropriate border glyph to link to neighbours as described in the naighbour_flags.
+// GetGlyph returns the appropriate border glyph to link to neighbours as described in the neighbour_flags.
 func (bs BorderStyle) GetGlyph(neighbour_flags int) gfx.Glyph {
 	if bs.lineType == gfx.LINETYPE_NONE {
 		return bs.DefaultGlyph
@@ -41,7 +41,7 @@ func (bs BorderStyle) GetGlyph(neighbour_flags int) gfx.Glyph {
 	return gfx.LineStyles[bs.lineType].Glyphs[neighbour_flags]
 }
 
-func (bs BorderStyle) DecorateText(text string, justification Justification) (decorated_text string) {
+func (bs BorderStyle) decorateText(text string, align Alignment) (decorated_text string) {
 	if bs.TextDecorationL != 0 {
 		decorated_text += string(bs.TextDecorationL)
 	}
@@ -51,10 +51,10 @@ func (bs BorderStyle) DecorateText(text string, justification Justification) (de
 	}
 
 	if len([]rune(decorated_text))%2 == 1 {
-		switch justification {
-		case JUSTIFY_LEFT, JUSTIFY_CENTER:
+		switch align {
+		case ALIGN_LEFT, ALIGN_CENTER:
 			decorated_text += string(bs.TextDecorationPad)
-		case JUSTIFY_RIGHT:
+		case ALIGN_RIGHT:
 			decorated_text = string(bs.TextDecorationPad) + decorated_text
 		}
 	}
@@ -85,7 +85,7 @@ func createBorderStyles() {
 	blockStyle.DefaultGlyph = gfx.GLYPH_FILL
 	blockStyle.Colours = col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}
 	blockStyle.DisableLink = true
-	blockStyle.HintJustification = JUSTIFY_RIGHT
+	blockStyle.HintAlignment = ALIGN_RIGHT
 	BorderStyles["Block"] = blockStyle
 
 	var thinStyle BorderStyle
@@ -94,7 +94,7 @@ func createBorderStyles() {
 	thinStyle.TextDecorationR = gfx.TEXT_BORDER_DECO_RIGHT
 	thinStyle.TextDecorationPad = gfx.TEXT_BORDER_LR
 	thinStyle.Colours = col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}
-	thinStyle.HintJustification = JUSTIFY_RIGHT
+	thinStyle.HintAlignment = ALIGN_RIGHT
 	BorderStyles["Thin"] = thinStyle
 
 	var thickStyle BorderStyle
@@ -103,7 +103,7 @@ func createBorderStyles() {
 	thickStyle.TextDecorationR = gfx.TEXT_BORDER_DECO_RIGHT
 	thickStyle.TextDecorationPad = gfx.TEXT_BORDER_LR
 	thickStyle.Colours = col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT}
-	thickStyle.HintJustification = JUSTIFY_RIGHT
+	thickStyle.HintAlignment = ALIGN_RIGHT
 	BorderStyles["Thick"] = thickStyle
 
 	DefaultBorderStyle = BorderStyles["Thin"]

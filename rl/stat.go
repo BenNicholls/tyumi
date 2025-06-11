@@ -8,9 +8,8 @@ import (
 )
 
 type Stat[T constraints.Float | constraints.Integer] struct {
-	value T
-	min   T
-	max   T
+	value    T
+	min, max T
 }
 
 func NewStat[T constraints.Float | constraints.Integer](value, min, max T) Stat[T] {
@@ -24,7 +23,7 @@ func NewStat[T constraints.Float | constraints.Integer](value, min, max T) Stat[
 func NewBasicStat[T constraints.Float | constraints.Integer](value T) Stat[T] {
 	return Stat[T]{
 		value: value,
-		max: value,
+		max:   value,
 	}
 }
 

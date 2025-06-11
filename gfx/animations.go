@@ -9,13 +9,13 @@ import (
 // otherwise will draw what what is underneath.
 type BlinkAnimation struct {
 	Animation
-	Vis Visuals //what to draw when the area is blinking
 
-	blinking bool //whether the area is rendering a blink or not
+	Vis      Visuals //what to draw when the area is blinking
+	blinking bool    //whether the area is rendering a blink or not
 }
 
-func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) (ba BlinkAnimation) {
-	ba = BlinkAnimation{
+func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) BlinkAnimation {
+	return BlinkAnimation{
 		Animation: Animation{
 			area:     vec.Rect{pos, size},
 			Depth:    depth,
@@ -23,10 +23,9 @@ func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rat
 			Duration: rate,
 			reset:    true,
 		},
+
 		Vis: vis,
 	}
-
-	return
 }
 
 func (ba *BlinkAnimation) Update() {
@@ -52,8 +51,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 type FadeAnimation struct {
 	Animation
 
-	ToColours   col.Pair
-	FromColours col.Pair
+	ToColours, FromColours col.Pair
 }
 
 // Sets up a Fade Animation. Optionally takes a col.Pair for the fade to start from. Omit this to just fade from

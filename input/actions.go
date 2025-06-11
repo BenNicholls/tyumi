@@ -19,7 +19,7 @@ func init() {
 var actionIDcounter int
 var actionNames []string
 
-type ActionID int
+type ActionID uint32
 
 func (a ActionID) String() string {
 	return actionNames[int(a)]
@@ -35,8 +35,8 @@ func RegisterAction(name string) ActionID {
 	}
 }
 
-// ActionHandler is any function that takes an ActionID and handles the action. If the action is handled, it returns
-// true
+// ActionHandler is any function that takes an ActionID and handles the action. If the action is handled it returns
+// true.
 type ActionHandler func(action ActionID) (action_handled bool)
 
 type ActionEvent struct {
@@ -73,8 +73,7 @@ func (akt ActionKeyTrigger) TriggeredBy(key_event KeyboardEvent) bool {
 
 type ActionMap struct {
 	keyTriggers map[Keycode]*util.Set[ActionKeyTrigger]
-
-	disabled util.Set[ActionID] // actions that do not produce action events
+	disabled    util.Set[ActionID] // actions that do not produce action events
 }
 
 // Adds triggers for the provided action for each provided key. These triggers default to firing on KEY_PRESSED with

@@ -53,11 +53,9 @@ func (c *Canvas) DrawRect(area vec.Rect, depth int, brush Visuals) {
 // draws a circle of radius r centered at (px, py), copying the visuals from v, with option to fill the circle with same
 // visuals
 func (c *Canvas) DrawCircle(center vec.Coord, depth, radius int, visuals Visuals, fill bool) {
-	drawFunc := func(pos vec.Coord) {
+	vec.Circle(center, radius, func(pos vec.Coord) {
 		c.DrawVisuals(pos, depth, visuals)
-	}
-
-	vec.Circle(center, radius, drawFunc)
+	})
 
 	if fill {
 		c.FloodFill(center, depth, visuals)

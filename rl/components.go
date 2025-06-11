@@ -10,8 +10,8 @@ import (
 func init() {
 	ecs.Register[TerrainComponent]()
 	ecs.Register[EntityContainerComponent]()
-	ecs.Register[EntityComponent]()
 	ecs.Register[PositionComponent]()
+	ecs.Register[EntityComponent]()
 	ecs.Register[MemoryComponent]()
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 // KEY_PRESSED for key downs, KEY_RELEASED for key ups.
-type KeyPressType int
+type KeyPressType uint8
 
 const (
 	KEY_PRESSED KeyPressType = iota
@@ -44,8 +44,6 @@ func (kbe KeyboardEvent) fireActions() {
 	for action := range triggeredActions.EachElement() {
 		fireActionEvent(action)
 	}
-
-	return
 }
 
 // Emits keypress event.
@@ -71,19 +69,25 @@ func FireKeyRepeatEvent(key Keycode) {
 	fireKeyboardEvent(KeyboardEvent{Key: key, Repeat: true})
 }
 
-// If the keyboard event represents a direction, returns a vec.Direction (or vec.DIR_NONE if not). Currently only does
-// cardinal directions.
-// TODO: make keypad keys also produce directions
+// Returns a vec.Direction if the keyboard event represents a direction (or vec.DIR_NONE if not).
 func (kb KeyboardEvent) Direction() vec.Direction {
 	switch kb.Key {
-	case K_UP:
+	case K_UP, K_KP_8:
 		return vec.DIR_UP
-	case K_DOWN:
+	case K_DOWN, K_KP_2:
 		return vec.DIR_DOWN
-	case K_LEFT:
+	case K_LEFT, K_KP_4:
 		return vec.DIR_LEFT
-	case K_RIGHT:
+	case K_RIGHT, K_KP_6:
 		return vec.DIR_RIGHT
+	case K_KP_7:
+		return vec.DIR_UPLEFT
+	case K_KP_9:
+		return vec.DIR_UPRIGHT
+	case K_KP_1:
+		return vec.DIR_DOWNLEFT
+	case K_KP_3:
+		return vec.DIR_DOWNRIGHT
 	default:
 		return vec.DIR_NONE
 	}
@@ -118,7 +122,7 @@ func (kb KeyboardEvent) String() (s string) {
 // keycodes. these names are ripped right from github.com/veandco/go-sdl2/sdl/keycode.go
 // for now, but we can add/change things here freely as long as we update the corresponding
 // mapping from platform-specific keycodes to these in the platform folder.
-type Keycode int
+type Keycode uint8
 
 const (
 	K_UNKNOWN      Keycode = iota // "" (no name, empty string)

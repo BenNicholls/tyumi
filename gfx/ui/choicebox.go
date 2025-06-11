@@ -12,10 +12,11 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-var EV_CHOICE_CHANGED = event.Register("Choice Changed")
-
-var ACTION_CHOICE_NEXT = input.RegisterAction("Select Next Choice")
-var ACTION_CHOICE_PREV = input.RegisterAction("Select Previous Choice")
+var (
+	EV_CHOICE_CHANGED  = event.Register("Choice Changed")
+	ACTION_CHOICE_NEXT = input.RegisterAction("Select Next Choice")
+	ACTION_CHOICE_PREV = input.RegisterAction("Select Previous Choice")
+)
 
 func init() {
 	input.DefaultActionMap.AddSimpleKeyAction(ACTION_CHOICE_NEXT, input.K_RIGHT)
@@ -33,7 +34,7 @@ type ChoiceBox struct {
 }
 
 func (cb *ChoiceBox) Init(size vec.Dims, pos vec.Coord, depth int, choices ...string) {
-	cb.Textbox.Init(size, pos, depth, "No Choice", JUSTIFY_CENTER)
+	cb.Textbox.Init(size, pos, depth, "No Choice", ALIGN_CENTER)
 	cb.TreeNode.Init(cb)
 
 	cb.currentChoiceIndex = -1

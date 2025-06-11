@@ -9,11 +9,13 @@ import (
 	"github.com/bennicholls/tyumi/util"
 )
 
-var audioSystem AudioSystem
+var (
+	audioSystem AudioSystem
 
-var masterVolume float64 = 1
-var sfxVolume float64 = 1
-var musicVolume float64 = 1
+	masterVolume float64 = 1
+	sfxVolume    float64 = 1
+	musicVolume  float64 = 1
+)
 
 func EnableAudio() {
 	if currentPlatform == nil {
@@ -105,7 +107,7 @@ func StopMusic() {
 	audioSystem.StopMusic()
 }
 
-type AudioType int
+type AudioType uint8
 
 const (
 	AUDIO_SOUND AudioType = iota

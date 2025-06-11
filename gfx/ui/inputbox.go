@@ -35,7 +35,7 @@ func NewInputbox(size vec.Dims, pos vec.Coord, depth, input_length int) (ib *Inp
 // Initializes the inputbox. input_length limits the number of characters that can be written. if <= 0,
 // input will instead be limited to the width of the inputbox
 func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) {
-	ib.Textbox.Init(size, pos, depth, "", JUSTIFY_LEFT)
+	ib.Textbox.Init(size, pos, depth, "", ALIGN_LEFT)
 	ib.TreeNode.Init(ib)
 
 	if input_length > 0 {
@@ -43,7 +43,7 @@ func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) 
 	} else {
 		ib.inputLengthMax = size.W * 2
 	}
-	ib.cursor = NewInputCursorAnimation(vec.Coord{0, 0}, 0, 30)
+	ib.cursor = NewInputCursorAnimation(vec.ZERO_COORD, 0, 30)
 	ib.AddAnimation(&ib.cursor)
 }
 

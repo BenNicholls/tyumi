@@ -131,7 +131,7 @@ func (tm *TileMap) AddEntity(entity Entity, pos vec.Coord) {
 		return
 	}
 
-	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && container.Empty() {
+	if container := ecs.Get[EntityContainerComponent](tile); container != nil && container.Empty() {
 		entity.MoveTo(pos)
 		container.Add(entity)
 		tm.SetDirty(pos)
@@ -148,7 +148,7 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 	}
 
 	tile := tm.GetTile(pos)
-	if container := ecs.GetComponent[EntityContainerComponent](tile); container != nil && !container.Empty() {
+	if container := ecs.Get[EntityContainerComponent](tile); container != nil && !container.Empty() {
 		container.Entity.MoveTo(NOT_IN_TILEMAP)
 		container.Remove()
 		tm.SetDirty(pos)
@@ -179,9 +179,9 @@ func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
 		return
 	}
 
-	ecs.GetComponent[EntityContainerComponent](toTile).Entity = entity
+	ecs.Get[EntityContainerComponent](toTile).Entity = entity
 	tm.SetDirty(to)
-	ecs.GetComponent[EntityContainerComponent](fromTile).Entity = INVALID_ENTITY
+	ecs.Get[EntityContainerComponent](fromTile).Entity = INVALID_ENTITY
 	tm.SetDirty(from)
 
 	entity.MoveTo(to)

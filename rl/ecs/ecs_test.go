@@ -75,7 +75,7 @@ func TestEntityAddRemove(t *testing.T) {
 }
 
 func TestAddRemoveAlterComponents(t *testing.T) {
-	RegisterComponent[testComponent]()
+	Register[testComponent]()
 	var entities []Entity
 
 	for range 30 {
@@ -86,18 +86,18 @@ func TestAddRemoveAlterComponents(t *testing.T) {
 
 	for range 20 {
 		entity := util.PickOne(entities)
-		if HasComponent[testComponent](entity) {
+		if Has[testComponent](entity) {
 			continue
 		}
 
-		AddComponent(entity, testComponent{Coord: vec.Coord{int(entity), int(entity)}})
+		Add(entity, testComponent{Coord: vec.Coord{int(entity), int(entity)}})
 		componentsAdded++
 	}
 
 	componentsFound := 0
 
 	for _, entity := range entities {
-		if test := GetComponent[testComponent](entity); test != nil {
+		if test := Get[testComponent](entity); test != nil {
 			componentsFound++
 			if coord := (vec.Coord{int(entity), int(entity)}); test.Coord != coord {
 				t.Errorf("Improperly set position for entity, position is %v, wanted %v", test.Coord, coord)
@@ -117,8 +117,8 @@ func TestAddRemoveAlterComponents(t *testing.T) {
 
 	for range 15 {
 		entity := util.PickOne(entities)
-		if HasComponent[testComponent](entity) {
-			RemoveComponent[testComponent](entity)
+		if Has[testComponent](entity) {
+			Remove[testComponent](entity)
 			componentsRemoved++
 		}
 	}
@@ -126,7 +126,7 @@ func TestAddRemoveAlterComponents(t *testing.T) {
 	componentsFound = 0
 
 	for _, entity := range entities {
-		if test := GetComponent[testComponent](entity); test != nil {
+		if test := Get[testComponent](entity); test != nil {
 			componentsFound++
 			if coord := (vec.Coord{int(entity), int(entity)}); test.Coord != coord {
 				t.Errorf("Improperly set position for entity, position is %v, wanted %v", test.Coord, coord)

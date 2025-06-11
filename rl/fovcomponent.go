@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	ecs.RegisterComponent[FOVComponent]()
+	ecs.Register[FOVComponent]()
 }
 
 // FOVComponent is for anything that can see.
@@ -96,7 +96,7 @@ func (fov *FOVComponent) UpdateFOV(tileMap *TileMap) {
 		return
 	}
 
-	pos := ecs.GetComponent[PositionComponent](fov.GetEntity()).Coord
+	pos := ecs.Get[PositionComponent](fov.GetEntity()).Coord
 	if pos == NOT_IN_TILEMAP {
 		return
 	}
@@ -185,7 +185,7 @@ func (fs *FOVSystem) Update() {
 						continue
 					}
 
-					if pos := ecs.GetComponent[PositionComponent](entity).Coord; fov.InFOV(pos) {
+					if pos := ecs.Get[PositionComponent](entity).Coord; fov.InFOV(pos) {
 						newEntities.Add(Entity(entity))
 					}
 				}

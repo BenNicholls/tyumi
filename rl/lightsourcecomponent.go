@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	ecs.RegisterComponent[LightSourceComponent]()
+	ecs.Register[LightSourceComponent]()
 }
 
 type LightSourceComponent struct {
@@ -125,7 +125,7 @@ func (lsc *LightSourceComponent) computeLitArea(tm *TileMap) {
 		return
 	}
 
-	source := ecs.GetComponent[PositionComponent](lsc.GetEntity()).Coord
+	source := ecs.Get[PositionComponent](lsc.GetEntity()).Coord
 	if source == NOT_IN_TILEMAP {
 		return
 	}
@@ -149,7 +149,7 @@ func (lsc *LightSourceComponent) applyLight(tm *TileMap) {
 		return
 	}
 
-	source := ecs.GetComponent[PositionComponent](lsc.GetEntity()).Coord
+	source := ecs.Get[PositionComponent](lsc.GetEntity()).Coord
 	if source == NOT_IN_TILEMAP {
 		return
 	}
@@ -195,7 +195,7 @@ func (ls *LightSystem) handleEvents(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_ENTITYMOVED:
 		moveEvent := e.(*EntityMovedEvent)
-		if light := ecs.GetComponent[LightSourceComponent](moveEvent.Entity); light != nil {
+		if light := ecs.Get[LightSourceComponent](moveEvent.Entity); light != nil {
 			light.AreaDirty = true
 		}
 		return true

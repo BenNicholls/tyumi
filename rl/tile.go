@@ -39,23 +39,23 @@ type Tile ecs.Entity
 
 func CreateTile(tile_type TileType) (tile Tile) {
 	tile = Tile(ecs.CreateEntity())
-	ecs.AddComponent(tile, TerrainComponent{TileType: tile_type})
+	ecs.Add(tile, TerrainComponent{TileType: tile_type})
 
 	if tile_type.Data().Passable {
-		ecs.AddComponent[EntityContainerComponent](tile)
+		ecs.Add[EntityContainerComponent](tile)
 	}
 
 	return
 }
 
 func (t Tile) GetTileType() TileType {
-	return ecs.GetComponent[TerrainComponent](t).TileType
+	return ecs.Get[TerrainComponent](t).TileType
 }
 
 func (t Tile) SetTileType(tile_type TileType) {
-	ecs.GetComponent[TerrainComponent](t).TileType = tile_type
-	if tile_type.Data().Passable != ecs.HasComponent[EntityContainerComponent](t) {
-		ecs.ToggleComponent[EntityContainerComponent](t)
+	ecs.Get[TerrainComponent](t).TileType = tile_type
+	if tile_type.Data().Passable != ecs.Has[EntityContainerComponent](t) {
+		ecs.Toggle[EntityContainerComponent](t)
 	}
 }
 
@@ -81,7 +81,7 @@ func (t Tile) GetVisuals() gfx.Visuals {
 }
 
 func (t Tile) GetEntity() Entity {
-	if container := ecs.GetComponent[EntityContainerComponent](t); container != nil {
+	if container := ecs.Get[EntityContainerComponent](t); container != nil {
 		return container.Entity
 	} else {
 		return Entity(ecs.INVALID_ID)
@@ -89,7 +89,7 @@ func (t Tile) GetEntity() Entity {
 }
 
 func (t Tile) RemoveEntity() {
-	if container := ecs.GetComponent[EntityContainerComponent](t); container != nil {
+	if container := ecs.Get[EntityContainerComponent](t); container != nil {
 		container.Remove()
 	}
 }
@@ -104,11 +104,11 @@ func (t Tile) ModLight(delta int) {
 }
 
 func (t Tile) AddLight(light uint8) {
-	ecs.GetComponent[TerrainComponent](t).LightLevel += uint16(light)
+	ecs.Get[TerrainComponent](t).LightLevel += uint16(light)
 }
 
 func (t Tile) RemoveLight(light uint8) {
-	terrain := ecs.GetComponent[TerrainComponent](t)
+	terrain := ecs.Get[TerrainComponent](t)
 	if terrain.LightLevel < uint16(light) {
 		terrain.LightLevel = 0
 	} else {
@@ -117,5 +117,5 @@ func (t Tile) RemoveLight(light uint8) {
 }
 
 func (t Tile) GetLight() uint8 {
-	return uint8(min(255, ecs.GetComponent[TerrainComponent](t).LightLevel))
+	return uint8(min(255, ecs.Get[TerrainComponent](t).LightLevel))
 }

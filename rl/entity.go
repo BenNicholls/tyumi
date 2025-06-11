@@ -38,35 +38,35 @@ var INVALID_ENTITY = Entity(ecs.INVALID_ID)
 func CreateEntity(entity_type EntityType) (entity Entity) {
 	entity = Entity(ecs.CreateEntity())
 
-	ecs.AddComponent(entity, EntityComponent{EntityType: entity_type})
-	ecs.AddComponent(entity, PositionComponent{Coord: NOT_IN_TILEMAP})
+	ecs.Add(entity, EntityComponent{EntityType: entity_type})
+	ecs.Add(entity, PositionComponent{Coord: NOT_IN_TILEMAP})
 
 	if sight := entity_type.Data().SightRange; sight > 0 {
-		ecs.AddComponent(entity, FOVComponent{SightRange: sight,
+		ecs.Add(entity, FOVComponent{SightRange: sight,
 			TrackEntities: entity_type.Data().TracksEntities})
 	}
 
 	if entity_type.Data().HasMemory {
-		ecs.AddComponent[MemoryComponent](entity)
+		ecs.Add[MemoryComponent](entity)
 	}
 
 	return
 }
 
 func (e Entity) GetVisuals() gfx.Visuals {
-	return ecs.GetComponent[EntityComponent](e).EntityType.Data().Visuals
+	return ecs.Get[EntityComponent](e).EntityType.Data().Visuals
 }
 
 func (e Entity) GetName() string {
-	return ecs.GetComponent[EntityComponent](e).EntityType.Data().Name
+	return ecs.Get[EntityComponent](e).EntityType.Data().Name
 }
 
 func (e Entity) Position() vec.Coord {
-	return ecs.GetComponent[PositionComponent](e).Coord
+	return ecs.Get[PositionComponent](e).Coord
 }
 
 func (e Entity) MoveTo(pos vec.Coord) {
-	position := ecs.GetComponent[PositionComponent](e)
+	position := ecs.Get[PositionComponent](e)
 	if position.Static && pos != NOT_IN_TILEMAP {
 		return
 	}
@@ -78,5 +78,5 @@ func (e Entity) MoveTo(pos vec.Coord) {
 }
 
 func (e Entity) IsInTilemap() bool {
-	return ecs.GetComponent[PositionComponent](e).Coord != NOT_IN_TILEMAP
+	return ecs.Get[PositionComponent](e).Coord != NOT_IN_TILEMAP
 }

@@ -8,11 +8,11 @@ import (
 )
 
 func init() {
-	ecs.RegisterComponent[TerrainComponent]()
-	ecs.RegisterComponent[EntityContainerComponent]()
-	ecs.RegisterComponent[EntityComponent]()
-	ecs.RegisterComponent[PositionComponent]()
-	ecs.RegisterComponent[MemoryComponent]()
+	ecs.Register[TerrainComponent]()
+	ecs.Register[EntityContainerComponent]()
+	ecs.Register[EntityComponent]()
+	ecs.Register[PositionComponent]()
+	ecs.Register[MemoryComponent]()
 }
 
 type PositionComponent struct {

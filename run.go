@@ -1,11 +1,15 @@
 package tyumi
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/vec"
 	"github.com/pkg/profile"
 )
 
@@ -84,19 +88,22 @@ func updateUI() {
 func render() {
 	activeScene.Window().Render()
 	activeScene.Window().Draw(&mainConsole.Canvas)
-	renderer.Render()
-}
 
-func endFrame() {
-	//framerate limiter, so the cpu doesn't implode
-	if Debug && ProfilingEnabled {
+	if Debug {
 		if time.Since(fpsTime) > time.Second {
-			log.Debug("FPS: ", tick-fpsTicks)
+			mainConsole.DrawText(vec.ZERO_COORD, 10000000,
+				fmt.Sprintf("FPS: %4d", tick-fpsTicks), col.Pair{col.ORANGE, col.MAROON},
+				gfx.DRAW_TEXT_LEFT)
 			fpsTicks = tick
 			fpsTime = time.Now()
 		}
 	}
 
+	renderer.Render()
+}
+
+func endFrame() {
+	//framerate limiter, so the cpu doesn't implode
 	if !overclock {
 		time.Sleep(frameTargetDuration - time.Since(frameTime))
 	}

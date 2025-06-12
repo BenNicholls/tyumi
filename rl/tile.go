@@ -2,7 +2,6 @@ package rl
 
 import (
 	"github.com/bennicholls/tyumi/gfx"
-	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/rl/ecs"
 )
 
@@ -65,19 +64,6 @@ func (t Tile) IsPassable() bool {
 
 func (t Tile) IsOpaque() bool {
 	return t.GetTileType().Data().Opaque
-}
-
-func (t Tile) GetVisuals() gfx.Visuals {
-	vis := t.GetTileType().Data().Visuals
-	if entity := t.GetEntity(); entity != INVALID_ENTITY {
-		entityVisuals := entity.GetVisuals()
-		if entityVisuals.Colours.Back != col.NONE {
-			entityVisuals.Colours.Back = vis.Colours.Back
-		}
-		return entityVisuals
-	}
-
-	return vis
 }
 
 func (t Tile) GetEntity() Entity {

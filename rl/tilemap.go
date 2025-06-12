@@ -195,23 +195,34 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	tm.Clean()
 }
 
-func (tm *TileMap) CalcTileVisuals(pos vec.Coord) gfx.Visuals {
+func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	tile := tm.GetTile(pos)
-	if tile.GetTileType() == TILE_NONE {
+	terrain := ecs.Get[TerrainComponent](tile)
+	if terrain.TileType == TILE_NONE {
 		return gfx.Visuals{Mode: gfx.DRAW_NONE}
+	}
+
+	info := terrain.Data()
+	vis = info.Visuals
+	if info.Passable {
+		if entity := tile.GetEntity(); entity != INVALID_ENTITY {
+			vis = entity.GetVisuals()
+			if vis.Colours.Back == col.NONE {
+				vis.Colours.Back = info.Visuals.Colours.Back
+			}
+		}
 	}
 
 	light := tm.globalLight
 	if light < 255 {
-		light = uint8(min(int(tile.GetLight())+int(light), 255))
+		light = uint8(min(int(terrain.LightLevel)+int(light), 255))
 	}
-
-	tv := tile.GetVisuals()
+	
 	if light > 0 {
-		tv.Colours.Fore = tv.Colours.Back.Lerp(tv.Colours.Fore, int(light), 255)
-		return tv
+		vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(light), 255)
+		return
 	} else {
-		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, tv.Colours.Back})
+		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, info.Visuals.Colours.Back})
 	}
 }
 

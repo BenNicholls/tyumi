@@ -16,11 +16,11 @@ func (d Dims) String() string {
 }
 
 func (d Dims) Grow(dw, dh int) Dims {
-	return Dims{d.W + dw, d.H + dh}
+	return Dims{max(d.W+dw, 0), max(d.H+dh, 0)}
 }
 
 func (d Dims) Shrink(dw, dh int) Dims {
-	return Dims{d.W - dw, d.H - dh}
+	return Dims{max(d.W-dw, 0), max(d.H-dh, 0)}
 }
 
 // Returns a rect with dimensions d, positioned at (0, 0)

@@ -3,6 +3,8 @@ package vec
 import (
 	"fmt"
 	"iter"
+
+	"github.com/bennicholls/tyumi/util"
 )
 
 // Rect is your standard rectangle object, with position (X,Y) in the top left corner.
@@ -22,6 +24,43 @@ func (r Rect) String() string {
 
 func (r Rect) Translated(coord Coord) Rect {
 	return Rect{r.Coord.Add(coord), r.Dims}
+}
+
+// Returns a rect that is the rect r extended by some amount of cells in some direction.
+func (r Rect) Extended(amount int, dir Direction) (extended Rect) {
+	extended = r
+	if x := dir.Coord().X; x < 0 {
+		extended.X += x * amount
+	}
+
+	if y := dir.Coord().Y; y < 0 {
+		extended.Y += y * amount
+	}
+
+	extended.W += util.Abs(dir.Coord().X) * amount
+	extended.H += util.Abs(dir.Coord().Y) * amount
+
+	return
+}
+
+// Returns a rect that is the rect r expanded in size by amount. Think of it like applying a layer of cells around the
+// perimeter of the rect, repeated amount times.
+// Example: expanding a 2x2 rect at the origin by 1 results in a 4x4 rect at position (-1, -1)
+func (r Rect) Expanded(amount int) Rect {
+	return Rect{
+		Coord: r.Coord.Subtract(Coord{amount, amount}),
+		Dims:  r.Dims.Grow(amount*2, amount*2),
+	}
+}
+
+// Returns a rect that is the rect r contracted in size by amount. Think of it like removing the perimeter of the rect,
+// repeated amount times.
+// Example: contracting a 4x4 rect at the origin by 1 results in a 2x2 rect at position (1, 1)
+func (r Rect) Contracted(amount int) Rect {
+	return Rect{
+		Coord: r.Coord.Add(Coord{amount, amount}),
+		Dims:  r.Dims.Shrink(amount*2, amount*2),
+	}
 }
 
 // Returns the coordinates of the 4 corners of the rect, starting in the top left and going clockwise.

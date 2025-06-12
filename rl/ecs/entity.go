@@ -64,7 +64,7 @@ func CreateEntity() (entity Entity) {
 // CopyEntity creates a new entity that is a copy of the provided entity. All of entity e's components are copied and
 // assigned to the new entity.
 func CopyEntity[ET ~uint32](entity ET) (copy Entity) {
-	if !Alive(entity) {
+	if Debug && !Alive(entity) {
 		log.Debug("ECS: Cannot copy dead entity!")
 		return
 	}
@@ -82,7 +82,7 @@ func CopyEntity[ET ~uint32](entity ET) (copy Entity) {
 
 // RemoveEntity removes an entity from the ECS. All of its components will be removed and it will be set as dead.
 func RemoveEntity[ET ~uint32](entity ET) {
-	if !Alive(entity) {
+	if Debug && !Alive(entity) {
 		log.Debug("ECS: Removing dead/invalid entity??")
 		return
 	}

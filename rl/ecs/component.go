@@ -54,7 +54,7 @@ func Register[T componentType]() {
 // occurs. Optionally, you can provide an already initialized component to be added. If the entity already has a
 // component of this type, nothing is added and the initValue, if present, is ignored.
 func Add[T componentType, ET ~uint32](entity ET, init_value ...T) {
-	if !Alive(entity) {
+	if Debug && !Alive(entity) {
 		log.Error("ECS: Cannot add " + reflect.TypeFor[T]().Name() + " component to dead/invalid entity")
 		return
 	}
@@ -65,7 +65,7 @@ func Add[T componentType, ET ~uint32](entity ET, init_value ...T) {
 // Get retrieves the component of type T from an entity. If the entity does not have the requested component,
 // returns nil.
 func Get[T componentType, ET ~uint32](entity ET) (component *T) {
-	if !Alive(entity) {
+	if Debug && !Alive(entity) {
 		log.Error("Cannot get " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity")
 		return nil
 	}
@@ -75,7 +75,7 @@ func Get[T componentType, ET ~uint32](entity ET) (component *T) {
 
 // Has returns true if the entity contains the requested component.
 func Has[T componentType, ET ~uint32](entity ET) bool {
-	if !Alive(entity) {
+	if Debug && !Alive(entity) {
 		log.Error("Cannot query " + reflect.TypeFor[T]().Name() + " component of dead/invalid entity")
 		return false
 	}
@@ -86,7 +86,7 @@ func Has[T componentType, ET ~uint32](entity ET) bool {
 // Remove removes the component of type T from the entity. If the entity does not have the requested component,
 // does nothing.
 func Remove[T componentType, ET ~uint32](entity ET) {
-	if !Alive(entity) {
+	if Debug && !Alive(entity) {
 		log.Error("Cannot remove " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity.")
 	}
 
@@ -96,7 +96,7 @@ func Remove[T componentType, ET ~uint32](entity ET) {
 // Toggle will add a component to an entity if it does not have one (optionally using the providing init value),
 // otherwise it removes the component.
 func Toggle[T componentType, ET ~uint32](entity ET, init ...T) {
-	if !Alive(entity) {
+	if Debug && !Alive(entity) {
 		log.Error("Cannot toggle " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity.")
 	}
 

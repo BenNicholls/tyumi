@@ -8,7 +8,7 @@ var entities []Entity
 var freeIndices chan uint32
 var generations []uint8
 
-const maxFreeIDs int = 32
+const maxFreeIDs int = 128
 
 const INVALID_ID Entity = 0
 const indexMask uint32 = 0x00ffffff
@@ -29,7 +29,7 @@ func Valid[ET ~uint32](entity ET) (valid bool) {
 		// if in debug mode, we also check to see if the id's index doesn't overflow the entity list. this should never
 		// be possible with actual ids from the ecs, but we do the check just in case some user acidentally passes
 		// in some other kind of uint32 from somewhere else
-		 valid = valid && (index(entity) < uint32(len(entities)))
+		valid = valid && (index(entity) < uint32(len(entities)))
 	}
 
 	return
@@ -53,15 +53,6 @@ func CreateEntity() (entity Entity) {
 	} else { // take first free ID, retrieve generation for that slot, increment, compile ID, store new ID and gen, return
 		idx := <-freeIndices
 		gen := uint32(generations[idx]) + 1
-		if Debug && gen == 255 {
-			// if in debug mode, this check warns us when our generation number rolls over. this isn't necessarily an
-			// issue -- it can only cause a bug in a very case where the user is holding a removed id for a slot that
-			// has been reused exactly 255 times since being removed -- so it's not worth erroring out or anything, but
-			// while making the game this warning could be useful just as a smoke test if something starts going wrong.
-			// if this does end up causing bugs, we need to make a way to increase the number of generation bits in the
-			// id.
-			log.Warning("ECS: GENERATION LIMIT REACHED!!! (If you see this, it's not a *big* deal but there's a very small chance a bug could occur going forward.)")
-		}
 		generations[idx] = uint8(gen)
 		entity = Entity((idx + 1) | (gen << 24))
 		entities[idx] = entity
@@ -97,7 +88,13 @@ func RemoveEntity[ET ~uint32](entity ET) {
 	}
 
 	entities[index(entity)] = INVALID_ID
-	addFreeID(index(entity))
+	if generations[index(entity)] != 255 {
+		addFreeID(index(entity))
+	} else {
+		if Debug {
+			log.Debug("ECS: Entity index retired. (If you're seeing this a lot, it might be worth increasing the generation bits.)")
+		}
+	}
 
 	for _, cache := range componentCaches {
 		cache.removeComponent(Entity(entity))

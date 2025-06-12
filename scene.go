@@ -161,6 +161,7 @@ func (s *Scene) getActiveSubScene() scene {
 	if s.subScene.Done() {
 		s.subScene.Shutdown()
 		s.subScene.cleanup()
+		s.Window().SetAllDirty()
 		s.subScene = nil
 		return nil
 	} else {

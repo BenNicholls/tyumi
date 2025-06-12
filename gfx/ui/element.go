@@ -29,7 +29,7 @@ type element interface {
 	prepareRender()
 	renderIfDirty()
 	Render()
-	Draw(dst_canvas *gfx.Canvas)
+	Draw(dst_canvas *gfx.Canvas, force bool)
 	renderAnimations()
 	finalizeRender()
 	drawChildren()
@@ -398,8 +398,12 @@ func (e *Element) renderAnimations() {
 }
 
 // Draws the element to a provided canvas, based on the element's position and respecting depth.
-func (e *Element) Draw(dst_canvas *gfx.Canvas) {
-	e.Canvas.Draw(dst_canvas, e.position, e.depth)
+func (e *Element) Draw(dst_canvas *gfx.Canvas, force bool) {
+	if force {
+		e.Canvas.Draw(dst_canvas, e.position, e.depth, gfx.DRAWFLAG_FORCE)
+	} else {
+		e.Canvas.Draw(dst_canvas, e.position, e.depth)
+	}
 }
 
 func (e *Element) drawChildren() {
@@ -444,10 +448,10 @@ func (e *Element) drawChildren() {
 			continue
 		}
 
-		if e.forceRedraw || child.getCanvas().Dirty() {
-			if child.IsTransparent() {
-				transparent = append(transparent, child)
-			} else {
+		if child.IsTransparent() {
+			transparent = append(transparent, child)
+		} else {
+			if e.forceRedraw || child.getCanvas().Dirty() {
 				opaque = append(opaque, child)
 			}
 		}
@@ -459,6 +463,21 @@ func (e *Element) drawChildren() {
 	slices.SortStableFunc(transparent, func(e1, e2 element) int {
 		return cmp.Compare(e1.getDepth(), e2.getDepth()) // sort by ascending depth
 	})
+
+	if !e.forceRedraw && len(transparent) > 0 {
+		//if we have transparent children, we need to flatten the canvas down to the depth of the highest-depth
+		//opaque child. that way opaque children that have changed will redraw successfully even if they are below
+		//a transparent child.
+		var maxOpaqueDepth int
+		for _, opChild := range opaque {
+			if d := opChild.getDepth(); d > maxOpaqueDepth {
+				maxOpaqueDepth = d
+			}
+		}
+
+		e.Canvas.FlattenTo(maxOpaqueDepth, e.DrawableArea())
+	}
+
 	drawlist := append(opaque, transparent...)
 
 	// precompute cells that will need to be relinked once dirty elements are drawn. this needs to be done
@@ -468,7 +487,7 @@ func (e *Element) drawChildren() {
 	borderLinks := e.computeBorderLinks(drawlist)
 
 	for _, child := range drawlist {
-		child.Draw(&e.Canvas)
+		child.Draw(&e.Canvas, e.forceRedraw || child.IsTransparent())
 	}
 
 	if !e.Dirty() {

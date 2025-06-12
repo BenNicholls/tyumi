@@ -176,7 +176,7 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 			vis.Chars[1] = cell.Chars[1]
 		}
 	}
-	
+
 	if cell == vis {
 		return
 	}
@@ -262,6 +262,20 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 		for cursor := range vec.EachCoordInIntersection(c, area) {
 			if depth < 0 || c.getDepth(cursor) <= depth {
 				c.setCell(cursor, -1, c.defaultVisuals)
+			}
+		}
+	}
+}
+
+func (c *Canvas) FlattenTo(depth int, areas ...vec.Rect) {
+	if len(areas) == 0 {
+		areas = append(areas, c.Bounds())
+	}
+
+	for _, area := range areas {
+		for cursor := range vec.EachCoordInIntersection(c, area) {
+			if c.getDepth(cursor) > depth {
+				c.setDepth(cursor, depth)
 			}
 		}
 	}

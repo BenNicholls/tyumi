@@ -89,7 +89,7 @@ func updateUI() {
 // builds the frame and renders using the current platform's renderer.
 func render() {
 	activeScene.Window().Render()
-	activeScene.Window().Draw(&mainConsole.Canvas)
+	activeScene.Window().Draw(&mainConsole.Canvas, false)
 
 	if ShowFPS {
 		if time.Since(fpsTime) > time.Second {

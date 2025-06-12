@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -30,6 +31,12 @@ func (m DrawMode) String() string {
 	}
 }
 
+type DrawFlag uint8
+
+const (
+	DRAWFLAG_FORCE DrawFlag = 0x1
+)
+
 // Defines anything with the ability to be drawn to a canvas
 type Drawable interface {
 	Draw(dst_canvas *Canvas, offset vec.Coord, depth int)
@@ -49,8 +56,12 @@ type VisualObject interface {
 
 // Draw draws the canvas c to a destination canvas, offset by some Coord at depth z. This process will mark
 // any copied cells in c as clean.
-// TODO: this function should take in flags to determine how the canvas is copied
-func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
+func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int, flags ...DrawFlag) {
+	var flag DrawFlag = 0
+	if len(flags) > 0 {
+		flag = util.OrAll(flags)
+	}
+
 	for dstCursor := range vec.EachCoordInIntersection(dst_canvas, c.Bounds().Translated(offset)) {
 		srcCursor := dstCursor.Subtract(offset)
 		cell := c.getCell(srcCursor)
@@ -58,9 +69,11 @@ func (c *Canvas) Draw(dst_canvas *Canvas, offset vec.Coord, depth int) {
 			continue
 		}
 
-		//draw cell if depth is higher, or if the cell in the destination canvas is DRAW_NONE
-		if dst_canvas.getDepth(dstCursor) <= depth || dst_canvas.getCell(dstCursor).Mode == DRAW_NONE {
-			dst_canvas.setCell(dstCursor, depth, cell)
+		if (flag&DRAWFLAG_FORCE) != 0 || c.IsDirtyAt(srcCursor) {
+			//draw cell if depth is higher, or if the cell in the destination canvas is DRAW_NONE
+			if dst_canvas.getDepth(dstCursor) <= depth || dst_canvas.getCell(dstCursor).Mode == DRAW_NONE {
+				dst_canvas.setCell(dstCursor, depth, cell)
+			}
 		}
 	}
 

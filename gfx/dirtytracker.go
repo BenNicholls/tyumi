@@ -1,6 +1,7 @@
 package gfx
 
 import (
+	"cmp"
 	"iter"
 	"slices"
 
@@ -125,14 +126,7 @@ func (dt *SpecialDirtyTracker) SetDirty(pos vec.Coord) {
 	}
 
 	slices.SortFunc(dt.areas, func(r1, r2 vec.Rect) int {
-		a1, a2 := r1.Area(), r2.Area()
-		if a1 < a2 {
-			return -1
-		} else if a1 > a2 {
-			return 1
-		}
-
-		return 0
+		return cmp.Compare(r1.Area(), r2.Area())
 	})
 }
 

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -452,8 +453,12 @@ func (e *Element) drawChildren() {
 		}
 	}
 
-	slices.SortStableFunc(opaque, reversedepthsort)
-	slices.SortStableFunc(transparent, depthsort)
+	slices.SortStableFunc(opaque, func(e1, e2 element) int {
+		return cmp.Compare(e2.getDepth(), e1.getDepth()) // sort by descending reverse depth
+	})
+	slices.SortStableFunc(transparent, func(e1, e2 element) int {
+		return cmp.Compare(e1.getDepth(), e2.getDepth()) // sort by ascending depth
+	})
 	drawlist := append(opaque, transparent...)
 
 	// precompute cells that will need to be relinked once dirty elements are drawn. this needs to be done
@@ -656,26 +661,4 @@ func generate_id() ElementID {
 // ID returns the unique id for this element. Use this for comparisons between arbitrary elements.
 func (e *Element) ID() ElementID {
 	return e.id
-}
-
-// sorting function for use in drawChildren(). low to high.
-func depthsort(c1, c2 element) int {
-	if d1, d2 := c1.getDepth(), c2.getDepth(); d1 < d2 {
-		return -1
-	} else if d2 < d1 {
-		return 1
-	} else {
-		return 0
-	}
-}
-
-// sorting function for use in drawChildren(). high to low.
-func reversedepthsort(c1, c2 element) int {
-	if d1, d2 := c1.getDepth(), c2.getDepth(); d1 < d2 {
-		return 1
-	} else if d2 < d1 {
-		return -1
-	} else {
-		return 0
-	}
 }

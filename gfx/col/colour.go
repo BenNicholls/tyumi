@@ -100,6 +100,10 @@ func (p Pair) String() string {
 	return fmt.Sprintf("{%s, %s}", p.Fore, p.Back)
 }
 
+func (p Pair) Inverted() Pair {
+	return Pair{p.Back, p.Fore}
+}
+
 // Linearly interpolates between p and p2 over (steps) number of steps, returning the (val)th value.
 func (p Pair) Lerp(p2 Pair, val, steps int) Pair {
 	return Pair{p.Fore.Lerp(p2.Fore, val, steps), p.Back.Lerp(p2.Back, val, steps)}

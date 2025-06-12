@@ -11,8 +11,9 @@ import (
 
 // DirtyTracker is an embeddable type that implements tracking of dirty coordinates in a grid.
 type DirtyTracker struct {
-	dirty  util.Bitset
-	stride int
+	dirty    util.Bitset
+	allDirty bool
+	stride   int
 }
 
 func (ft *DirtyTracker) Init(size vec.Dims) {
@@ -21,19 +22,28 @@ func (ft *DirtyTracker) Init(size vec.Dims) {
 }
 
 func (ft DirtyTracker) IsDirtyAt(pos vec.Coord) bool {
-	return ft.dirty.Get(pos.ToIndex(ft.stride))
+	return ft.allDirty || ft.dirty.Get(pos.ToIndex(ft.stride))
 }
 
 func (ft DirtyTracker) Dirty() bool {
-	return !ft.dirty.IsEmpty()
+	return ft.allDirty || !ft.dirty.IsEmpty()
 }
 
 func (ft *DirtyTracker) SetDirty(pos vec.Coord) {
+	if ft.allDirty {
+		return
+	}
+
 	ft.dirty.Set(pos.ToIndex(ft.stride))
+}
+
+func (ft *DirtyTracker) SetAllDirty() {
+	ft.allDirty = true
 }
 
 func (ft *DirtyTracker) Clean() {
 	ft.dirty.Clear()
+	ft.allDirty = false
 }
 
 // SpecialDirtyTracker was an attempt to make a dirty tracker with minimal memory overhead. It accepts a certain number

@@ -469,8 +469,8 @@ func (e *Element) drawChildren() {
 		//opaque child. that way opaque children that have changed will redraw successfully even if they are below
 		//a transparent child.
 		var maxOpaqueDepth int
-		for _, opChild := range opaque {
-			if d := opChild.getDepth(); d > maxOpaqueDepth {
+		for _, child := range e.GetChildren() {
+			if d := child.getDepth(); !child.IsTransparent() && d > maxOpaqueDepth {
 				maxOpaqueDepth = d
 			}
 		}

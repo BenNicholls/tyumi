@@ -36,7 +36,7 @@ func (tm *TileMap) scan(pos vec.Coord, row int, slope1, slope2 float32, radius i
 		//scan row
 		for dx, dy, newStart := -j, -j, slope1; dx <= 0; dx++ {
 			mapPos := vec.Coord{pos.X + dx*r[0] + dy*r[1], pos.Y + dx*r[2] + dy*r[3]} //map coordinates
-			if !mapPos.IsInside(tm) {
+			if !tm.Bounds().Contains(mapPos) {
 				continue
 			}
 			lSlope, rSlope := (float32(dx)-0.5)/(float32(dy)+0.5), (float32(dx)+0.5)/(float32(dy)-0.5)
@@ -45,27 +45,27 @@ func (tm *TileMap) scan(pos vec.Coord, row int, slope1, slope2 float32, radius i
 				continue
 			} else if slope2 > lSlope {
 				break
-			} else {
-				if d := vec.ZERO_COORD.DistanceSqTo(vec.Coord{dx, dy}); d < r2 {
-					if !cull || !(dx == 0 || dy == 0 || dx == dy) {
-						fn(tm, mapPos, d, radius)
-					}
+			}
+
+			if d := vec.ZERO_COORD.DistanceSqTo(vec.Coord{dx, dy}); d < r2 {
+				if !cull || !(dx == 0 || dy == 0 || dx == dy) {
+					fn(tm, mapPos, d, radius)
 				}
-				//scanning a block
-				if blocked {
-					if !tm.tiles[mapPos.ToIndex(tm.size.W)].IsOpaque() {
-						blocked = false
-						slope1 = newStart
-					} else {
-						newStart = rSlope
-					}
+			}
+			//scanning a block
+			if blocked {
+				if !tm.tiles[mapPos.ToIndex(tm.size.W)].IsOpaque() {
+					blocked = false
+					slope1 = newStart
 				} else {
-					//blocked square, commence child scan
-					if tm.tiles[mapPos.ToIndex(tm.size.W)].IsOpaque() && j < radius {
-						blocked = true
-						tm.scan(pos, j+1, newStart, lSlope, radius, r, cull, fn)
-						newStart = rSlope
-					}
+					newStart = rSlope
+				}
+			} else {
+				//blocked square, commence child scan
+				if j < radius && tm.tiles[mapPos.ToIndex(tm.size.W)].IsOpaque() {
+					blocked = true
+					tm.scan(pos, j+1, newStart, lSlope, radius, r, cull, fn)
+					newStart = rSlope
 				}
 			}
 		}

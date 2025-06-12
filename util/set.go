@@ -2,6 +2,7 @@ package util
 
 import (
 	"iter"
+	"math/rand/v2"
 	"slices"
 )
 
@@ -173,6 +174,20 @@ func (s Set[E]) EachElement() iter.Seq[E] {
 	}
 }
 
+func (s Set[E]) PickOne() E {
+	idx := rand.IntN(s.Count())
+	i := 0
+	for elem := range s.EachElement() {
+		if i == idx {
+			return elem
+		}
+
+		i++
+	}
+
+	panic("Could not pick one???")
+}
+
 type OrderedSet[E comparable] struct {
 	Set[E]
 
@@ -219,7 +234,7 @@ func (os *OrderedSet[E]) RemoveAt(idx int) {
 }
 
 func (os *OrderedSet[E]) RemoveFunc(del func(E) bool) {
-	f := func (elem E) bool {
+	f := func(elem E) bool {
 		if del(elem) {
 			os.Set.Remove(elem)
 			return true
@@ -262,4 +277,8 @@ func (os *OrderedSet[E]) At(idx int) E {
 	}
 
 	return os.order[idx]
+}
+
+func (os *OrderedSet[E]) PickOne() E {
+	return os.order[rand.IntN(len(os.order))]
 }

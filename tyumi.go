@@ -3,20 +3,26 @@ package tyumi
 import (
 	"time"
 
-	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
 )
 
-var renderer Renderer
-var eventGenerator EventGenerator
-var events event.Stream //the main event stream for engine-level events
+// User controllable flags
+var (
+	ProfilingEnabled bool // Enables CPU profiling. Only works in debug mode.
+	ShowFPS          bool
+)
 
-var tick int                          //count of number of ticks since engine was initialized
-var frameTargetDuration time.Duration // target duration of each frame, based on user-set framerate
-var frameTime time.Time
-var overclock bool // if true, no framerate limiting is enforced
+// ticks and fps-control vars
+var (
+	tick                int           //count of number of ticks since engine was initialized
+	frameTargetDuration time.Duration // target duration of each frame, based on user-set framerate
+	frameTime           time.Time
+	overclock           bool // if true, no framerate limiting is enforced
+	fpsTicks            int
+	fpsTime             time.Time
+)
 
 func init() {
 	SetFramerate(60)

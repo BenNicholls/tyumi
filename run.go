@@ -13,14 +13,16 @@ import (
 	"github.com/pkg/profile"
 )
 
-var running bool
-var ProfilingEnabled bool // Enables CPU profiling. Only works in debug mode.
-var fpsTicks int
-var fpsTime time.Time
+var (
+	running        bool
+	renderer       Renderer
+	eventGenerator EventGenerator
+	events         event.Stream //the main event stream for engine-level events
+)
 
 // This is the gameloop
 func Run() {
-	if Debug && ProfilingEnabled {
+	if ProfilingEnabled {
 		defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
 	}
 
@@ -89,7 +91,7 @@ func render() {
 	activeScene.Window().Render()
 	activeScene.Window().Draw(&mainConsole.Canvas)
 
-	if Debug {
+	if ShowFPS {
 		if time.Since(fpsTime) > time.Second {
 			mainConsole.DrawText(vec.ZERO_COORD, 10000000,
 				fmt.Sprintf("FPS: %4d", tick-fpsTicks), col.Pair{col.ORANGE, col.MAROON},

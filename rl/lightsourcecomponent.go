@@ -1,6 +1,9 @@
 package rl
 
 import (
+	"math/rand"
+
+	"github.com/bennicholls/tyumi"
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/util"
@@ -14,15 +17,18 @@ func init() {
 type LightSourceComponent struct {
 	ecs.Component
 
-	Disabled    bool
-	Dirty       bool  // if true, light needs to be reapplied to its area
-	AreaDirty   bool  // if true, light needs to recompute which tiles it is affecting
-	Power       uint8 // light level applied at the source
-	FalloffRate uint8 // amount light level diminishes every 1 tile away from source
-	MaxRange    uint8 // maximum range of the light. If 0 (default), the light's distance is computed from Power and FalloffRate
+	Disabled     bool
+	Dirty        bool  // if true, light needs to be reapplied to its area
+	AreaDirty    bool  // if true, light needs to recompute which tiles it is affecting
+	Power        uint8 // light level applied at the source
+	FalloffRate  uint8 // amount light level diminishes every 1 tile away from source
+	MaxRange     uint8 // maximum range of the light. If 0 (default), the light's distance is computed from Power and FalloffRate
+	FlickerSpeed uint8 // How many ticks between flickers. If 0, flickering is disabled.
 	//Colour      col.Colour // Colour of light
 
-	litTiles map[vec.Coord]uint8 // map of tile position to the amount of light being cast there
+	litTiles    map[vec.Coord]uint8 // map of tile position to the amount of light being cast there
+	basePower   uint8               // used when computing flickers
+	baseFalloff uint8               // used when computing flickers
 }
 
 func (lsc *LightSourceComponent) Init() {
@@ -99,6 +105,23 @@ func (lsc *LightSourceComponent) SetMaxRange(max_range uint8) {
 	}
 }
 
+func (lsc *LightSourceComponent) flicker() {
+	if lsc.Disabled || lsc.FlickerSpeed == 0 {
+		return
+	}
+
+	if lsc.basePower == 0 {
+		lsc.basePower = lsc.Power
+		lsc.baseFalloff = max(lsc.FalloffRate, 1)
+	}
+
+	f := float32(lsc.baseFalloff)*0.75 + rand.Float32()*(float32(lsc.baseFalloff)/4)
+	p := float32(lsc.basePower)*0.75 + rand.Float32()*(float32(lsc.basePower)/4)
+
+	lsc.SetFalloff(uint8(util.Clamp(f, 1, 255)))
+	lsc.SetPower(uint8(min(p, 255)))
+}
+
 type LightSystem struct {
 	System
 
@@ -151,6 +174,12 @@ func (ls *LightSystem) Update() {
 	ls.System.Update()
 
 	for light := range ecs.EachComponent[LightSourceComponent]() {
+		if light.FlickerSpeed > 0 {
+			if tyumi.GetTick()%int(light.FlickerSpeed) == 0 {
+				light.flicker()
+			}
+		}
+
 		// check if light should trigger an area update due to nearby tiles changing visibility
 		if !light.AreaDirty {
 			for pos := range ls.changedVisbilityTiles.EachElement() {
@@ -168,7 +197,7 @@ func (ls *LightSystem) Update() {
 
 	ls.changedVisbilityTiles.RemoveAll()
 
-	// light application has to go in a separate pass to prevent certain accumulations errors arising from weird
+	// light application has to go in a separate pass to prevent certain accumulation errors arising from weird
 	// situations where tiles are replaced.
 	for light := range ecs.EachComponent[LightSourceComponent]() {
 		if light.Dirty {

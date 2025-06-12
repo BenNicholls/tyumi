@@ -212,7 +212,11 @@ func (ls *LightSystem) computeLightArea(light *LightSourceComponent) {
 
 	lightRange := int(light.MaxRange)
 	if lightRange == 0 {
-		lightRange = int(float32(light.Power) / float32(light.FalloffRate))
+		if light.FalloffRate == 0 {
+			lightRange = 10
+		} else {
+			lightRange = int(float32(light.Power) / float32(light.FalloffRate))
+		}
 	}
 
 	ls.tileMap.ShadowCast(source, lightRange, func(tm *TileMap, pos vec.Coord, d, r int) {

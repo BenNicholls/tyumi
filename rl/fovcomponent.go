@@ -148,6 +148,9 @@ func (fs *FOVSystem) Update() {
 
 		if fov.Dirty {
 			fs.computeFOV(fov)
+			if Entity(fov.GetEntity()).IsPlayer() {
+				fs.tileMap.SetAllDirty()
+			}
 
 			if fov.TrackEntities {
 				var newEntities util.Set[Entity]

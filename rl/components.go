@@ -12,6 +12,7 @@ func init() {
 	ecs.Register[EntityContainerComponent]()
 	ecs.Register[PositionComponent]()
 	ecs.Register[EntityComponent]()
+	ecs.Register[PlayerComponent]()
 	ecs.Register[MemoryComponent]()
 }
 
@@ -34,6 +35,10 @@ type TerrainComponent struct {
 type EntityComponent struct {
 	ecs.Component
 	EntityType
+}
+
+type PlayerComponent struct {
+	ecs.Component
 }
 
 type EntityContainerComponent struct {

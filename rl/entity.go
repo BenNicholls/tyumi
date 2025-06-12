@@ -65,6 +65,10 @@ func (e Entity) Position() vec.Coord {
 	return ecs.Get[PositionComponent](e).Coord
 }
 
+func (e Entity) IsPlayer() bool {
+	return ecs.Has[PlayerComponent](e)
+}
+
 func (e Entity) MoveTo(pos vec.Coord) {
 	position := ecs.Get[PositionComponent](e)
 	if position.Static && pos != NOT_IN_TILEMAP {

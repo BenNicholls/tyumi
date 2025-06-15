@@ -89,6 +89,22 @@ func NewFadeOutAnimation(area vec.Rect, depth int, duration_frames int, colour c
 	return
 }
 
+// Sets up a Fade In animation. Both foreground and background are faded from the specified colour.
+func NewFadeInAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) (fa FadeAnimation) {
+	fa = FadeAnimation{
+		Animation: Animation{
+			area:          area,
+			Depth:         depth,
+			Duration:      duration_frames,
+			AlwaysUpdates: true,
+			Backwards:     true,
+		},
+		ToColours: col.Pair{colour, colour},
+	}
+
+	return
+}
+
 // Sets up a flash animation. The colour immediately is set to the provided flash colours, and then the area fades
 // back to the original colours over the duration.
 func NewFlashAnimation(area vec.Rect, depth int, duration_frames int, flash_colours col.Pair) (fa FadeAnimation) {

@@ -9,9 +9,9 @@ import (
 )
 
 var logger []Entry
-var onMessageCallback func(e Entry)   // callback for when a message is logged
-var printLogs bool                    // print log messages to console
-var minimumLogLevel level = LVL_DEBUG // only log messages of this level or higher
+var onMessageCallback func(e Entry)  // callback for when a message is logged
+var printLogs bool                   // print log messages to console
+var minimumLogLevel level = LVL_INFO // only log messages of this level or higher
 
 type level uint8
 
@@ -89,10 +89,6 @@ func WriteToDisk() {
 	for _, m := range logger {
 		f.WriteString(m.String() + "\n")
 	}
-}
-
-func Debug(messages ...any) {
-	log(LVL_DEBUG, messages...)
 }
 
 func Info(messages ...any) {

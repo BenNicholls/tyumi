@@ -60,6 +60,8 @@ func (l *List) Insert(items ...element) {
 		return
 	}
 
+	oldCount := l.Count()
+
 	if l.items == nil {
 		l.items = make([]element, 0)
 	} else if l.capacity > 0 && len(l.items) == l.capacity {
@@ -69,13 +71,17 @@ func (l *List) Insert(items ...element) {
 	}
 
 	for _, item := range items {
+		if slices.Contains(l.items, item) {
+			continue
+		}
+
 		l.items = append(l.items, item)
 		l.AddChild(item)
 	}
 
 	l.recalibrate = true
 
-	if l.Count() == 1 {
+	if oldCount == 0 && l.Count() > 0 {
 		l.Select(0)
 
 		if l.emptyLabel != nil {

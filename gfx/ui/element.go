@@ -245,6 +245,11 @@ func (e *Element) AddChild(child element) {
 		return
 	}
 
+	if parent := child.GetParent(); parent != nil && parent.ID() == e.ID() {
+		log.Warning("Tried to add an element to its own parent! Why add twice????")
+		return
+	}
+
 	e.TreeNode.AddChild(child)
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeAdded(child)

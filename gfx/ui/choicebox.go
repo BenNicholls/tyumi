@@ -30,7 +30,7 @@ type ChoiceBox struct {
 	choices            []string
 	currentChoiceIndex int            //will be -1 if no choices present
 	arrowVisuals       [2]gfx.Visuals //LEFT and RIGHT
-	arrowAnimations    [2]gfx.FlashAnimation
+	arrowAnimations    [2]gfx.FadeAnimation
 }
 
 func (cb *ChoiceBox) Init(size vec.Dims, pos vec.Coord, depth int, choices ...string) {
@@ -46,8 +46,8 @@ func (cb *ChoiceBox) Init(size vec.Dims, pos vec.Coord, depth int, choices ...st
 	cb.arrowVisuals[0] = gfx.NewGlyphVisuals(gfx.GLYPH_TRIANGLE_LEFT, cb.DefaultColours())
 	cb.arrowVisuals[1] = gfx.NewGlyphVisuals(gfx.GLYPH_TRIANGLE_RIGHT, cb.DefaultColours())
 
-	cb.arrowAnimations[0] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{0, 0}, vec.Dims{1, 1}}, 1, col.Pair{col.RED, gfx.COL_DEFAULT}, 15)
-	cb.arrowAnimations[1] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{cb.Size().W - 1, 0}, vec.Dims{1, 1}}, 1, col.Pair{col.RED, gfx.COL_DEFAULT}, 15)
+	cb.arrowAnimations[0] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{0, 0}, vec.Dims{1, 1}}, 1, 15, col.Pair{col.RED, gfx.COL_DEFAULT})
+	cb.arrowAnimations[1] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{cb.Size().W - 1, 0}, vec.Dims{1, 1}}, 1, 15, col.Pair{col.RED, gfx.COL_DEFAULT})
 	cb.AddAnimation(&cb.arrowAnimations[0])
 	cb.AddAnimation(&cb.arrowAnimations[1])
 }

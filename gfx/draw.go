@@ -10,6 +10,10 @@ const (
 	COL_DEFAULT col.Colour = 0x00000001 //pass this in cases where you want a canvas to use the default colours
 )
 
+func init() {
+	col.ColourNames[COL_DEFAULT] = "Default"
+}
+
 type DrawMode uint8
 
 const (

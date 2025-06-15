@@ -74,37 +74,62 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colour
 	return
 }
 
-func (fa *FadeAnimation) Render(c *Canvas) {
-	for cursor := range vec.EachCoordInIntersection(c, fa) {
-		dst_cell := c.getCell(cursor)
-		// if dst_cell.Mode == DRAW_NONE {
-		// 	continue
-		// }
-
-		colours := fa.FromColours
-		if colours.Fore == col.NONE {
-			colours.Fore = dst_cell.Colours.Fore
-		}
-		if colours.Back == col.NONE {
-			colours.Back = dst_cell.Colours.Back
-		}
-
-		c.DrawColours(cursor, fa.Depth, colours.Lerp(fa.ToColours, fa.GetTicks(), fa.Duration-1))
+// Sets up a Fade Out animation. Both foreground and background are faded to the specified colour.
+func NewFadeOutAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) (fa FadeAnimation) {
+	fa = FadeAnimation{
+		Animation: Animation{
+			area:          area,
+			Depth:         depth,
+			Duration:      duration_frames,
+			AlwaysUpdates: true,
+		},
+		ToColours: col.Pair{colour, colour},
 	}
 
-	fa.Updated = false
+	return
 }
 
-// FlashAnimation makes an area flash once.
-type FlashAnimation struct {
-	FadeAnimation
-}
-
-func NewFlashAnimation(area vec.Rect, depth int, flash_colours col.Pair, duration_frames int) (fa FlashAnimation) {
-	fa.FadeAnimation = NewFadeAnimation(area, depth, duration_frames, flash_colours)
+// Sets up a flash animation. The colour immediately is set to the provided flash colours, and then the area fades
+// back to the original colours over the duration.
+func NewFlashAnimation(area vec.Rect, depth int, duration_frames int, flash_colours col.Pair) (fa FadeAnimation) {
+	fa = NewFadeAnimation(area, depth, duration_frames, flash_colours)
 	fa.Backwards = true
 
 	return
+}
+
+func (fa *FadeAnimation) Render(c *Canvas) {
+
+	toColours := fa.ToColours
+	if toColours.Fore == COL_DEFAULT {
+		toColours.Fore = c.DefaultColours().Fore
+	}
+	if toColours.Back == COL_DEFAULT {
+		toColours.Back = c.DefaultColours().Back
+	}
+
+	for cursor := range vec.EachCoordInIntersection(c, fa) {
+		dst_cell := c.getCell(cursor)
+
+		fromColours := fa.FromColours
+		if fromColours.Fore == COL_DEFAULT {
+			fromColours.Fore = c.DefaultColours().Fore
+		}
+		if fromColours.Back == COL_DEFAULT {
+			fromColours.Back = c.DefaultColours().Back
+		}
+
+		if fromColours.Fore == col.NONE {
+			fromColours.Fore = dst_cell.Colours.Fore
+		}
+		if fromColours.Back == col.NONE {
+			fromColours.Back = dst_cell.Colours.Back
+		}
+
+		c.DrawColours(cursor, fa.Depth, fromColours.Lerp(toColours, fa.GetTicks(), fa.Duration-1))
+	}
+
+	fa.Updated = false
 }
 
 // PulseAnimation makes an area pulse, fading to a set of colours and then fading back

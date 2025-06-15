@@ -164,6 +164,9 @@ func (e *Element) Resize(size vec.Dims) {
 func (e *Element) SetDefaultColours(colours col.Pair) {
 	e.Canvas.SetDefaultColours(colours)
 	e.Updated = true
+	if e.Border.enabled {
+		e.Border.dirty = true
+	}
 }
 
 func (e *Element) SetDefaultVisuals(vis gfx.Visuals) {

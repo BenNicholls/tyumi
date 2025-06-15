@@ -53,6 +53,8 @@ type Animation struct {
 	Duration      int  //duration of animation in ticks
 	Label         string
 
+	OnDone func() // Callback run when animation finishes.
+
 	area        vec.Rect
 	ticks       int  //incremented each update
 	enabled     bool //animation is playing
@@ -81,6 +83,11 @@ func (a *Animation) Update() {
 		if a.Label != "" {
 			fireAnimationCompleteEvent(a.Label)
 		}
+
+		if a.OnDone != nil {
+			a.OnDone()
+		}
+
 		a.enabled = false
 		a.justStopped = true
 		a.reset = true

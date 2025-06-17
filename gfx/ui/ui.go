@@ -53,5 +53,5 @@ func fireCallbacks(callbacks ...func()) {
 // predicate for ui-tree-walking functions. we use this to break early on walks that only apply to visible sections
 // of the ui tree
 func ifVisible(e element) bool {
-	return e.IsVisible()
+	return e != nil && e.IsVisible()
 }

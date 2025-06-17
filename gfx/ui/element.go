@@ -465,6 +465,11 @@ func (e *Element) drawChildren() {
 		}
 	}
 
+	if len(opaque) == 0 && len(transparent) == 0 {
+		//nothing to draw! our work here is done.
+		return
+	}
+
 	slices.SortStableFunc(opaque, func(e1, e2 element) int {
 		return cmp.Compare(e2.getDepth(), e1.getDepth()) // sort by descending reverse depth
 	})

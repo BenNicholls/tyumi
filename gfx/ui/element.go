@@ -503,6 +503,14 @@ func (e *Element) AddAnimation(animation gfx.Animator) {
 	}
 }
 
+// AddOneShotAnimation adds an animation to the element. The animation will automatically start, play once, and then
+// be removed.
+func (e *Element) AddOneShotAnimation(animation gfx.Animator) {
+	animation.SetOneShot(true)
+	animation.Start()
+	e.AddAnimation(animation)
+}
+
 func (e *Element) updateAnimations() {
 	for _, a := range e.animations {
 		if a.IsPlaying() {

@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -39,6 +40,8 @@ type Animator interface {
 	Finish()
 
 	GetDuration() int
+
+	SetOneShot(bool)
 }
 
 // Base struct for animations. Embed this to satisfy Animator interface above.
@@ -117,6 +120,20 @@ func (a Animation) IsUpdated() bool {
 func (a *Animation) SetArea(area vec.Rect) {
 	a.MoveTo(area.Coord)
 	a.Resize(area.Dims)
+}
+
+// Sets the animation to OneShot. OneShot animations play once and then can be removed/deleted/garbaged/whatever.
+// If the animation is set to Repeat, repeat is removed since you can't do both.
+func (a *Animation) SetOneShot(oneshot bool) {
+	if a.OneShot == oneshot {
+		return
+	}
+
+	a.OneShot = oneshot
+	if a.OneShot && a.Repeat {
+		log.Warning("Repeating animations cannot be oneshot! Removing repeat flag.")
+		a.Repeat = false
+	}
 }
 
 func (a *Animation) Resize(size vec.Dims) {

@@ -73,6 +73,15 @@ func (r Rect) Corners() (corners [4]Coord) {
 	return
 }
 
+func (r Rect) Sides() (sides [4]Line) {
+	sides[0] = Line{r.Coord, Coord{r.X + r.W - 1, r.Y}}                             //TOP
+	sides[1] = Line{Coord{r.X + r.W - 1, r.Y}, Coord{r.X + r.W - 1, r.Y + r.H - 1}} //RIGHT
+	sides[2] = Line{Coord{r.X + r.W - 1, r.Y + r.H - 1}, Coord{r.X, r.Y + r.H - 1}} //BOTTOM
+	sides[3] = Line{Coord{r.X, r.Y + r.H - 1}, r.Coord}                             //LEFT
+
+	return
+}
+
 // IsInside calculates whether the rect is within the bounds of the provided rect.
 // NOTE: for now, identical rects are NOT reported as being within eachother. May have to rethink this...
 func (r Rect) IsInside(r2 Rect) bool {
@@ -121,7 +130,7 @@ func (r Rect) Center() Coord {
 
 // Contains calculates whether the provided coord is within the bounds of the rect.
 func (r Rect) Contains(c Coord) bool {
-	return !(c.X < r.X || c.Y < r.Y || c.X >= r.X+r.W || c.Y >= r.Y+r.H)
+	return c.X >= r.X && c.Y >= r.Y && c.X < r.X+r.W && c.Y < r.Y+r.H
 }
 
 func (r Rect) EachCoord() iter.Seq[Coord] {
@@ -136,6 +145,46 @@ func (r Rect) EachCoord() iter.Seq[Coord] {
 	}
 }
 
+// Returns an iterator producing a sequence of all coords in the perimeter of a bounded area.
+func (r Rect) EachCoordInPerimeter() iter.Seq[Coord] {
+	return func(yield func(Coord) bool) {
+		if r.Area() == 0 { //0x0 box, aka a nothing
+			return
+		}
+
+		if r.Area() == 1 { //1x1 box, aka 1 cell
+			yield(r.Coord)
+			return
+		}
+
+		if r.W == 1 || r.H == 1 { // 1D box, aka a line.
+			corners := r.Corners()
+			line := Line{corners[0], corners[2]}
+			for coord := range line.EachCoord() {
+				if !yield(coord) {
+					return
+				}
+			}
+			return
+		}
+
+		sides := r.Sides()
+		for _, side := range sides {
+			for coord := range side.EachCoord() {
+				if coord == side.End { // don't yield the end coord, the next side will do it.
+					break
+				}
+
+				if !yield(coord) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// CalcExtendedRect returns a rect that is the original rect r minimally extended so that it encompasses the provided
+// coord.
 func (r Rect) CalcExtendedRect(coord Coord) (extended Rect) {
 	extended = r
 	if coord.X < r.X {
@@ -155,6 +204,7 @@ func (r Rect) CalcExtendedRect(coord Coord) (extended Rect) {
 	return
 }
 
+// CalcRectContainingCoord returns the smallest rect that contains the provided coords.
 func CalcRectContainingCoords(c1, c2 Coord) Rect {
 	if c1 == c2 {
 		return Rect{c1, Dims{1, 1}}

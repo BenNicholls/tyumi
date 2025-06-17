@@ -24,6 +24,30 @@ func (l Line) LengthSq() int {
 	return l.Start.DistanceSqTo(l.End)
 }
 
+// Contracted returns the line l with the first N and last N points removed (where N = amount).
+func (l Line) Contracted(amount int) (contracted Line) {
+	i := 0
+	for cursor := range l.EachCoord() {
+		if i == amount {
+			contracted.Start = cursor
+			break
+		}
+		i += 1
+	}
+
+	i = 0
+	backwards := Line{l.End, l.Start}
+	for cursor := range backwards.EachCoord() {
+		if i == amount {
+			contracted.End = cursor
+			break
+		}
+		i += 1
+	}
+
+	return
+}
+
 // EachCoord returns an iterator that produces Coords representing the line from start to end inclusive.
 func (l Line) EachCoord() iter.Seq[Coord] {
 	//detect if we're drawing a straight line or not. if we are, we can skip the more expensive bresenham algorithm in

@@ -12,11 +12,10 @@ type Circle struct {
 }
 
 func (c Circle) EachCoordInPerimeter() iter.Seq[Coord] {
-	arc := arcGenerator(c.Radius)
 	return func(yield func(Coord) bool) {
-		for p := arc(); p != ZERO_COORD; p = arc() {
+		for arcPos := range arcIterator(c.Radius) {
 			for i := range 8 {
-				if !yield(transformArcToOctant(c.Center, p, i)) {
+				if !yield(transformArcToOctant(c.Center, arcPos, i)) {
 					return
 				}
 			}
@@ -24,7 +23,7 @@ func (c Circle) EachCoordInPerimeter() iter.Seq[Coord] {
 	}
 }
 
-// Computes a circle, calling fn on each point on the perimeter the circle.
+// Computes a circle, calling fn for each point on the perimeter the circle.
 // fn can be a drawing function or whatever.
 func CircleFunc(center Coord, radius int, fn func(pos Coord)) {
 	circle := Circle{radius, center}
@@ -33,30 +32,27 @@ func CircleFunc(center Coord, radius int, fn func(pos Coord)) {
 	}
 }
 
-// returns a generator that computes successive coordinates representing 1/8th of a circle. rotate the arc to draw
-// circles. gives back the ZERO_COORD when it is done.
-func arcGenerator(radius int) func() Coord {
+func arcIterator(radius int) iter.Seq[Coord] {
 	x, y := 0, radius
 	f := 1 - radius
 	ddf_x, ddf_y := 1, -2*radius
 
-	return func() Coord {
-		if x <= y {
-			c := Coord{x, y}
+	return func(yield func(Coord) bool) {
+		for x <= y {
+			if !yield(Coord{x, y}) {
+				return
+			}
+
 			if f >= 0 {
-				y--
+				y -= 1
 				ddf_y += 2
 				f += ddf_y
 			}
 
-			x++
+			x += 1
 			ddf_x += 2
 			f += ddf_x
-
-			return c
 		}
-
-		return ZERO_COORD
 	}
 }
 
@@ -83,5 +79,4 @@ func transformArcToOctant(center, arcPos Coord, octant int) Coord {
 		log.Error("Octant is bigger than 7. Don't you know what octant *means*????")
 		return ZERO_COORD
 	}
-
 }

@@ -94,8 +94,8 @@ func (c *Canvas) InBounds(pos vec.Coord) bool {
 	return c.Bounds().Contains(pos)
 }
 
-// SetOrigin sets the origin coord for the canvas. draw operations will be done relative to this point.
-// must be a point in the canvas, so {0 <= x < W, 0 <= y < H}
+// SetOrigin sets the origin coord for the canvas. draw operations will be done relative to this point. Must be a point
+// in the canvas, so {0 <= x < W, 0 <= y < H}
 func (c *Canvas) SetOrigin(pos vec.Coord) {
 	if !pos.IsInside(c.size) {
 		return
@@ -113,8 +113,8 @@ func (c *Canvas) cellIndex(pos vec.Coord) int {
 }
 
 // GetCell returns the cell at pos. Returns an empty cell if pos is out of bounds.
-// Note that this function just returns the value of the requested cell, not a reference,
-// so you can't change the cell this way. Use the Canvas.Draw* functions for that!
+// Note that this function just returns the value of the requested cell, not a reference, so you can't change the cell
+// this way. Use the Canvas.Draw* functions for that!
 func (c *Canvas) GetCell(pos vec.Coord) (cell Visuals) {
 	if !c.InBounds(pos) {
 		return
@@ -267,6 +267,9 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	}
 }
 
+
+// FlattenTo reduces the depth of all cells in the provided areas to AT MOST the provided depth. If no areas are
+// provided, the whole canvas is flattened.
 func (c *Canvas) FlattenTo(depth int, areas ...vec.Rect) {
 	if len(areas) == 0 {
 		areas = append(areas, c.Bounds())
@@ -289,6 +292,9 @@ func (c *Canvas) SetDirty(pos vec.Coord) {
 	c.DirtyTracker.SetDirty(pos.Subtract(c.offset))
 }
 
+
+// IsTransparent returns true if any cells in the canvas are transparent.
+// THINK: should there be a version of this that just checks a certain cell or area for transparency??
 func (c Canvas) IsTransparent() bool {
 	return c.transparentCells > 0
 }

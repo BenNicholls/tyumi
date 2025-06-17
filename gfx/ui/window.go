@@ -225,8 +225,8 @@ func (wnd *Window) removeLabel(label string) {
 }
 
 func (wnd *Window) onSubNodeAdded(subNode element) {
-	//find labelled subnodes of the new element and add them to the label map
 	util.WalkTree(subNode, func(e element) {
+		//find labelled subnodes of the new element and add them to the label map
 		if e.IsLabelled() {
 			wnd.addLabel(e.GetLabel(), e)
 		}

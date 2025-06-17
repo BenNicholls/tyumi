@@ -71,6 +71,10 @@ func (tb *Textbox) InitTitle(size vec.Dims, pos vec.Coord, depth int, text strin
 	tb.EnableBorder()
 }
 
+// SetTextMode sets how text is drawn. Valid modes are:
+//   - TEXTMODE_FULL    : draw full width characters
+//   - TEXTMODE_HALF    : draw half width characters
+//   - TEXTMODE_DEFAULT : use the default value set at gfx.DefaultTextMode
 func (tb *Textbox) SetTextMode(text_mode gfx.TextMode) {
 	if tb.textMode == text_mode {
 		return
@@ -81,6 +85,8 @@ func (tb *Textbox) SetTextMode(text_mode gfx.TextMode) {
 	tb.Updated = true
 }
 
+// ChangeText changes the text content of the textbox. The new content is re-wrapped and if the textbox is set to
+// FIT_WIDTH or FIT_HEIGHT it will be resized to fit.
 func (tb *Textbox) ChangeText(txt string) {
 	if txt == tb.text {
 		return
@@ -91,6 +97,8 @@ func (tb *Textbox) ChangeText(txt string) {
 	tb.Updated = true
 }
 
+// AppendText adds a string to the text in the textbox. The new content is re-wrapped and if the textbox is set to
+// FIT_WIDTH or FIT_HEIGHT it will be resized to fit.
 func (tb *Textbox) AppendText(txt string) {
 	if txt == "" {
 		return

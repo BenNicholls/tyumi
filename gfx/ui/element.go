@@ -299,22 +299,16 @@ func (e *Element) Update() {}
 // you do not have to handle that here. Render() is called *after* child elements are drawn, and *before* any playing
 // animations are drawn.
 func (e *Element) Render() {
-	if e.OnRender == nil {
-		return
+	if e.OnRender != nil {
+		e.OnRender()
 	}
-
-	e.OnRender()
 }
 
 // Handles keypresses. Override this to implement key input handling.
-func (e *Element) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) {
-	return
-}
+func (e *Element) HandleKeypress(event *input.KeyboardEvent) (event_handled bool) { return }
 
 // Handles Actions. Override this to implement action handling.
-func (e *Element) HandleAction(action input.ActionID) (action_handled bool) {
-	return
-}
+func (e *Element) HandleAction(action input.ActionID) (action_handled bool) { return }
 
 // -------------------
 
@@ -326,25 +320,7 @@ func (e *Element) IsUpdated() bool {
 	return e.Updated
 }
 
-func (e *Element) updateAnimations() {
-	for _, a := range e.animations {
-		if a.IsPlaying() {
-			a.Update()
-		}
-
-		if a.JustStopped() {
-			// if animation has stopped, trigger a redraw to clean up anything the animation might have left on the canvas
-			e.forceRedraw = true
-		}
-	}
-
-	// remove finished one-shot animations
-	e.animations = slices.DeleteFunc(e.animations, func(a gfx.Animator) bool {
-		return a.IsOneShot() && a.IsDone()
-	})
-}
-
-// ForceRedraw will force an element to clear itself redraw all of its children, and perform a Render(). This generally
+// ForceRedraw will force an element to clear itself, redraw all of its children, and perform a Render(). This generally
 // isn't necessary as the UI system will trigger these operations automatically, only when strictly needed. But in cases
 // where this can't be done you can use ForceRedraw to trigger the process manually.
 func (e *Element) ForceRedraw() {
@@ -394,14 +370,6 @@ func (e *Element) finalizeRender() {
 	if e.Border.enabled {
 		e.Border.dirty = false
 		e.Border.internalLinksRecalculated = false
-	}
-}
-
-func (e *Element) renderAnimations() {
-	for _, animation := range e.animations {
-		if animation.IsPlaying() && vec.Intersects(e.getCanvas(), animation) {
-			animation.Render(&e.Canvas)
-		}
 	}
 }
 
@@ -531,6 +499,32 @@ func (e *Element) AddAnimation(animation gfx.Animator) {
 	if animation.IsBlocking() && animation.IsPlaying() {
 		if wnd := e.getWindow(); wnd != nil {
 			wnd.onBlockingAnimationAdded()
+		}
+	}
+}
+
+func (e *Element) updateAnimations() {
+	for _, a := range e.animations {
+		if a.IsPlaying() {
+			a.Update()
+		}
+
+		if a.JustStopped() {
+			// if animation has stopped, trigger a redraw to clean up anything the animation might have left on the canvas
+			e.forceRedraw = true
+		}
+	}
+
+	// remove finished one-shot animations
+	e.animations = slices.DeleteFunc(e.animations, func(a gfx.Animator) bool {
+		return a.IsOneShot() && a.IsDone()
+	})
+}
+
+func (e *Element) renderAnimations() {
+	for _, animation := range e.animations {
+		if animation.IsPlaying() && vec.Intersects(e.getCanvas(), animation) {
+			animation.Render(&e.Canvas)
 		}
 	}
 }

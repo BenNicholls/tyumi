@@ -60,26 +60,29 @@ func (l *List) Insert(items ...element) {
 		return
 	}
 
-	oldCount := l.Count()
-
 	if l.items == nil {
 		l.items = make([]element, 0)
-	} else if l.capacity > 0 && len(l.items) == l.capacity {
-		for i := range len(items) {
-			l.RemoveAt(len(items) - 1 - i)
-		}
 	}
 
+	oldCount := l.Count()
+	itemAdded := false
 	for _, item := range items {
 		if slices.Contains(l.items, item) {
 			continue
 		}
 
+		if l.capacity > 0 && len(l.items) == l.capacity {
+			l.RemoveAt(0)
+		}
+
 		l.items = append(l.items, item)
 		l.AddChild(item)
+		itemAdded = true
 	}
 
-	l.recalibrate = true
+	if !itemAdded {
+		return
+	}
 
 	if oldCount == 0 && l.Count() > 0 {
 		l.Select(0)
@@ -89,14 +92,18 @@ func (l *List) Insert(items ...element) {
 		}
 	}
 
+	l.recalibrate = true
 	l.Updated = true
 }
 
 // InsertText adds simple textboxes to the list, one for each string passed.
 func (l *List) InsertText(align Alignment, items ...string) {
+	textBoxes := make([]element, 0)
 	for _, item := range items {
-		l.Insert(NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, align))
+		textBoxes = append(textBoxes, NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, align))
 	}
+
+	l.Insert(textBoxes...)
 }
 
 // Remove removes ui elements from the list, if present.

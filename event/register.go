@@ -1,13 +1,15 @@
 package event
 
 import (
+	"weak"
+
 	"github.com/bennicholls/tyumi/util"
 )
 
 var registeredEvents []eventInfo
 
 func init() {
-	registeredEvents = make([]eventInfo, 1)
+	registeredEvents = make([]eventInfo, 0)
 	Register("ERROR event (if you see this, someone did a boo boo.)")
 }
 
@@ -15,20 +17,18 @@ func init() {
 type eventInfo struct {
 	id        EventID
 	name      string
-	listeners util.Set[*Stream]
+	listeners util.Set[weak.Pointer[Stream]]
 }
 
 func (e *eventInfo) addListener(stream *Stream) {
-	e.listeners.Add(stream)
+	e.listeners.Add(weak.Make(stream))
 }
 
 func (e *eventInfo) removeListener(stream *Stream) {
-	e.listeners.Remove(stream)
+	e.listeners.Remove(weak.Make(stream))
 }
 
 // Registers an event type with the event system and returns the assigned ID.
-// event_type is SIMPLE or COMPLEX. simple events just contain the ID, complex events are composed around a larger
-// event struct with additional data.
 // NOTE: name is NOT a unique identifier, only the returned ID is. Name is just for human readability.
 func Register(name string) EventID {
 	info := eventInfo{

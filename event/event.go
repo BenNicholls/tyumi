@@ -2,7 +2,11 @@
 // and eventual doling-out of events.
 package event
 
-import "github.com/bennicholls/tyumi/log"
+import (
+	"weak"
+
+	"github.com/bennicholls/tyumi/log"
+)
 
 // Definition for event objects. Compose custom events around the EventPrototype to satisfy
 // this interface cleanly.
@@ -64,16 +68,29 @@ func Fire(ID EventID, events ...Event) {
 
 	if len(events) == 0 { // no provided event, fire a simple event with just the id
 		e := EventPrototype{id: ID}
-		for stream := range registeredEvents[ID].listeners.EachElement() {
-			stream.add(&e)
-		}
+		addEventToListeners(&e)
 		return
 	}
 
 	for _, e := range events {
 		e.setID(ID)
-		for stream := range registeredEvents[ID].listeners.EachElement() {
-			stream.add(e)
+		addEventToListeners(e)
+	}
+}
+
+func addEventToListeners(e Event) {
+	var closedStreams []weak.Pointer[Stream]
+	for stream := range registeredEvents[e.ID()].listeners.EachElement() {
+		if stream.Value() == nil {
+			closedStreams = append(closedStreams, stream)
+			continue
 		}
+
+		stream.Value().add(e)
+	}
+
+	if len(closedStreams) > 0 {
+		registeredEvents[e.ID()].listeners.Remove(closedStreams...)
+		log.Debug("closing a stream!")
 	}
 }

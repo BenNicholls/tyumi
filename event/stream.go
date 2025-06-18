@@ -58,7 +58,7 @@ func NewStream(size int, handler Handler) (s Stream) {
 }
 
 // Sets the event handler function to the stream for event processing. If this is not set, the stream will not receive
-// events. If the stream's size defaults to 100 events. Use Init() or SetStreamSize() to set another size if needed.
+// events.
 func (s *Stream) SetEventHandler(handler Handler) {
 	if s.stream == nil {
 		s.Init(100, handler)
@@ -67,8 +67,8 @@ func (s *Stream) SetEventHandler(handler Handler) {
 	}
 }
 
-// Sets the maximum number of events that the stream can hold before needing to be processed. If this is not called, a
-// default value of 100 will be used.
+// Sets the maximum number of events that the stream can hold before needing to be processed. If this is not called then
+// a default value of 100 will be used.
 func (s *Stream) SetStreamSize(size int) {
 	if size <= 0 {
 		log.Error("Attempting to set stream size to 0 or less. Don't do that.")
@@ -142,8 +142,7 @@ func (s *Stream) EnableListening() {
 }
 
 // Disables listening for events. Disabled streams will not receive events and ProcessEvents() becomes a no-op. Use
-// EnableListening() to reactivate the stream. Disabling a stream also removes all cached pointers to the stream object
-// from the event package; be sure to call this if you want your stream to be garbage collected.
+// EnableListening() to reactivate the stream.
 func (s *Stream) DisableListening() {
 	s.setDisabled(true)
 }
@@ -190,7 +189,8 @@ func (s *Stream) add(e Event) {
 	}
 
 	if len(s.stream) == cap(s.stream) {
-		log.Warning("Event stream full! Event not added. Either this means the stream is too small, or you've forgotten to close a stream that is no longer being processed.")
+		log.Warning(`Event stream full! Event not added. Either this means the stream is too small,
+						or you've forgotten to close a stream that is no longer being processed.`)
 		return
 	}
 

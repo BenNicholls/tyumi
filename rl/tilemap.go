@@ -13,16 +13,15 @@ import (
 var NOT_IN_TILEMAP = vec.Coord{-1, -1}
 
 type TileMap struct {
+	gfx.DirtyTracker
+
 	LightSystem
 	FOVSystem
-	gfx.DirtyTracker
 
 	Ready bool // set this to true once level generation is complete! suppresses events while false.
 
 	size  vec.Dims
 	tiles []Tile
-
-	//entities []Entity
 }
 
 func (tm *TileMap) getMap() *TileMap {
@@ -31,9 +30,10 @@ func (tm *TileMap) getMap() *TileMap {
 
 // Initialize the TileMap. All tiles in the map will be set to defaultTile
 func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
+	tm.DirtyTracker.Init(size)
+
 	tm.LightSystem.Init(tm)
 	tm.FOVSystem.Init(tm)
-	tm.DirtyTracker.Init(size)
 
 	tm.size = size
 
@@ -217,7 +217,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	if light < 255 {
 		light = uint8(min(int(terrain.LightLevel)+int(light), 255))
 	}
-	
+
 	if light > 0 {
 		vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(light), 255)
 		return

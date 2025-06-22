@@ -27,14 +27,10 @@ func (c *Component) setEntity(e Entity) {
 }
 
 // Init is run when the component is added to an entity. Use this to initialize any slices or maps or whatever.
-func (c *Component) Init() {
-
-}
+func (c *Component) Init() {}
 
 // Cleanup is run when the component is removed from an entity. Use this to... I dunno, send events?
-func (c *Component) Cleanup() {
-
-}
+func (c *Component) Cleanup() {}
 
 // Register registers a type to be used as a component for entities. Types MUST be registered before being
 // added to entities. Trying to add, get, or remove an unregistered component to/from an entity results in a panic.
@@ -64,6 +60,8 @@ func Add[T componentType, ET ~uint32](entity ET, init_value ...T) {
 
 // Get retrieves the component of type T from an entity. If the entity does not have the requested component,
 // returns nil.
+// WARNING: do not hold these component pointers! Do not store them, do not save them for later. The ECS shuffles things
+// around as necessary to keep arrays packed nicely for iteration so at any time these pointers can become invalid.
 func Get[T componentType, ET ~uint32](entity ET) (component *T) {
 	if Debug && !Alive(entity) {
 		log.Error("Cannot get " + reflect.TypeFor[T]().Name() + " component from dead/invalid entity")
@@ -93,7 +91,7 @@ func Remove[T componentType, ET ~uint32](entity ET) {
 	getComponentCache[T]().removeComponent(Entity(entity))
 }
 
-// Toggle will add a component to an entity if it does not have one (optionally using the providing init value),
+// Toggle will add a component to an entity if it does not have one (optionally using the provided init value),
 // otherwise it removes the component.
 func Toggle[T componentType, ET ~uint32](entity ET, init ...T) {
 	if Debug && !Alive(entity) {

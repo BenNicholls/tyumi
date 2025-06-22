@@ -73,7 +73,8 @@ func log(level level, messages ...any) {
 	}
 
 	if printLogs {
-		fmt.Println(e)
+		// for console printing we skip the timestamp for easier readability.
+		fmt.Printf("%s: %s\n", e.Level, e.Message)
 	}
 }
 

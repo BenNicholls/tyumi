@@ -91,6 +91,5 @@ func addEventToListeners(e Event) {
 
 	if len(closedStreams) > 0 {
 		registeredEvents[e.ID()].listeners.Remove(closedStreams...)
-		log.Debug("closing a stream!")
 	}
 }

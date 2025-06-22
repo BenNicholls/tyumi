@@ -54,16 +54,25 @@ func fireActionEvent(action ActionID) {
 }
 
 type ActionKeyTrigger struct {
-	Action ActionID // ID of the action to trigger
-	Key    Keycode  // key to trigger on
+	Action ActionID     // ID of the action to trigger
+	Key    Keycode      // key to trigger on
+	Mods   KeyModifiers // required modifiers
 
 	// presstype to trigger on. you can use KEYPRESS_EITHER to have the action trigger on both PRESS and RELEASE.
 	// defaults to KEY_PRESSED
 	PressType KeyPressType
 }
 
-// TriggeredBy returns true is the provided keyboard event successfully triggers the trigger. Trigger.
+// TriggeredBy returns true if the provided keyboard event successfully triggers the trigger. Trigger.
 func (akt ActionKeyTrigger) TriggeredBy(key_event KeyboardEvent) bool {
+	if akt.Key != key_event.Key {
+		return false
+	}
+
+	if akt.Mods != key_event.Mods {
+		return false
+	}
+
 	if akt.PressType != key_event.PressType && akt.PressType != KEYPRESS_EITHER {
 		return false
 	}
@@ -81,6 +90,15 @@ type ActionMap struct {
 func (am *ActionMap) AddSimpleKeyAction(action ActionID, keys ...Keycode) {
 	for _, key := range keys {
 		trigger := ActionKeyTrigger{Action: action, Key: key}
+		am.AddKeyAction(trigger)
+	}
+}
+
+// Adds triggers for the provided action for each provided key. These triggers default to firing on KEY_PRESSED when the
+// provided modifiers are pressed
+func (am *ActionMap) AddModifiedKeyAction(action ActionID, mods KeyModifiers, keys ...Keycode) {
+	for _, key := range keys {
+		trigger := ActionKeyTrigger{Action: action, Mods: mods, Key: key}
 		am.AddKeyAction(trigger)
 	}
 }

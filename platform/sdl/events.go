@@ -13,6 +13,14 @@ func (p *Platform) processEvents() {
 	//save mouse position so we can detect if we've moved to a new cell and fire a mouse move event
 	new_mouse_pos := p.mouse_position
 
+	// fetch the state of the mods on the keyboard (because windows eats certain modifiers sometimes??)
+	// we did this because windows doesn't report the SHIFT key on keypad inputs when numlock is off. by fetching the
+	// keyboard mod state early, now this problem only affects the key-release event. so still not pefect but it's
+	// better than nothing.
+	// INVESTIGATE: this seems like it'll have other consequences that I can't see yet. if keyboard inputs get weird
+	// we can look into this further.
+	sdlMods := sdl.GetModState()
+
 eventLoop:
 	for sdlevent := sdl.PollEvent(); sdlevent != nil; sdlevent = sdl.PollEvent() {
 		switch e := sdlevent.(type) {
@@ -24,16 +32,27 @@ eventLoop:
 				p.renderer.onWindowResize()
 			}
 		case *sdl.KeyboardEvent:
+			var mods input.KeyModifiers
+			if sdlMods&sdl.KMOD_CTRL != 0 {
+				mods |= input.KEYMOD_CTRL
+			}
+			if sdlMods&sdl.KMOD_ALT != 0 {
+				mods |= input.KEYMOD_ALT
+			}
+			if sdlMods&sdl.KMOD_SHIFT != 0 {
+				mods |= input.KEYMOD_SHIFT
+			}
+
 			if key, ok := keycodemap[e.Keysym.Sym]; ok {
 				switch e.State {
 				case sdl.PRESSED:
 					if e.Repeat == 0 {
-						input.FireKeyPressEvent(key)
+						input.FireKeyPressEvent(key, mods)
 					} else {
-						input.FireKeyRepeatEvent(key)
+						input.FireKeyRepeatEvent(key, mods)
 					}
 				case sdl.RELEASED:
-					input.FireKeyReleaseEvent(key)
+					input.FireKeyReleaseEvent(key, mods)
 				}
 			}
 		case *sdl.MouseMotionEvent:

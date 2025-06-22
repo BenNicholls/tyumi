@@ -2,6 +2,7 @@ package input
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/util"
@@ -18,12 +19,27 @@ const (
 	KEYPRESS_EITHER // only used for defining allowable presstypes for actions.
 )
 
+// Flags representing modifier keys. These will be OR'd together in the case that multiple are pressed concurrently.
+type KeyModifiers uint8
+
+const (
+	KEYMOD_NONE  KeyModifiers = 0
+	KEYMOD_CTRL  KeyModifiers = 0b001
+	KEYMOD_ALT   KeyModifiers = 0b010
+	KEYMOD_SHIFT KeyModifiers = 0b100
+
+	KEYMOD_CTRLSHIFT = KEYMOD_CTRL | KEYMOD_SHIFT
+	KEYMOD_CTRLALT   = KEYMOD_CTRL | KEYMOD_ALT
+	KEYMOD_ALTSHIFT  = KEYMOD_ALT | KEYMOD_SHIFT
+)
+
 type KeyboardEvent struct {
 	event.EventPrototype
 
 	Key       Keycode
 	PressType KeyPressType
-	Repeat    bool //will be true if this is the key is being held down
+	Mods      KeyModifiers // Modifier keys for this key event, ex. CTRL, ALT, SHIFT.
+	Repeat    bool         //will be true if this is the key is being held down
 }
 
 func fireKeyboardEvent(key_event KeyboardEvent) {
@@ -47,26 +63,37 @@ func (kbe KeyboardEvent) fireActions() {
 }
 
 // Emits keypress event.
-func FireKeyPressEvent(key Keycode) {
-	fireKeyboardEvent(KeyboardEvent{Key: key})
+func FireKeyPressEvent(key Keycode, mods ...KeyModifiers) {
+	fireKeyboardEvent(KeyboardEvent{
+		Key:  key,
+		Mods: util.OrAll(mods),
+	})
 }
 
 // Emits keyrelease event.
-func FireKeyReleaseEvent(key Keycode) {
+func FireKeyReleaseEvent(key Keycode, mods ...KeyModifiers) {
 	if SuppressKeyUpEvents {
 		return
 	}
 
-	fireKeyboardEvent(KeyboardEvent{Key: key, PressType: KEY_RELEASED})
+	fireKeyboardEvent(KeyboardEvent{
+		Key:       key,
+		Mods:      util.OrAll(mods),
+		PressType: KEY_RELEASED,
+	})
 }
 
 // Emits key repeated event. The KeyPressType of repeat events is always KEY_PRESSED.
-func FireKeyRepeatEvent(key Keycode) {
+func FireKeyRepeatEvent(key Keycode, mods ...KeyModifiers) {
 	if !AllowKeyRepeats {
 		return
 	}
 
-	fireKeyboardEvent(KeyboardEvent{Key: key, Repeat: true})
+	fireKeyboardEvent(KeyboardEvent{
+		Key:    key,
+		Mods:   util.OrAll(mods),
+		Repeat: true,
+	})
 }
 
 // Returns a vec.Direction if the keyboard event represents a direction (or vec.DIR_NONE if not).
@@ -95,9 +122,11 @@ func (kb KeyboardEvent) Direction() vec.Direction {
 
 // If the keyboard event represents text in some way (letter, number, anything traditionally
 // representable by a string) this returns the string form. If not, it return an empty string.
-// TODO: support for capital letters once modifier support is added.
 func (kb KeyboardEvent) Text() (s string) {
 	if s, ok := keytextmap[kb.Key]; ok {
+		if kb.Mods == KEYMOD_SHIFT {
+			s = strings.ToUpper(s)
+		}
 		return s
 	} else {
 		return ""
@@ -105,7 +134,7 @@ func (kb KeyboardEvent) Text() (s string) {
 }
 
 func (kb KeyboardEvent) String() (s string) {
-	s = "KEY EVENT. "
+	s = "KEY "
 	if kb.PressType == KEY_PRESSED {
 		s += "PRESSED: "
 	} else {
@@ -116,6 +145,22 @@ func (kb KeyboardEvent) String() (s string) {
 	} else {
 		s += "some non text char (" + strconv.Itoa(int(kb.Key)) + ")"
 	}
+
+	if kb.Mods != 0 {
+		s += " +["
+		if kb.Mods&KEYMOD_CTRL != 0 {
+			s += "CTRL"
+		}
+		if kb.Mods&KEYMOD_ALT != 0 {
+			s += "ALT"
+		}
+		if kb.Mods&KEYMOD_SHIFT != 0 {
+			s += "SHIFT"
+		}
+
+		s += "]"
+	}
+
 	return
 }
 

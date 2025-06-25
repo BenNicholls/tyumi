@@ -53,6 +53,21 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 	return
 }
 
+// Destroy removes the entity from the ECS. Before doing so, it emits EV_ENTITYBEINGDESTROYED, an event fired in
+// immediate mode. Systems that need to do some cleanup when an entity is destroyed can listen for this event and
+// respond accordingly. Before being removed, all components on the entity will have their Cleanup() function run, if
+// present.
+func (e Entity) Destroy() {
+	if !ecs.Alive(e) {
+		log.Debug("Trying to destroy an entity that is already dead!!")
+	}
+
+	log.Debug("Now we do the immediate fire thing.")
+	event.FireImmediate(EV_ENTITYBEINGDESTROYED, &EntityEvent{Entity: e})
+	log.Debug("Now we destroy.")
+	ecs.RemoveEntity(e)
+}
+
 func (e Entity) GetVisuals() gfx.Visuals {
 	return ecs.Get[EntityComponent](e).EntityType.Data().Visuals
 }

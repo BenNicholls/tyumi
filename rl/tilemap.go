@@ -20,8 +20,9 @@ type TileMap struct {
 
 	Ready bool // set this to true once level generation is complete! suppresses events while false.
 
-	size  vec.Dims
-	tiles []Tile
+	events event.Stream
+	size   vec.Dims
+	tiles  []Tile
 }
 
 func (tm *TileMap) getMap() *TileMap {
@@ -31,6 +32,8 @@ func (tm *TileMap) getMap() *TileMap {
 // Initialize the TileMap. All tiles in the map will be set to defaultTile
 func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	tm.DirtyTracker.Init(size)
+	tm.events.Listen(EV_ENTITYBEINGDESTROYED)
+	tm.events.SetEventHandler(tm.handleEvent)
 
 	tm.LightSystem.Init(tm)
 	tm.FOVSystem.Init(tm)
@@ -49,6 +52,7 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 
 		tm.LightSystem.Shutdown()
 		tm.FOVSystem.Shutdown()
+		tm.events.DisableListening()
 	}, tm.tiles)
 }
 
@@ -56,6 +60,32 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 func (tm *TileMap) Update() {
 	tm.LightSystem.Update()
 	tm.FOVSystem.Update()
+}
+
+func (tm *TileMap) handleEvent(e event.Event) (event_handled bool) {
+	switch e.ID() {
+	case EV_ENTITYBEINGDESTROYED:
+		entity := e.(*EntityEvent).Entity
+
+		// ensure entity being destroyed is in the tilemap
+		pos := entity.Position()
+		if !tm.Bounds().Contains(pos) || tm.GetTile(pos).GetEntity() != entity {
+			return
+		}
+
+		// if it has a light source, remove light
+		if light := ecs.Get[LightSourceComponent](entity); light != nil {
+			tm.removeAppliedLight(light)
+		}
+
+		// remove entity from tilemap
+		tm.RemoveEntityAt(pos)
+
+	default:
+		return false
+	}
+
+	return true
 }
 
 func (tm TileMap) Size() vec.Dims {
@@ -148,11 +178,20 @@ func (tm *TileMap) RemoveEntityAt(pos vec.Coord) {
 	}
 
 	tile := tm.GetTile(pos)
-	if container := ecs.Get[EntityContainerComponent](tile); container != nil && !container.Empty() {
-		container.Entity.MoveTo(NOT_IN_TILEMAP)
-		container.Remove()
-		tm.SetDirty(pos)
+	if !ecs.Valid(tile) {
+		return
 	}
+
+	container := ecs.Get[EntityContainerComponent](tile)
+	if container == nil || container.Empty() {
+		return
+	}
+
+	entity := container.Entity
+	entity.MoveTo(NOT_IN_TILEMAP)
+	container.Remove()
+
+	tm.SetDirty(pos)
 }
 
 func (tm *TileMap) GetEntityAt(pos vec.Coord) Entity {

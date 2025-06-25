@@ -6,11 +6,18 @@ import (
 )
 
 var (
+	EV_ENTITYBEINGDESTROYED  = event.Register("Entity being destroyed/removed from the ECS.")
 	EV_ENTITYMOVED           = event.Register("Entity moved.")
 	EV_TILECHANGEDVISIBILITY = event.Register("A Tile Changed visibility state (opaque or transparent)")
 	EV_LOSTSIGHT             = event.Register("An entity has lost sight of another entity.")
 	EV_GAINEDSIGHT           = event.Register("An entity has gained sight of another entity.")
 )
+
+type EntityEvent struct {
+	event.EventPrototype
+
+	Entity Entity
+}
 
 type EntityMovedEvent struct {
 	event.EventPrototype

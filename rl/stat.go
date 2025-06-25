@@ -20,6 +20,7 @@ func NewStat[T constraints.Float | constraints.Integer](value, min, max T) Stat[
 	}
 }
 
+// Returns a stat with min 0, max = value.
 func NewBasicStat[T constraints.Float | constraints.Integer](value T) Stat[T] {
 	return Stat[T]{
 		value: value,

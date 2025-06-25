@@ -3,6 +3,7 @@ package rl
 import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -17,6 +18,7 @@ type EntityData struct {
 	Name           string // Generic name of the entity.
 	Desc           string // Generic description for the entity
 	Visuals        gfx.Visuals
+	HP             int // HP this entity starts with. If zero, entity is undamagable.
 	SightRange     uint8
 	TracksEntities bool
 	HasMemory      bool
@@ -48,6 +50,10 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 
 	if entity_type.Data().HasMemory {
 		ecs.Add[MemoryComponent](entity)
+	}
+
+	if hp := entity_type.Data().HP; hp > 0 {
+		ecs.Add(entity, HealthComponent{HP: NewBasicStat(hp)})
 	}
 
 	return

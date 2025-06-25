@@ -115,8 +115,8 @@ func (lsc *LightSourceComponent) flicker() {
 		lsc.baseFalloff = max(lsc.FalloffRate, 1)
 	}
 
-	f := float32(lsc.baseFalloff)*0.75 + rand.Float32()*(float32(lsc.baseFalloff)/4)
-	p := float32(lsc.basePower)*0.75 + rand.Float32()*(float32(lsc.basePower)/4)
+	f := float32(lsc.baseFalloff)*0.9 + rand.Float32()*(float32(lsc.baseFalloff)/10)
+	p := float32(lsc.basePower)*0.9 + rand.Float32()*(float32(lsc.basePower)/10)
 
 	lsc.SetFalloff(uint8(util.Clamp(f, 1, 255)))
 	lsc.SetPower(uint8(min(p, 255)))
@@ -153,17 +153,21 @@ func (ls *LightSystem) handleEvents(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_ENTITYMOVED:
 		moveEvent := e.(*EntityMovedEvent)
+		if !ecs.Alive(moveEvent.Entity) {
+			return
+		}
+
 		if light := ecs.Get[LightSourceComponent](moveEvent.Entity); light != nil {
 			light.AreaDirty = true
 		}
-		return true
 	case EV_TILECHANGEDVISIBILITY:
 		visEvent := e.(*TileChangedVisibilityEvent)
 		ls.changedVisbilityTiles.Add(visEvent.Pos)
-		return true
+	default:
+		return
 	}
 
-	return
+	return true
 }
 
 func (ls *LightSystem) Update() {

@@ -68,9 +68,7 @@ func (e Entity) Destroy() {
 		log.Debug("Trying to destroy an entity that is already dead!!")
 	}
 
-	log.Debug("Now we do the immediate fire thing.")
 	event.FireImmediate(EV_ENTITYBEINGDESTROYED, &EntityEvent{Entity: e})
-	log.Debug("Now we destroy.")
 	ecs.RemoveEntity(e)
 }
 

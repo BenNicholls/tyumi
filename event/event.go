@@ -93,3 +93,42 @@ func addEventToListeners(e Event) {
 		registeredEvents[e.ID()].listeners.Remove(closedStreams...)
 	}
 }
+
+// FireImmediate fires events in the same way as Fire except instead of adding the event to the listeners' queues to
+// be processed later, all listening event handlers are run immediately.
+func FireImmediate(ID EventID, events ...Event) {
+	if !ID.valid() {
+		log.Error("Attempted to fire unregistered event with ID ", ID)
+		return
+	}
+
+	if len(events) == 0 { // no provided event, fire a simple event with just the id
+		e := EventPrototype{id: ID}
+		callHandlersImmediately(&e)
+		return
+	}
+
+	for _, e := range events {
+		e.setID(ID)
+		callHandlersImmediately(e)
+	}
+}
+
+func callHandlersImmediately(e Event) {
+	var closedStreams []weak.Pointer[Stream]
+	for stream := range registeredEvents[e.ID()].listeners.EachElement() {
+		if stream.Value() == nil {
+			closedStreams = append(closedStreams, stream)
+			continue
+		}
+
+		// THINK: is this check necessary? how would a stream with a nil handler be an active listener???
+		if handler := stream.Value().handler; handler != nil {
+			handler(e)
+		}
+	}
+
+	if len(closedStreams) > 0 {
+		registeredEvents[e.ID()].listeners.Remove(closedStreams...)
+	}
+}

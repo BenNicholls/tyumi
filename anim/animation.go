@@ -1,22 +1,9 @@
-package gfx
+package anim
 
 import (
-	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/vec"
 )
-
-var EV_ANIMATION_COMPLETE = event.Register("Animation Complete")
-
-type AnimationEvent struct {
-	event.EventPrototype
-
-	Label string // label of the animation that produced the event
-}
-
-func fireAnimationCompleteEvent(label string) {
-	event.Fire(EV_ANIMATION_COMPLETE, &AnimationEvent{Label: label})
-}
 
 // Anything that can do animations on a Canvas
 type Animator interface {
@@ -28,7 +15,6 @@ type Animator interface {
 	Stop()
 
 	Update()
-	Render(*Canvas)
 
 	IsPlaying() bool
 	IsDone() bool
@@ -50,19 +36,18 @@ type Animation struct {
 	Repeat        bool //animation repeats when finished
 	Backwards     bool //play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
 	Blocking      bool //whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
-	AlwaysUpdates bool //if true, indicates this animation updates every frame
 	Updated       bool //indicates to whatever is drawing the animation that it's going to render this frame
+	AlwaysUpdates bool //if true, indicates this animation updates every frame
 	Depth         int  //depth value of the animation
 	Duration      int  //duration of animation in ticks
-	Label         string
+	Area          vec.Rect // Area this animation affects. Use Resize() to change this value.
 
 	OnDone func() // Callback run when animation finishes.
 
-	area        vec.Rect
-	ticks       int  //incremented each update
 	enabled     bool //animation is playing
 	reset       bool //indicates animation should reset and start over.
 	justStopped bool //indicates animation has stopped recently. use Finish() to clear this flag.
+	ticks       int  //incremented each update
 }
 
 func (a *Animation) Update() {
@@ -83,10 +68,6 @@ func (a *Animation) Update() {
 	}
 
 	if a.IsDone() {
-		if a.Label != "" {
-			fireAnimationCompleteEvent(a.Label)
-		}
-
 		if a.OnDone != nil {
 			a.OnDone()
 		}
@@ -137,20 +118,20 @@ func (a *Animation) SetOneShot(oneshot bool) {
 }
 
 func (a *Animation) Resize(size vec.Dims) {
-	if a.area.Dims == size {
+	if a.Area.Dims == size {
 		return
 	}
 
-	a.area.Dims = size
+	a.Area.Dims = size
 	a.Updated = true
 }
 
 func (a *Animation) MoveTo(pos vec.Coord) {
-	if a.area.Coord == pos {
+	if a.Area.Coord == pos {
 		return
 	}
 
-	a.area.Coord = pos
+	a.Area.Coord = pos
 	a.Updated = true
 }
 
@@ -183,7 +164,7 @@ func (a *Animation) Stop() {
 }
 
 func (a Animation) Bounds() vec.Rect {
-	return a.area
+	return a.Area
 }
 
 func (a Animation) GetDuration() int {
@@ -204,6 +185,10 @@ func (a Animation) GetProgress() float64 {
 	return float64(a.ticks) / float64(a.Duration)
 }
 
+func (a Animation) IsResetting() bool {
+	return a.reset
+}
+
 // Returns true if the animation has stopped recently.
 func (a Animation) JustStopped() bool {
 	return a.justStopped
@@ -212,47 +197,4 @@ func (a Animation) JustStopped() bool {
 // Finish clears the justStopped flag.
 func (a *Animation) Finish() {
 	a.justStopped = false
-}
-
-// AnimationChain is a container for multiple animations. Playing the chain will play all of the
-// contained animations one after the other until all sub-animations have completed.
-type AnimationChain struct {
-	Animation
-
-	animations []Animator
-	current    int
-}
-
-// Adds animations to the chain. These animations will be played in the order provided.
-func (ac *AnimationChain) Add(animations ...Animator) {
-	for _, animation := range animations {
-		ac.animations = append(ac.animations, animation)
-		ac.Duration += animation.GetDuration()
-	}
-}
-
-func (ac *AnimationChain) Update() {
-	ac.Animation.Update()
-
-	if ac.IsDone() {
-		return
-	}
-
-	//ensure all animations in the chain are reset when the chain is reset
-	if ac.ticks == 0 {
-		ac.current = 0
-		for _, anim := range ac.animations {
-			anim.Start()
-		}
-	} else if ac.animations[ac.current].IsDone() {
-		ac.current += 1
-	}
-
-	ac.animations[ac.current].Update()
-	ac.Updated = ac.animations[ac.current].IsUpdated()
-}
-
-func (ac *AnimationChain) Render(canvas *Canvas) {
-	ac.animations[ac.current].Render(canvas)
-	ac.Updated = false
 }

@@ -1,14 +1,36 @@
 package gfx
 
 import (
+	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/vec"
 )
 
+// Anything that can do animations on a Canvas
+type CanvasAnimator interface {
+	anim.Animator
+
+	Render(*Canvas)
+}
+
+// An animation chain that can hold and render CanvasAnimators. If an animation in the chain is a canvas animator it
+// will be rendered as normal.
+type CanvasAnimationChain struct {
+	anim.AnimationChain
+}
+
+func (cac *CanvasAnimationChain) Render(canvas *Canvas) {
+	if currentCanvas, ok := cac.GetCurrentAnimation().(CanvasAnimator); ok {
+		currentCanvas.Render(canvas)
+	}
+
+	cac.Updated = false
+}
+
 // Animation that makes an area blink. The entire provided area will be filled with visuals Vis while blinking,
 // otherwise will draw what what is underneath.
 type BlinkAnimation struct {
-	Animation
+	anim.Animation
 
 	Vis      Visuals //what to draw when the area is blinking
 	blinking bool    //whether the area is rendering a blink or not
@@ -16,12 +38,11 @@ type BlinkAnimation struct {
 
 func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) BlinkAnimation {
 	return BlinkAnimation{
-		Animation: Animation{
-			area:     vec.Rect{pos, size},
+		Animation: anim.Animation{
+			Area:     vec.Rect{pos, size},
 			Depth:    depth,
 			Repeat:   true,
 			Duration: rate,
-			reset:    true,
 		},
 
 		Vis: vis,
@@ -31,7 +52,7 @@ func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rat
 func (ba *BlinkAnimation) Update() {
 	ba.Animation.Update()
 
-	if ba.ticks == 0 {
+	if ba.GetTicks() == 0 {
 		ba.blinking = !ba.blinking
 		ba.Updated = true
 	}
@@ -49,7 +70,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 // FadeAnimation makes an area fade to the provided colours (ToColours). If FromColours is non-zero, it will start the
 // fade from there. Otherwise uses whatever colours are on the canvas.
 type FadeAnimation struct {
-	Animation
+	anim.Animation
 
 	ToColours, FromColours col.Pair
 }
@@ -58,8 +79,8 @@ type FadeAnimation struct {
 // whatever the canvas colours are, which is generally what you want.
 func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colours col.Pair, start_colours ...col.Pair) (fa FadeAnimation) {
 	fa = FadeAnimation{
-		Animation: Animation{
-			area:          area,
+		Animation: anim.Animation{
+			Area:          area,
 			Depth:         depth,
 			Duration:      duration_frames,
 			AlwaysUpdates: true,
@@ -77,8 +98,8 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colour
 // Sets up a Fade Out animation. Both foreground and background are faded to the specified colour.
 func NewFadeOutAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) (fa FadeAnimation) {
 	fa = FadeAnimation{
-		Animation: Animation{
-			area:          area,
+		Animation: anim.Animation{
+			Area:          area,
 			Depth:         depth,
 			Duration:      duration_frames,
 			AlwaysUpdates: true,
@@ -92,8 +113,8 @@ func NewFadeOutAnimation(area vec.Rect, depth int, duration_frames int, colour c
 // Sets up a Fade In animation. Both foreground and background are faded from the specified colour.
 func NewFadeInAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) (fa FadeAnimation) {
 	fa = FadeAnimation{
-		Animation: Animation{
-			area:          area,
+		Animation: anim.Animation{
+			Area:          area,
 			Depth:         depth,
 			Duration:      duration_frames,
 			AlwaysUpdates: true,
@@ -150,15 +171,15 @@ func (fa *FadeAnimation) Render(c *Canvas) {
 
 // PulseAnimation makes an area pulse, fading to a set of colours and then fading back
 type PulseAnimation struct {
-	Animation
+	anim.Animation
 
 	fade FadeAnimation
 }
 
 // Creates a pulse animation. duration_frames is the duration of the entire cycle: start -> fade to pulse colour -> fade back
 func NewPulseAnimation(area vec.Rect, depth int, duration_frames int, pulse_colours col.Pair) (pa PulseAnimation) {
-	pa.Animation = Animation{
-		area:          area,
+	pa.Animation = anim.Animation{
+		Area:          area,
 		Depth:         depth,
 		Duration:      duration_frames,
 		AlwaysUpdates: true,
@@ -170,7 +191,7 @@ func NewPulseAnimation(area vec.Rect, depth int, duration_frames int, pulse_colo
 }
 
 func (pa *PulseAnimation) Update() {
-	if pa.reset {
+	if pa.IsResetting() {
 		pa.fade.Backwards = false
 		pa.fade.Start()
 	}

@@ -1,8 +1,6 @@
 package tyumi
 
 import (
-	"github.com/bennicholls/tyumi/event"
-	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -47,23 +45,15 @@ func (md *MessageDialog) Init(title, message string) {
 	messageText.MoveTo(vec.Coord{0, (9 - messageText.Size().H) / 2})
 	messageText.CenterHorizontal()
 
-	md.okayButton.Init(vec.Dims{6, 1}, vec.Coord{0, 10}, 1, "Okay", nil)
+	md.okayButton.Init(vec.Dims{6, 1}, vec.Coord{0, 10}, 1, "Okay", func() {
+		md.CreateTimer(20, func() {
+			md.done = true
+		})
+	})
 	md.okayButton.EnableBorder()
 	md.okayButton.Focus()
 	md.Window().AddChild(&md.okayButton)
 	md.okayButton.CenterHorizontal()
-
-	md.Listen(gfx.EV_ANIMATION_COMPLETE)
-	md.SetEventHandler(md.HandleEvent)
-}
-
-func (md *MessageDialog) HandleEvent(game_event event.Event) (event_handled bool) {
-	if game_event.ID() == gfx.EV_ANIMATION_COMPLETE {
-		md.done = true
-		return true
-	}
-
-	return
 }
 
 func (md MessageDialog) Done() bool {

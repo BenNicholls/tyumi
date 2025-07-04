@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
@@ -61,7 +62,7 @@ type element interface {
 	getBorderStyle() BorderStyle
 	getDepth() int
 	getPosition() vec.Coord
-	getAnimations() []gfx.Animator
+	getAnimations() []anim.Animator
 
 	// debug functions
 	dumpUI(dir_name string, depth int)
@@ -84,15 +85,15 @@ type Element struct {
 	OnRender    func() // a callback, called when the element renders (unless the element has custom rendering logic)
 	Border      Border //the element's border data. use EnableBorder() to turn on
 
-	visible     bool           //visibility, controlled via Show() and Hide()
-	focused     bool           //focus state. by default, only focused elements receive input
-	forceRedraw bool           //indicates this object needs to clear and render everything from zero
-	position    vec.Coord      //position relative to parent
-	size        vec.Dims       //size of the drawable area of the element
-	depth       int            //depth for the UI system, relative to the element's parent.
-	id          ElementID      //a unique ID for the element
-	label       string         //an optional identifier for the element
-	animations  []gfx.Animator //animations on this element. these are updated once per frame while playing
+	visible     bool            //visibility, controlled via Show() and Hide()
+	focused     bool            //focus state. by default, only focused elements receive input
+	forceRedraw bool            //indicates this object needs to clear and render everything from zero
+	position    vec.Coord       //position relative to parent
+	size        vec.Dims        //size of the drawable area of the element
+	depth       int             //depth for the UI system, relative to the element's parent.
+	id          ElementID       //a unique ID for the element
+	label       string          //an optional identifier for the element
+	animations  []anim.Animator //animations on this element. these are updated once per frame while playing
 }
 
 func (e *Element) String() string {
@@ -483,9 +484,9 @@ func (e *Element) drawChildren() {
 }
 
 // Adds an animation to the ui element. Note that this does NOT start the animation.
-func (e *Element) AddAnimation(animation gfx.Animator) {
+func (e *Element) AddAnimation(animation anim.Animator) {
 	if e.animations == nil {
-		e.animations = make([]gfx.Animator, 0)
+		e.animations = make([]anim.Animator, 0)
 	}
 
 	//check for duplicate add
@@ -505,7 +506,7 @@ func (e *Element) AddAnimation(animation gfx.Animator) {
 
 // AddOneShotAnimation adds an animation to the element. The animation will automatically start, play once, and then
 // be removed.
-func (e *Element) AddOneShotAnimation(animation gfx.Animator) {
+func (e *Element) AddOneShotAnimation(animation anim.Animator) {
 	animation.SetOneShot(true)
 	animation.Start()
 	e.AddAnimation(animation)
@@ -524,20 +525,25 @@ func (e *Element) updateAnimations() {
 	}
 
 	// remove finished one-shot animations
-	e.animations = slices.DeleteFunc(e.animations, func(a gfx.Animator) bool {
+	e.animations = slices.DeleteFunc(e.animations, func(a anim.Animator) bool {
 		return a.IsOneShot() && a.IsDone()
 	})
 }
 
 func (e *Element) renderAnimations() {
 	for _, animation := range e.animations {
-		if animation.IsPlaying() && vec.Intersects(e.getCanvas(), animation) {
-			animation.Render(&e.Canvas)
+		canvasAnimation, ok := animation.(gfx.CanvasAnimator)
+		if !ok {
+			continue
+		}
+
+		if canvasAnimation.IsPlaying() && vec.Intersects(e.getCanvas(), canvasAnimation) {
+			canvasAnimation.Render(&e.Canvas)
 		}
 	}
 }
 
-func (e *Element) getAnimations() []gfx.Animator {
+func (e *Element) getAnimations() []anim.Animator {
 	return e.animations
 }
 

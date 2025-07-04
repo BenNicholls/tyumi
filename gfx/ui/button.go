@@ -19,7 +19,7 @@ type Button struct {
 
 	DisablePress     bool // if true, button will not be pressable.
 	OnPressCallback  func()
-	OnPressAnimation gfx.Animator
+	OnPressAnimation gfx.CanvasAnimator
 }
 
 func (b *Button) Init(size vec.Dims, pos vec.Coord, depth int, text string, on_press func()) {
@@ -29,7 +29,6 @@ func (b *Button) Init(size vec.Dims, pos vec.Coord, depth int, text string, on_p
 	b.OnPressCallback = on_press
 	pressPulse := gfx.NewPulseAnimation(b.DrawableArea(), 0, 20, col.Pair{col.WHITE, col.WHITE})
 	pressPulse.OneShot = true
-	pressPulse.Label = "Button Pressed"
 	b.OnPressAnimation = &pressPulse
 }
 

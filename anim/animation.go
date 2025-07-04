@@ -38,9 +38,7 @@ type Animation struct {
 	Blocking      bool //whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
 	Updated       bool //indicates to whatever is drawing the animation that it's going to render this frame
 	AlwaysUpdates bool //if true, indicates this animation updates every frame
-	Depth         int  //depth value of the animation
 	Duration      int  //duration of animation in ticks
-	Area          vec.Rect // Area this animation affects. Use Resize() to change this value.
 
 	OnDone func() // Callback run when animation finishes.
 
@@ -98,11 +96,6 @@ func (a Animation) IsUpdated() bool {
 	return a.AlwaysUpdates || a.Updated
 }
 
-func (a *Animation) SetArea(area vec.Rect) {
-	a.MoveTo(area.Coord)
-	a.Resize(area.Dims)
-}
-
 // Sets the animation to OneShot. OneShot animations play once and then can be removed/deleted/garbaged/whatever.
 // If the animation is set to Repeat, repeat is removed since you can't do both.
 func (a *Animation) SetOneShot(oneshot bool) {
@@ -115,24 +108,6 @@ func (a *Animation) SetOneShot(oneshot bool) {
 		log.Warning("Repeating animations cannot be oneshot! Removing repeat flag.")
 		a.Repeat = false
 	}
-}
-
-func (a *Animation) Resize(size vec.Dims) {
-	if a.Area.Dims == size {
-		return
-	}
-
-	a.Area.Dims = size
-	a.Updated = true
-}
-
-func (a *Animation) MoveTo(pos vec.Coord) {
-	if a.Area.Coord == pos {
-		return
-	}
-
-	a.Area.Coord = pos
-	a.Updated = true
 }
 
 // Starts an animation. If the animation is playing or paused, restarts it.
@@ -161,10 +136,6 @@ func (a *Animation) Stop() {
 	a.enabled = false
 	a.justStopped = true
 	a.reset = true
-}
-
-func (a Animation) Bounds() vec.Rect {
-	return a.Area
 }
 
 func (a Animation) GetDuration() int {

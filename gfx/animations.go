@@ -9,8 +9,44 @@ import (
 // Anything that can do animations on a Canvas
 type CanvasAnimator interface {
 	anim.Animator
+	vec.Bounded
 
 	Render(*Canvas)
+}
+
+// Base for Canvas Animations, satisfying the CanvasAnimator interface above. Compose canvas animations around this!
+type CanvasAnimation struct {
+	anim.Animation
+
+	Depth int      //depth value of the animation
+	area  vec.Rect // Area this animation affects. Use MoveTo() and Resize() to change this value.
+}
+
+func (ca CanvasAnimation) Bounds() vec.Rect {
+	return ca.area
+}
+
+func (ca *CanvasAnimation) SetArea(area vec.Rect) {
+	ca.MoveTo(area.Coord)
+	ca.Resize(area.Dims)
+}
+
+func (ca *CanvasAnimation) Resize(size vec.Dims) {
+	if ca.area.Dims == size {
+		return
+	}
+
+	ca.area.Dims = size
+	ca.Updated = true
+}
+
+func (ca *CanvasAnimation) MoveTo(pos vec.Coord) {
+	if ca.area.Coord == pos {
+		return
+	}
+
+	ca.area.Coord = pos
+	ca.Updated = true
 }
 
 // An animation chain that can hold and render CanvasAnimators. If an animation in the chain is a canvas animator it
@@ -30,7 +66,7 @@ func (cac *CanvasAnimationChain) Render(canvas *Canvas) {
 // Animation that makes an area blink. The entire provided area will be filled with visuals Vis while blinking,
 // otherwise will draw what what is underneath.
 type BlinkAnimation struct {
-	anim.Animation
+	CanvasAnimation
 
 	Vis      Visuals //what to draw when the area is blinking
 	blinking bool    //whether the area is rendering a blink or not
@@ -38,13 +74,14 @@ type BlinkAnimation struct {
 
 func NewBlinkAnimation(pos vec.Coord, size vec.Dims, depth int, vis Visuals, rate int) BlinkAnimation {
 	return BlinkAnimation{
-		Animation: anim.Animation{
-			Area:     vec.Rect{pos, size},
-			Depth:    depth,
-			Repeat:   true,
-			Duration: rate,
+		CanvasAnimation: CanvasAnimation{
+			Animation: anim.Animation{
+				Repeat:   true,
+				Duration: rate,
+			},
+			Depth: depth,
+			area:  vec.Rect{pos, size},
 		},
-
 		Vis: vis,
 	}
 }
@@ -70,7 +107,7 @@ func (ba *BlinkAnimation) Render(c *Canvas) {
 // FadeAnimation makes an area fade to the provided colours (ToColours). If FromColours is non-zero, it will start the
 // fade from there. Otherwise uses whatever colours are on the canvas.
 type FadeAnimation struct {
-	anim.Animation
+	CanvasAnimation
 
 	ToColours, FromColours col.Pair
 }
@@ -79,11 +116,13 @@ type FadeAnimation struct {
 // whatever the canvas colours are, which is generally what you want.
 func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colours col.Pair, start_colours ...col.Pair) (fa FadeAnimation) {
 	fa = FadeAnimation{
-		Animation: anim.Animation{
-			Area:          area,
-			Depth:         depth,
-			Duration:      duration_frames,
-			AlwaysUpdates: true,
+		CanvasAnimation: CanvasAnimation{
+			Animation: anim.Animation{
+				Duration:      duration_frames,
+				AlwaysUpdates: true,
+			},
+			Depth: depth,
+			area:  area,
 		},
 		ToColours: fade_colours,
 	}
@@ -98,11 +137,13 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, fade_colour
 // Sets up a Fade Out animation. Both foreground and background are faded to the specified colour.
 func NewFadeOutAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) (fa FadeAnimation) {
 	fa = FadeAnimation{
-		Animation: anim.Animation{
-			Area:          area,
-			Depth:         depth,
-			Duration:      duration_frames,
-			AlwaysUpdates: true,
+		CanvasAnimation: CanvasAnimation{
+			Animation: anim.Animation{
+				Duration:      duration_frames,
+				AlwaysUpdates: true,
+			},
+			Depth: depth,
+			area:  area,
 		},
 		ToColours: col.Pair{colour, colour},
 	}
@@ -113,12 +154,14 @@ func NewFadeOutAnimation(area vec.Rect, depth int, duration_frames int, colour c
 // Sets up a Fade In animation. Both foreground and background are faded from the specified colour.
 func NewFadeInAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) (fa FadeAnimation) {
 	fa = FadeAnimation{
-		Animation: anim.Animation{
-			Area:          area,
-			Depth:         depth,
-			Duration:      duration_frames,
-			AlwaysUpdates: true,
-			Backwards:     true,
+		CanvasAnimation: CanvasAnimation{
+			Animation: anim.Animation{
+				Duration:      duration_frames,
+				AlwaysUpdates: true,
+				Backwards:     true,
+			},
+			Depth: depth,
+			area:  area,
 		},
 		ToColours: col.Pair{colour, colour},
 	}
@@ -136,7 +179,6 @@ func NewFlashAnimation(area vec.Rect, depth int, duration_frames int, flash_colo
 }
 
 func (fa *FadeAnimation) Render(c *Canvas) {
-
 	toColours := fa.ToColours
 	if toColours.Fore == COL_DEFAULT {
 		toColours.Fore = c.DefaultColours().Fore
@@ -171,18 +213,20 @@ func (fa *FadeAnimation) Render(c *Canvas) {
 
 // PulseAnimation makes an area pulse, fading to a set of colours and then fading back
 type PulseAnimation struct {
-	anim.Animation
+	CanvasAnimation
 
 	fade FadeAnimation
 }
 
 // Creates a pulse animation. duration_frames is the duration of the entire cycle: start -> fade to pulse colour -> fade back
 func NewPulseAnimation(area vec.Rect, depth int, duration_frames int, pulse_colours col.Pair) (pa PulseAnimation) {
-	pa.Animation = anim.Animation{
-		Area:          area,
-		Depth:         depth,
-		Duration:      duration_frames,
-		AlwaysUpdates: true,
+	pa.CanvasAnimation = CanvasAnimation{
+		Animation: anim.Animation{
+			Duration:      duration_frames,
+			AlwaysUpdates: true,
+		},
+		Depth: depth,
+		area:  area,
 	}
 
 	pa.fade = NewFadeAnimation(area, depth, duration_frames/2, pulse_colours)
@@ -205,17 +249,16 @@ func (pa *PulseAnimation) Update() {
 }
 
 func (pa *PulseAnimation) SetArea(area vec.Rect) {
-	pa.Animation.SetArea(area)
+	pa.CanvasAnimation.SetArea(area)
 	pa.fade.SetArea(area)
 }
 
 func (pa *PulseAnimation) MoveTo(pos vec.Coord) {
-	pa.Animation.MoveTo(pos)
+	pa.CanvasAnimation.MoveTo(pos)
 	pa.fade.MoveTo(pos)
 }
 
 func (pa *PulseAnimation) Render(canvas *Canvas) {
 	pa.fade.Render(canvas)
-
 	pa.Updated = false // don't actually think this is necessary... more of a guard for if the user does something weird.
 }

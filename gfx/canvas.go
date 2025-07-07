@@ -154,19 +154,8 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 	c.setDepth(pos, depth)
 
 	cell := c.getCell(pos)
-	switch vis.Colours.Fore {
-	case COL_DEFAULT:
-		vis.Colours.Fore = c.defaultVisuals.Colours.Fore
-	case col.NONE:
-		vis.Colours.Fore = cell.Colours.Fore
-	}
-
-	switch vis.Colours.Back {
-	case COL_DEFAULT:
-		vis.Colours.Back = c.defaultVisuals.Colours.Back
-	case col.NONE:
-		vis.Colours.Back = cell.Colours.Back
-	}
+	vis.Colours = vis.Colours.Replace(COL_DEFAULT, c.defaultVisuals.Colours)
+	vis.Colours = vis.Colours.Replace(col.NONE, cell.Colours)
 
 	if vis.Mode == DRAW_TEXT {
 		if vis.Chars[0] == TEXT_DEFAULT {

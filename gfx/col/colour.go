@@ -86,6 +86,15 @@ func (c Colour) Lerp(c2 Colour, val, steps int) Colour {
 	)
 }
 
+// ReplaceNone returns the colour c, unless c is to_replace in which case it returns the default colour provided.
+func (c Colour) Replace(to_replace, defaultColour Colour) Colour {
+	if c == to_replace {
+		return defaultColour
+	}
+
+	return c
+}
+
 // Random returns a random opaque colour.
 func Random() Colour {
 	return MakeOpaque(uint8(rand.Uint32()), uint8(rand.Uint32()), uint8(rand.Uint32()))
@@ -107,6 +116,15 @@ func (p Pair) Inverted() Pair {
 // Linearly interpolates between p and p2 over (steps) number of steps, returning the (val)th value.
 func (p Pair) Lerp(p2 Pair, val, steps int) Pair {
 	return Pair{p.Fore.Lerp(p2.Fore, val, steps), p.Back.Lerp(p2.Back, val, steps)}
+}
+
+// ReplaceNone returns the colour Pair c, with any to_replace colours found replaced with the appropriate default colour
+// as provided.
+func (p Pair) Replace(to_replace Colour, defaultColours Pair) Pair {
+	return Pair{
+		Fore: p.Fore.Replace(to_replace, defaultColours.Fore),
+		Back: p.Back.Replace(to_replace, defaultColours.Back),
+	}
 }
 
 type Gradient []Colour

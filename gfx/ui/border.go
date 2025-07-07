@@ -161,28 +161,12 @@ func (e *Element) getBorderStyle() (style BorderStyle) {
 		colours.Fore = DefaultFocusColour
 	}
 
-	if colours.Fore == col.NONE {
-		if style.Colours.Fore != col.NONE {
-			colours.Fore = style.Colours.Fore
-		} else {
-			colours.Fore = DefaultBorderStyle.Colours.Fore
-		}
-	}
-	if colours.Back == col.NONE {
-		if style.Colours.Back != col.NONE {
-			colours.Back = style.Colours.Back
-		} else {
-			colours.Back = DefaultBorderStyle.Colours.Back
-		}
-	}
+	// replace col.NONEs with style colours. if those are NONE as well, look to defaults.
+	colours = colours.Replace(col.NONE, style.Colours)
+	colours = colours.Replace(col.NONE, DefaultBorderStyle.Colours)
 
 	//if any colours are gfx.COL_DEFAULT, replace with canvas colours
-	if colours.Fore == gfx.COL_DEFAULT {
-		colours.Fore = e.DefaultColours().Fore
-	}
-	if colours.Back == gfx.COL_DEFAULT {
-		colours.Back = e.DefaultColours().Back
-	}
+	colours = colours.Replace(gfx.COL_DEFAULT, e.DefaultColours())
 
 	style.Colours = colours
 

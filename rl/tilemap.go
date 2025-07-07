@@ -246,9 +246,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	if info.Passable {
 		if entity := tile.GetEntity(); entity != INVALID_ENTITY {
 			vis = entity.GetVisuals()
-			if vis.Colours.Back == col.NONE {
-				vis.Colours.Back = info.Visuals.Colours.Back
-			}
+			vis.Colours.Back = vis.Colours.Back.Replace(col.NONE, info.Visuals.Colours.Back)
 		}
 	}
 

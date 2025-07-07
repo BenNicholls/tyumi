@@ -17,6 +17,7 @@ type TileMap struct {
 
 	LightSystem
 	FOVSystem
+	AnimationSystem
 
 	Ready bool // set this to true once level generation is complete! suppresses events while false.
 
@@ -37,12 +38,13 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 
 	tm.LightSystem.Init(tm)
 	tm.FOVSystem.Init(tm)
+	tm.AnimationSystem.Init(tm)
 
 	tm.size = size
 
 	tm.tiles = make([]Tile, 0, size.Area())
-	for range tm.Bounds().Area() {
-		tm.tiles = append(tm.tiles, CreateTile(defaultTile))
+	for cursor := range vec.EachCoordInArea(tm.Bounds()) {
+		tm.tiles = append(tm.tiles, CreateTile(defaultTile, cursor))
 	}
 
 	runtime.AddCleanup(tm, func(tiles []Tile) {
@@ -59,6 +61,12 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 // update tilemap-controlled systems
 func (tm *TileMap) Update() {
 	tm.LightSystem.Update()
+	tm.AnimationSystem.Update()
+
+	if tm.HasBlockingAnimation {
+		return
+	}
+
 	tm.FOVSystem.Update()
 }
 
@@ -243,25 +251,32 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 
 	info := terrain.Data()
 	vis = info.Visuals
+	if tileAnimComp := ecs.Get[AnimationComponent](tile); tileAnimComp != nil {
+		vis = tileAnimComp.ApplyVisualAnimations(vis)
+	}
+
 	if info.Passable {
 		if entity := tile.GetEntity(); entity != INVALID_ENTITY {
+			tileVis := vis
 			vis = entity.GetVisuals()
-			vis.Colours.Back = vis.Colours.Back.Replace(col.NONE, info.Visuals.Colours.Back)
+			vis.Colours.Back = vis.Colours.Back.Replace(col.NONE, tileVis.Colours.Back)
 		}
 	}
 
 	light := tm.globalLight
 	if light < 255 {
-		light = uint8(min(int(terrain.LightLevel)+int(light), 255))
 		light = uint8(min(terrain.LightLevel+uint16(light), 255))
 	}
 
 	if light > 0 {
+		//TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
+		// inverts the tile colours) should probably do this better somehow....
 		vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(light), 255)
-		return
 	} else {
 		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, info.Visuals.Colours.Back})
 	}
+
+	return
 }
 
 func (tm TileMap) CopyToTileMap(dst_map *TileMap, offset vec.Coord) {

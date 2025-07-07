@@ -3,6 +3,7 @@ package rl
 import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/rl/ecs"
+	"github.com/bennicholls/tyumi/vec"
 )
 
 type TileType uint32
@@ -36,9 +37,10 @@ func init() {
 
 type Tile ecs.Entity
 
-func CreateTile(tile_type TileType) (tile Tile) {
+func CreateTile(tile_type TileType, pos vec.Coord) (tile Tile) {
 	tile = Tile(ecs.CreateEntity())
 	ecs.Add(tile, TerrainComponent{TileType: tile_type})
+	ecs.Add(tile, PositionComponent{Coord: pos, Static: true})
 
 	if tile_type.Data().Passable {
 		ecs.Add[EntityContainerComponent](tile)
@@ -70,7 +72,7 @@ func (t Tile) GetEntity() Entity {
 	if container := ecs.Get[EntityContainerComponent](t); container != nil {
 		return container.Entity
 	} else {
-		return Entity(ecs.INVALID_ID)
+		return INVALID_ENTITY
 	}
 }
 

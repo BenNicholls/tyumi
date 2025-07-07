@@ -72,8 +72,14 @@ func (e Entity) Destroy() {
 	ecs.RemoveEntity(e)
 }
 
-func (e Entity) GetVisuals() gfx.Visuals {
-	return ecs.Get[EntityComponent](e).EntityType.Data().Visuals
+func (e Entity) GetVisuals() (vis gfx.Visuals) {
+	vis = ecs.Get[EntityComponent](e).EntityType.Data().Visuals
+
+	if animComp := ecs.Get[AnimationComponent](e); animComp != nil {
+		vis = animComp.ApplyVisualAnimations(vis)
+	}
+
+	return
 }
 
 func (e Entity) GetName() string {

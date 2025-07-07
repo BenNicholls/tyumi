@@ -532,13 +532,12 @@ func (e *Element) updateAnimations() {
 
 func (e *Element) renderAnimations() {
 	for _, animation := range e.animations {
-		canvasAnimation, ok := animation.(gfx.CanvasAnimator)
-		if !ok {
+		if !animation.IsPlaying() {
 			continue
 		}
 
-		if canvasAnimation.IsPlaying() && vec.Intersects(e.getCanvas(), canvasAnimation) {
-			canvasAnimation.Render(&e.Canvas)
+		if canvasAnim, ok := animation.(gfx.CanvasAnimator); ok {
+			canvasAnim.Render(&e.Canvas)
 		}
 	}
 }

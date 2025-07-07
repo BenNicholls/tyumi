@@ -2,13 +2,10 @@ package anim
 
 import (
 	"github.com/bennicholls/tyumi/log"
-	"github.com/bennicholls/tyumi/vec"
 )
 
 // Anything that can do animations on a Canvas
 type Animator interface {
-	vec.Bounded
-
 	Start()
 	Play()
 	Pause()

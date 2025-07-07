@@ -1,5 +1,9 @@
 package anim
 
+import (
+	"iter"
+)
+
 // AnimationChain is a container for multiple animations. Playing the chain will play all of the
 // contained animations one after the other until all sub-animations have completed.
 type AnimationChain struct {
@@ -40,4 +44,14 @@ func (ac *AnimationChain) Update() {
 
 func (ac *AnimationChain) GetCurrentAnimation() Animator {
 	return ac.animations[ac.current]
+}
+
+func (ac *AnimationChain) EachAnimation() iter.Seq[Animator] {
+	return func(yield func(Animator) bool) {
+		for _, a := range ac.animations {
+			if !yield(a) {
+				return
+			}
+		}
+	}
 }

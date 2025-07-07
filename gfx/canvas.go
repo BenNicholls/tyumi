@@ -156,15 +156,7 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 	cell := c.getCell(pos)
 	vis.Colours = vis.Colours.Replace(COL_DEFAULT, c.defaultVisuals.Colours)
 	vis.Colours = vis.Colours.Replace(col.NONE, cell.Colours)
-
-	if vis.Mode == DRAW_TEXT {
-		if vis.Chars[0] == TEXT_DEFAULT {
-			vis.Chars[0] = cell.Chars[0]
-		}
-		if vis.Chars[1] == TEXT_DEFAULT {
-			vis.Chars[1] = cell.Chars[1]
-		}
-	}
+	vis = vis.ReplaceChars(TEXT_DEFAULT, cell.Chars) // remember, this only runs if Mode == DRAW_TEXT
 
 	if cell == vis {
 		return
@@ -256,7 +248,6 @@ func (c *Canvas) ClearAtDepth(depth int, areas ...vec.Rect) {
 	}
 }
 
-
 // FlattenTo reduces the depth of all cells in the provided areas to AT MOST the provided depth. If no areas are
 // provided, the whole canvas is flattened.
 func (c *Canvas) FlattenTo(depth int, areas ...vec.Rect) {
@@ -280,7 +271,6 @@ func (c *Canvas) IsDirtyAt(pos vec.Coord) bool {
 func (c *Canvas) SetDirty(pos vec.Coord) {
 	c.DirtyTracker.SetDirty(pos.Subtract(c.offset))
 }
-
 
 // IsTransparent returns true if any cells in the canvas are transparent.
 // THINK: should there be a version of this that just checks a certain cell or area for transparency??

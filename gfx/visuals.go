@@ -52,11 +52,42 @@ func (v *Visuals) SetGlyph(glyph Glyph) {
 	v.Mode = DRAW_GLYPH
 }
 
+// ReplaceGlyph replaces the glyph with the provided replacement if it is equal to to_replace. If the visuals is not in
+// DRAW_GLYPH mode, this does nothing.
+func (v Visuals) ReplaceGlyph(to_replace, replacement Glyph) (result Visuals) {
+	if v.Mode != DRAW_GLYPH || v.Glyph != to_replace {
+		return v
+	}
+
+	result = v
+	result.Glyph = replacement
+
+	return
+}
+
 // Changes the characters. Also enables text drawmode.
 func (v *Visuals) SetText(char1, char2 uint8) {
 	v.Chars[0] = char1
 	v.Chars[1] = char2
 	v.Mode = DRAW_TEXT
+}
+
+// ReplaceChars replaces any found chars matching to_replace with the appropriate char from the provided replacements
+// array. If the visuals is not in DRAW_TEXT mode, this does nothing.
+func (v Visuals) ReplaceChars(to_replace uint8, replacements [2]uint8) (result Visuals) {
+	if v.Mode != DRAW_TEXT {
+		return v
+	}
+
+	result = v
+	if result.Chars[0] == to_replace {
+		result.Chars[0] = replacements[0]
+	}
+	if result.Chars[1] == to_replace {
+		result.Chars[1] = replacements[1]
+	}
+
+	return
 }
 
 func (v Visuals) IsTransparent() bool {

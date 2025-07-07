@@ -63,13 +63,15 @@ func (pb *ProgressBar) SetProgressColour(colour col.Colour) {
 
 func (pb *ProgressBar) Render() {
 	pb.Textbox.Render()
+	if pb.progress == 0 {
+		return
+	}
+
 	barLength := util.Lerp(0, pb.size.W, pb.progress, 100)
 
-	for cursor := range vec.EachCoordInArea(pb.DrawableArea()) {
-		if cursor.X < barLength {
-			pb.DrawColours(cursor, 0, col.Pair{col.NONE, pb.progressColour})
-		} else {
-			pb.DrawColours(cursor, 0, col.Pair{col.NONE, pb.DefaultColours().Back})
+	for x := range barLength {
+		for y := range pb.DrawableArea().H {
+			pb.DrawColours(vec.Coord{x, y}, 0, col.Pair{col.NONE, pb.progressColour})
 		}
 	}
 }

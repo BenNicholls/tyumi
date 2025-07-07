@@ -253,6 +253,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	light := tm.globalLight
 	if light < 255 {
 		light = uint8(min(int(terrain.LightLevel)+int(light), 255))
+		light = uint8(min(terrain.LightLevel+uint16(light), 255))
 	}
 
 	if light > 0 {

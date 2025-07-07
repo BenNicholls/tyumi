@@ -73,9 +73,9 @@ func (c Colour) IsTransparent() bool {
 // NOTE: this completely disregards transparent colours, except for NONE. If lerping to NONE, it just doesn't do it and
 // returns the other colour.
 func (c Colour) Lerp(c2 Colour, val, steps int) Colour {
-	if val >= steps {
+	if val >= steps || c == NONE {
 		return c2
-	} else if val <= 0 {
+	} else if val <= 0 || c2 == NONE {
 		return c
 	}
 

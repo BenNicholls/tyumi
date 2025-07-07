@@ -46,8 +46,8 @@ func (cb *ChoiceBox) Init(size vec.Dims, pos vec.Coord, depth int, choices ...st
 	cb.arrowVisuals[0] = gfx.NewGlyphVisuals(gfx.GLYPH_TRIANGLE_LEFT, cb.DefaultColours())
 	cb.arrowVisuals[1] = gfx.NewGlyphVisuals(gfx.GLYPH_TRIANGLE_RIGHT, cb.DefaultColours())
 
-	cb.arrowAnimations[0] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{0, 0}, vec.Dims{1, 1}}, 1, 15, col.Pair{col.RED, gfx.COL_DEFAULT})
-	cb.arrowAnimations[1] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{cb.Size().W - 1, 0}, vec.Dims{1, 1}}, 1, 15, col.Pair{col.RED, gfx.COL_DEFAULT})
+	cb.arrowAnimations[0] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{0, 0}, vec.Dims{1, 1}}, 1, 15, col.Pair{col.RED, col.NONE})
+	cb.arrowAnimations[1] = gfx.NewFlashAnimation(vec.Rect{vec.Coord{cb.Size().W - 1, 0}, vec.Dims{1, 1}}, 1, 15, col.Pair{col.RED, col.NONE})
 	cb.AddAnimation(&cb.arrowAnimations[0])
 	cb.AddAnimation(&cb.arrowAnimations[1])
 }

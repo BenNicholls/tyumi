@@ -312,6 +312,7 @@ func (r *Renderer) Render() {
 	// apply background cell fills
 	for colour, rects := range r.bg {
 		if len(rects) == 0 {
+			delete(r.bg, colour)
 			continue
 		}
 		r.renderer.SetDrawColor(colour.RGBA())
@@ -324,9 +325,18 @@ func (r *Renderer) Render() {
 	// copy glyphs
 	src := makeRect(0, 0, r.tileSize, r.tileSize)
 	for colour, glyphMap := range r.fgGlyphs {
+		if len(glyphMap) == 0 {
+			delete(r.fgGlyphs, colour)
+			continue
+		}
+
 		r.setTextureColour(r.glyphs, colour, colour.A() != currentDrawColour.A())
 		currentDrawColour = colour
 		for glyph, coords := range glyphMap {
+			if len(coords) == 0 {
+				delete(glyphMap, glyph)
+				continue
+			}
 			src.X, src.Y = int32(int(glyph%16)*r.tileSize), int32(int(glyph/16)*r.tileSize)
 			for _, pos := range coords {
 				dst := makeRect(pos.X*r.tileSize, pos.Y*r.tileSize, r.tileSize, r.tileSize)
@@ -340,9 +350,19 @@ func (r *Renderer) Render() {
 	// copy text
 	src.W = src.W / 2
 	for colour, textMap := range r.fgText {
+		if len(textMap) == 0 {
+			delete(r.fgText, colour)
+			continue
+		}
+
 		r.setTextureColour(r.font, colour, colour.A() != currentDrawColour.A())
 		currentDrawColour = colour
 		for char, rects := range textMap {
+			if len(rects) == 0 {
+				delete(textMap, char)
+				continue
+			}
+
 			src.X, src.Y = int32(int(char%32)*r.tileSize/2), int32(int(char/32)*r.tileSize)
 			for _, rect := range rects {
 				r.renderer.Copy(r.font, &src, &rect)

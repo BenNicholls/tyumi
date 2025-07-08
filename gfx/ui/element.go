@@ -18,14 +18,14 @@ import (
 
 // element is the base api of anything handled by the UI system.
 type element interface {
+	Labelled
+	anim.Manager
+	event.Listener
 	vec.Bounded
 	util.TreeType[element]
-	Labelled
-	event.Listener
 
 	Update()
 	IsUpdated() bool
-	updateAnimations()
 
 	prepareRender()
 	renderIfDirty()
@@ -62,7 +62,6 @@ type element interface {
 	getBorderStyle() BorderStyle
 	getDepth() int
 	getPosition() vec.Coord
-	getAnimations() []anim.Animator
 
 	// debug functions
 	dumpUI(dir_name string, depth int)
@@ -80,20 +79,21 @@ type Element struct {
 	gfx.Canvas
 	util.TreeNode[element]
 	event.Stream
+	anim.AnimationManager
+
 	Updated     bool   //indicates this object's state has changed and needs to be re-rendered.
 	AcceptInput bool   // if true, the element will be sent inputs when in a window with SendEventsToUnfocused = true
 	OnRender    func() // a callback, called when the element renders (unless the element has custom rendering logic)
 	Border      Border //the element's border data. use EnableBorder() to turn on
 
-	visible     bool            //visibility, controlled via Show() and Hide()
-	focused     bool            //focus state. by default, only focused elements receive input
-	forceRedraw bool            //indicates this object needs to clear and render everything from zero
-	position    vec.Coord       //position relative to parent
-	size        vec.Dims        //size of the drawable area of the element
-	depth       int             //depth for the UI system, relative to the element's parent.
-	id          ElementID       //a unique ID for the element
-	label       string          //an optional identifier for the element
-	animations  []anim.Animator //animations on this element. these are updated once per frame while playing
+	visible     bool      //visibility, controlled via Show() and Hide()
+	focused     bool      //focus state. by default, only focused elements receive input
+	forceRedraw bool      //indicates this object needs to clear and render everything from zero
+	position    vec.Coord //position relative to parent
+	size        vec.Dims  //size of the drawable area of the element
+	depth       int       //depth for the UI system, relative to the element's parent.
+	id          ElementID //a unique ID for the element
+	label       string    //an optional identifier for the element
 }
 
 func (e *Element) String() string {
@@ -104,14 +104,12 @@ func (e *Element) String() string {
 	if e.Border.enabled {
 		desc += fmt.Sprintf("\n +-- Border Enabled. Title: %s, Hint: %s", e.Border.title, e.Border.hint)
 	}
-	if len(e.animations) != 0 {
+	if animCount := e.CountAnimations(); animCount != 0 {
 		playing := 0
-		for _, anim := range e.animations {
-			if anim.IsPlaying() {
-				playing++
-			}
+		for range e.EachPlayingAnimation() {
+			playing++
 		}
-		desc += fmt.Sprintf("\n +-- Animations: %d, (%d playing)", len(e.animations), playing)
+		desc += fmt.Sprintf("\n +-- Animations: %d, (%d playing)", animCount, playing)
 	}
 
 	return desc
@@ -340,11 +338,9 @@ func (e *Element) forceParentRedraw() {
 
 // performs some pre-render operations. done for the whole tree before any rendering is done.
 func (e *Element) prepareRender() {
-	//if any animations are rendering this frame, trigger a redraw
-	for _, a := range e.animations {
-		if a.IsPlaying() && a.IsUpdated() {
+	if !e.forceRedraw {
+		if e.AnimationJustStopped || e.AnimationJustUpdated {
 			e.forceRedraw = true
-			break
 		}
 	}
 
@@ -362,10 +358,6 @@ func (e *Element) renderIfDirty() {}
 
 // performs some after-render cleanups. TODO: could also put some profiling code in here once that's a thing?
 func (e *Element) finalizeRender() {
-	for _, anim := range e.animations {
-		anim.Finish()
-	}
-
 	e.Updated = false
 	e.forceRedraw = false
 	if e.Border.enabled {
@@ -485,16 +477,7 @@ func (e *Element) drawChildren() {
 
 // Adds an animation to the ui element. Note that this does NOT start the animation.
 func (e *Element) AddAnimation(animation anim.Animator) {
-	if e.animations == nil {
-		e.animations = make([]anim.Animator, 0)
-	}
-
-	//check for duplicate add
-	if slices.Contains(e.animations, animation) {
-		return
-	}
-
-	e.animations = append(e.animations, animation)
+	e.AnimationManager.AddAnimation(animation)
 
 	//if we're adding a blocking animation during an update, make sure the window knows to stop updating
 	if animation.IsBlocking() && animation.IsPlaying() {
@@ -512,38 +495,12 @@ func (e *Element) AddOneShotAnimation(animation anim.Animator) {
 	e.AddAnimation(animation)
 }
 
-func (e *Element) updateAnimations() {
-	for _, a := range e.animations {
-		if a.IsPlaying() {
-			a.Update()
-		}
-
-		if a.JustStopped() {
-			// if animation has stopped, trigger a redraw to clean up anything the animation might have left on the canvas
-			e.forceRedraw = true
-		}
-	}
-
-	// remove finished one-shot animations
-	e.animations = slices.DeleteFunc(e.animations, func(a anim.Animator) bool {
-		return a.IsOneShot() && a.IsDone()
-	})
-}
-
 func (e *Element) renderAnimations() {
-	for _, animation := range e.animations {
-		if !animation.IsPlaying() {
-			continue
-		}
-
+	for animation := range e.EachPlayingAnimation() {
 		if canvasAnim, ok := animation.(gfx.CanvasAnimator); ok {
 			canvasAnim.Render(&e.Canvas)
 		}
 	}
-}
-
-func (e *Element) getAnimations() []anim.Animator {
-	return e.animations
 }
 
 // IsVisible returns true if the element's visibility is true AND at least part of it is within the bounds of its

@@ -26,7 +26,7 @@ type Window struct {
 	Element
 
 	labels             map[string]element
-	blockingAnimations int //number of running animations blocking updates
+	blockingAnimations bool //true if running animations are blocking updates
 
 	SendEventsToUnfocused bool //if true, unhandled input events will be sent to all elements, not just the focused one.
 	focusedElement        element
@@ -44,25 +44,25 @@ func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
 // Updates all visible subelements in the window, as well as all visible animations.
 func (wnd *Window) Update() {
 	// see how many animations (if any) are blocking updates
-	wnd.blockingAnimations = 0
+	wnd.blockingAnimations = false
 	util.WalkTree[element](wnd, func(element element) {
-		for _, a := range element.getAnimations() {
-			if a.IsBlocking() && a.IsPlaying() {
-				wnd.blockingAnimations += 1
-			}
+		if element.HasBlockingAnimation() {
+			wnd.blockingAnimations = true
 		}
-	}, ifVisible)
+	}, ifVisible, func(e element) bool { return !wnd.IsBlocked() })
 
 	// update all visible subelements (unless window is blocked) and their animations
 	util.WalkSubTrees[element](wnd, func(element element) {
 		if !wnd.IsBlocked() {
+			//THINK : should an element have its events flushed if the window is blocked? we could do that here instead
+			// of wherever we are doing it now (if we're doing it at all....).
 			element.ProcessEvents()
 			element.Update()
 		}
-		element.updateAnimations()
+		element.UpdateAnimations()
 	}, ifVisible)
 
-	wnd.updateAnimations()
+	wnd.UpdateAnimations()
 }
 
 func (wnd *Window) Render() {
@@ -182,7 +182,7 @@ func (wnd *Window) HasFocusedElement() bool {
 }
 
 func (wnd *Window) IsBlocked() bool {
-	return wnd.blockingAnimations > 0
+	return wnd.blockingAnimations
 }
 
 // Dumps every UI element in the window to an .xp file in the provided directory. If the directory does not exist it
@@ -278,7 +278,7 @@ func (wnd *Window) onSubNodeDefocused(subnode element) {
 }
 
 func (wnd *Window) onBlockingAnimationAdded() {
-	wnd.blockingAnimations += 1
+	wnd.blockingAnimations = true
 }
 
 // Labelled elements can be retrieved via their label string from the window they are in. Also the labels can be

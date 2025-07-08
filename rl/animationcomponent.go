@@ -1,8 +1,6 @@
 package rl
 
 import (
-	"slices"
-
 	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/rl/ecs"
@@ -12,37 +10,29 @@ func init() {
 	ecs.Register[AnimationComponent]()
 }
 
-func AddAnimation[ET ~uint32](entity ET, a gfx.VisualAnimator) {
+func AddAnimation[ET ~uint32](entity ET, a gfx.VisualAnimator, oneshot bool) {
 	animComp := ecs.Get[AnimationComponent](entity)
 	if animComp == nil {
 		ecs.Add[AnimationComponent](entity)
 		animComp = ecs.Get[AnimationComponent](entity)
 	}
 
-	animComp.AddAnimation(a)
+	if oneshot {
+		animComp.AddOneShotAnimation(a)
+	} else {
+		animComp.AddAnimation(a)
+	}
 }
 
 // AnimationComponent is a container for animations affecting an entity in the ECS.
 type AnimationComponent struct {
 	ecs.Component
-
-	animations []anim.Animator
-}
-
-func (ac *AnimationComponent) AddAnimation(animation anim.Animator) {
-	if ac.animations == nil {
-		ac.animations = make([]anim.Animator, 0)
-	}
-
-	animation.SetOneShot(true)
-	animation.Start()
-
-	ac.animations = append(ac.animations, animation)
+	anim.AnimationManager
 }
 
 func (ac *AnimationComponent) ApplyVisualAnimations(vis gfx.Visuals) (result gfx.Visuals) {
 	result = vis
-	for _, animation := range ac.animations {
+	for animation := range ac.EachPlayingAnimation() {
 		if visualAnimation, ok := animation.(gfx.VisualAnimator); ok {
 			result = visualAnimation.ApplyToVisuals(result)
 		}
@@ -68,32 +58,18 @@ func (as *AnimationSystem) Update() {
 	emptyAnimCompEntities := make([]ecs.Entity, 0)
 
 	for animComp := range ecs.EachComponent[AnimationComponent]() {
-		updated := false
-		for _, animation := range animComp.animations {
-			if animation.IsPlaying() {
-				animation.Update()
-
-				if !animation.IsDone() && animation.IsBlocking() {
-					as.HasBlockingAnimation = true
-				}
-
-				if animation.IsUpdated() || animation.JustStopped() {
-					updated = true
-				}
-			}
+		animComp.UpdateAnimations()
+		if animComp.HasBlockingAnimation() {
+			as.HasBlockingAnimation = true
 		}
 
-		if updated {
+		if animComp.AnimationJustUpdated || animComp.AnimationJustStopped {
 			if pos := ecs.Get[PositionComponent](animComp.GetEntity()); pos != nil {
 				as.tileMap.SetDirty(pos.Coord)
 			}
 		}
 
-		animComp.animations = slices.DeleteFunc(animComp.animations, func(a anim.Animator) bool {
-			return a.IsDone() && a.IsOneShot()
-		})
-
-		if len(animComp.animations) == 0 {
+		if animComp.CountAnimations() == 0 {
 			emptyAnimCompEntities = append(emptyAnimCompEntities, animComp.GetEntity())
 		}
 	}

@@ -4,7 +4,8 @@ import (
 	"github.com/bennicholls/tyumi/log"
 )
 
-// Anything that can do animations on a Canvas
+// Anything that can do animations! Animations are updated by an update function, and track duration/progress. Animations
+// can be started, stopped, paused, resumed, the whole deal.
 type Animator interface {
 	Start()
 	Play()
@@ -19,8 +20,8 @@ type Animator interface {
 	IsBlocking() bool
 	IsUpdated() bool
 
-	JustStopped() bool
-	Finish()
+	stoppedSinceLastUpdate() bool
+	clearFlags()
 
 	GetDuration() int
 
@@ -41,7 +42,7 @@ type Animation struct {
 
 	enabled     bool //animation is playing
 	reset       bool //indicates animation should reset and start over.
-	justStopped bool //indicates animation has stopped recently. use Finish() to clear this flag.
+	justStopped bool //indicates animation has stopped recently
 	ticks       int  //incremented each update
 }
 
@@ -111,15 +112,21 @@ func (a *Animation) SetOneShot(oneshot bool) {
 func (a *Animation) Start() {
 	a.reset = true
 	a.Play()
+	a.justStopped = false // just in case we're starting an animation that stopped this frame??
 }
 
 // Plays an animation. If the animation is paused, continues it.
 func (a *Animation) Play() {
 	a.enabled = true
+	a.justStopped = false // just in case we're starting an animation that stopped this frame??
 }
 
 // Pauses a playing animation.
 func (a *Animation) Pause() {
+	if !a.enabled {
+		return
+	}
+
 	a.enabled = false
 	a.justStopped = true
 }
@@ -153,16 +160,11 @@ func (a Animation) GetProgress() float64 {
 	return float64(a.ticks) / float64(a.Duration)
 }
 
-func (a Animation) IsResetting() bool {
-	return a.reset
-}
-
 // Returns true if the animation has stopped recently.
-func (a Animation) JustStopped() bool {
+func (a Animation) stoppedSinceLastUpdate() bool {
 	return a.justStopped
 }
 
-// Finish clears the justStopped flag.
-func (a *Animation) Finish() {
+func (a *Animation) clearFlags() {
 	a.justStopped = false
 }

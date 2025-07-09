@@ -87,6 +87,10 @@ func RemoveEntity[ET ~uint32](entity ET) {
 		return
 	}
 
+	for _, cache := range componentCaches {
+		cache.removeComponent(Entity(entity))
+	}
+
 	entities[index(entity)] = INVALID_ID
 	if generations[index(entity)] != 255 {
 		addFreeID(index(entity))
@@ -94,10 +98,6 @@ func RemoveEntity[ET ~uint32](entity ET) {
 		if Debug {
 			log.Debug("ECS: Entity index retired. (If you're seeing this a lot, it might be worth increasing the generation bits.)")
 		}
-	}
-
-	for _, cache := range componentCaches {
-		cache.removeComponent(Entity(entity))
 	}
 }
 

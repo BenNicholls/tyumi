@@ -69,8 +69,8 @@ func (cc *componentCache[T]) addComponent(entity Entity, init ...T) {
 
 	var i any = &newComponent
 	if set, ok := i.(settableComponentType); ok {
-		set.Init()
 		set.setEntity(entity)
+		set.Init()
 	} else {
 		panic("COULD NOT SET ENTITY ID ON ADDED COMPONENT??? BAD!!!")
 	}

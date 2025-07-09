@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/bennicholls/tyumi"
+	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/util"
@@ -24,12 +24,13 @@ type LightSourceComponent struct {
 	Power        uint8 // light level applied at the source
 	FalloffRate  uint8 // amount light level diminishes every 1 tile away from source
 	MaxRange     uint8 // maximum range of the light. If 0 (default), the light's distance is computed from Power and FalloffRate
-	FlickerSpeed uint8 // How many ticks between flickers. If 0, flickering is disabled.
+	FlickerSpeed uint8 // How many ticks between flickers (at 60 ticks per second). If 0, flickering is disabled. NOTE: changing this after init does not update the flicker yet.
 	//Colour      col.Colour // Colour of light
 
 	photons   []photon // a photon is an amount of light being applied to a specific location on the tilemap
 	litbounds vec.Rect // rough bounding box containing all lit positions (and more, of course)
 
+	flickerAnimation  *anim.Repeater
 	basePower         uint8 // used when computing flickers
 	baseFalloff       uint8 // used when computing flickers
 	lastComputedRange uint8 // used to prevent unnecessary area computations while flickering
@@ -43,6 +44,32 @@ type photon struct {
 func (lsc *LightSourceComponent) Init() {
 	if !lsc.Disabled {
 		lsc.AreaDirty = true
+	}
+
+	if lsc.FlickerSpeed > 0 {
+		flickerTime := (time.Second / 60) * time.Duration(lsc.FlickerSpeed)
+		flicker := anim.NewRepeaterAnimation(flickerTime, func() {
+			if light := ecs.Get[LightSourceComponent](lsc.GetEntity()); light != nil {
+				light.flicker()
+			}
+		})
+
+		flicker.Start()
+		AddAnimation(lsc.GetEntity(), &flicker, false)
+		lsc.flickerAnimation = &flicker
+	}
+}
+
+func (lsc *LightSourceComponent) Cleanup() {
+	if lsc.flickerAnimation != nil {
+		entity := lsc.GetEntity()
+		if !ecs.Alive(entity) {
+			return
+		}
+
+		if animComp := ecs.Get[AnimationComponent](entity); animComp != nil {
+			animComp.RemoveAnimation(lsc.flickerAnimation)
+		}
 	}
 }
 
@@ -64,7 +91,14 @@ func (lsc *LightSourceComponent) setDisabled(disabled bool) {
 	}
 
 	lsc.Disabled = disabled
-	if !lsc.Disabled {
+	if lsc.Disabled {
+		if lsc.flickerAnimation != nil {
+			lsc.flickerAnimation.Stop()
+		}
+	} else {
+		if lsc.flickerAnimation != nil {
+			lsc.flickerAnimation.Start()
+		}
 		lsc.AreaDirty = true // if enabling, trigger a recompute and apply
 	}
 }
@@ -213,12 +247,6 @@ func (ls *LightSystem) Update(delta time.Duration) {
 	for light := range ecs.EachComponent[LightSourceComponent]() {
 		if light.Disabled {
 			continue
-		}
-
-		if light.FlickerSpeed > 0 {
-			if tyumi.GetTick()%int(light.FlickerSpeed) == 0 {
-				light.flicker()
-			}
 		}
 
 		// check if light should trigger an area update due to nearby tiles changing visibility

@@ -12,7 +12,7 @@ func init() {
 	ecs.Register[AnimationComponent]()
 }
 
-func AddAnimation[ET ~uint32](entity ET, a gfx.VisualAnimator, oneshot bool) {
+func AddAnimation[ET ~uint32](entity ET, a anim.Animator, oneshot bool) {
 	animComp := ecs.Get[AnimationComponent](entity)
 	if animComp == nil {
 		ecs.Add[AnimationComponent](entity)

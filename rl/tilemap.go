@@ -62,8 +62,8 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 
 // update tilemap-controlled systems
 func (tm *TileMap) Update(delta time.Duration) {
-	tm.LightSystem.Update(delta)
 	tm.AnimationSystem.Update(delta)
+	tm.LightSystem.Update(delta)
 
 	if tm.HasBlockingAnimation {
 		return

@@ -184,8 +184,12 @@ func (r Rect) EachCoordInPerimeter() iter.Seq[Coord] {
 }
 
 // CalcExtendedRect returns a rect that is the original rect r minimally extended so that it encompasses the provided
-// coord.
+// coord. If the rect r has no area, we just return a 1x1 rect at the provided coord.
 func (r Rect) CalcExtendedRect(coord Coord) (extended Rect) {
+	if r.Area() == 0 {
+		return Rect{coord, Dims{1, 1}}
+	}
+
 	extended = r
 	if coord.X < r.X {
 		extended.X = coord.X

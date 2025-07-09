@@ -26,9 +26,17 @@ type LightSourceComponent struct {
 	FlickerSpeed uint8 // How many ticks between flickers. If 0, flickering is disabled.
 	//Colour      col.Colour // Colour of light
 
-	litTiles    map[vec.Coord]uint8 // map of tile position to the amount of light being cast there
-	basePower   uint8               // used when computing flickers
-	baseFalloff uint8               // used when computing flickers
+	photons   []photon // a photon is an amount of light being applied to a specific location on the tilemap
+	litbounds vec.Rect // rough bounding box containing all lit positions (and more, of course)
+
+	basePower         uint8 // used when computing flickers
+	baseFalloff       uint8 // used when computing flickers
+	lastComputedRange uint8 // used to prevent unnecessary area computations while flickering
+}
+
+type photon struct {
+	amount uint8
+	pos    vec.Coord
 }
 
 func (lsc *LightSourceComponent) Init() {
@@ -70,7 +78,7 @@ func (lsc *LightSourceComponent) SetPower(power uint8) {
 		return
 	}
 
-	if lsc.MaxRange == 0 {
+	if lsc.MaxRange == 0 && lsc.GetMaxRange() > lsc.lastComputedRange {
 		lsc.AreaDirty = true
 	} else {
 		lsc.Dirty = true
@@ -87,7 +95,7 @@ func (lsc *LightSourceComponent) SetFalloff(falloff uint8) {
 		return
 	}
 
-	if lsc.MaxRange == 0 {
+	if lsc.MaxRange == 0 && lsc.GetMaxRange() > lsc.lastComputedRange {
 		lsc.AreaDirty = true
 	} else {
 		lsc.Dirty = true
@@ -105,6 +113,18 @@ func (lsc *LightSourceComponent) SetMaxRange(max_range uint8) {
 	}
 }
 
+func (lsc *LightSourceComponent) GetMaxRange() (lightRange uint8) {
+	if lsc.MaxRange != 0 {
+		return lsc.MaxRange
+	}
+
+	if lsc.FalloffRate == 0 {
+		return lsc.Power // 0 falloffrate makes the lightrange infinite, so let's avoid that yeah?
+	}
+
+	return uint8(float32(lsc.Power) / float32(lsc.FalloffRate))
+}
+
 func (lsc *LightSourceComponent) flicker() {
 	if lsc.Disabled || lsc.FlickerSpeed == 0 {
 		return
@@ -115,8 +135,8 @@ func (lsc *LightSourceComponent) flicker() {
 		lsc.baseFalloff = max(lsc.FalloffRate, 1)
 	}
 
-	f := float32(lsc.baseFalloff)*0.9 + rand.Float32()*(float32(lsc.baseFalloff)/10)
-	p := float32(lsc.basePower)*0.9 + rand.Float32()*(float32(lsc.basePower)/10)
+	f := float32(lsc.baseFalloff) - rand.Float32()*(float32(lsc.baseFalloff)/10)
+	p := float32(lsc.basePower) - rand.Float32()*(float32(lsc.basePower)/10)
 
 	lsc.SetFalloff(uint8(util.Clamp(f, 1, 255)))
 	lsc.SetPower(uint8(min(p, 255)))
@@ -128,10 +148,14 @@ type LightSystem struct {
 	tileMap               *TileMap
 	changedVisbilityTiles util.Set[vec.Coord]
 	globalLight           uint8 // amount of light automatically applied to every tile. If 255, disables system.
+
+	lightmap []uint16 // the light applied to each tile!
 }
 
 func (ls *LightSystem) Init(tm *TileMap) {
 	ls.tileMap = tm
+	area := ls.tileMap.Bounds().Area()
+	ls.lightmap = make([]uint16, area, area)
 	ls.Listen(EV_ENTITYMOVED, EV_TILECHANGEDVISIBILITY)
 	ls.SetEventHandler(ls.handleEvents)
 	ls.Enable()
@@ -147,6 +171,14 @@ func (ls *LightSystem) SetGlobalLight(light uint8) {
 	} else {
 		ls.Enable()
 	}
+}
+
+func (ls LightSystem) GetLightLevel(pos vec.Coord) uint8 {
+	if !ls.Enabled {
+		return 255
+	}
+
+	return uint8(min(255, uint16(ls.globalLight)+ls.lightmap[pos.ToIndex(ls.tileMap.size.W)]))
 }
 
 func (ls *LightSystem) handleEvents(e event.Event) (event_handled bool) {
@@ -178,6 +210,10 @@ func (ls *LightSystem) Update() {
 	ls.System.Update()
 
 	for light := range ecs.EachComponent[LightSourceComponent]() {
+		if light.Disabled {
+			continue
+		}
+
 		if light.FlickerSpeed > 0 {
 			if tyumi.GetTick()%int(light.FlickerSpeed) == 0 {
 				light.flicker()
@@ -187,7 +223,7 @@ func (ls *LightSystem) Update() {
 		// check if light should trigger an area update due to nearby tiles changing visibility
 		if !light.AreaDirty {
 			for pos := range ls.changedVisbilityTiles.EachElement() {
-				if _, ok := light.litTiles[pos]; ok {
+				if pos.IsInside(light.litbounds) {
 					light.AreaDirty = true
 					break
 				}
@@ -204,20 +240,21 @@ func (ls *LightSystem) Update() {
 	// light application has to go in a separate pass to prevent certain accumulation errors arising from weird
 	// situations where tiles are replaced.
 	for light := range ecs.EachComponent[LightSourceComponent]() {
-		if light.Dirty {
+		if light.Dirty && light.litbounds.Intersects(ls.tileMap.currentCameraBounds) {
 			ls.applyLight(light)
 		}
 	}
 }
 
 func (ls *LightSystem) removeAppliedLight(light *LightSourceComponent) {
-	for pos, amount := range light.litTiles {
+	for idx, photon := range light.photons {
+		pos, amount := photon.pos, photon.amount
 		if amount == 0 {
 			continue
 		}
 
-		ls.tileMap.GetTile(pos).RemoveLight(amount)
-		light.litTiles[pos] = 0
+		ls.removeLight(pos, amount)
+		light.photons[idx].amount = 0
 		ls.tileMap.SetDirty(pos)
 	}
 }
@@ -227,11 +264,13 @@ func (ls *LightSystem) removeAppliedLight(light *LightSourceComponent) {
 func (ls *LightSystem) computeLightArea(light *LightSourceComponent) {
 	light.AreaDirty = false
 
-	if light.litTiles != nil {
+	// clear photon array, we're recomputing from scratch!
+	if light.photons != nil {
 		ls.removeAppliedLight(light)
-		clear(light.litTiles)
+		light.photons = light.photons[0:0]
+		light.litbounds = vec.Rect{}
 	} else {
-		light.litTiles = make(map[vec.Coord]uint8)
+		light.photons = make([]photon, 0)
 	}
 
 	if light.Disabled || light.Power == 0 {
@@ -243,25 +282,18 @@ func (ls *LightSystem) computeLightArea(light *LightSourceComponent) {
 		return
 	}
 
-	lightRange := int(light.MaxRange)
-	if lightRange == 0 {
-		if light.FalloffRate == 0 {
-			lightRange = 10
-		} else {
-			lightRange = int(float32(light.Power) / float32(light.FalloffRate))
-		}
-	}
-
-	ls.tileMap.ShadowCast(source, lightRange, func(tm *TileMap, pos vec.Coord, d, r int) {
-		light.litTiles[pos] = 0
+	lightRange := light.GetMaxRange()
+	ls.tileMap.ShadowCast(source, int(lightRange), func(tm *TileMap, pos vec.Coord, d, r int) {
+		light.photons = append(light.photons, photon{0, pos})
+		light.litbounds = light.litbounds.CalcExtendedRect(pos)
 	})
 
 	light.Dirty = true
+	light.lastComputedRange = lightRange
 }
 
 func (ls *LightSystem) applyLight(light *LightSourceComponent) {
 	light.Dirty = false
-
 	if light.Disabled {
 		return
 	}
@@ -271,13 +303,36 @@ func (ls *LightSystem) applyLight(light *LightSourceComponent) {
 		return
 	}
 
-	for pos, oldLight := range light.litTiles {
+	for idx, photon := range light.photons {
+		pos := photon.pos
 		newLight := max(0, int(light.Power)-int(source.DistanceTo(pos)*float64(light.FalloffRate)))
-		if delta := newLight - int(oldLight); delta != 0 {
-			ls.tileMap.GetTile(pos).ModLight(delta)
+		if delta := newLight - int(photon.amount); delta != 0 {
+			ls.modLight(pos, delta)
 			ls.tileMap.SetDirty(pos)
 		}
 
-		light.litTiles[pos] = uint8(newLight)
+		light.photons[idx].amount = uint8(newLight)
+	}
+}
+
+// Applies a delta to the light level on a tile.
+func (ls *LightSystem) modLight(pos vec.Coord, delta int) {
+	if delta > 0 {
+		ls.addLight(pos, uint8(delta))
+	} else if delta < 0 {
+		ls.removeLight(pos, uint8(-delta))
+	}
+}
+
+func (ls *LightSystem) addLight(pos vec.Coord, light uint8) {
+	ls.lightmap[pos.ToIndex(ls.tileMap.size.W)] += uint16(light)
+}
+
+func (ls *LightSystem) removeLight(pos vec.Coord, light uint8) {
+	level := ls.GetLightLevel(pos)
+	if level < light {
+		ls.lightmap[pos.ToIndex(ls.tileMap.size.W)] = 0
+	} else {
+		ls.lightmap[pos.ToIndex(ls.tileMap.size.W)] -= uint16(light)
 	}
 }

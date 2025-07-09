@@ -24,6 +24,8 @@ type TileMap struct {
 	events event.Stream
 	size   vec.Dims
 	tiles  []Tile
+
+	currentCameraBounds vec.Rect
 }
 
 func (tm *TileMap) getMap() *TileMap {
@@ -35,12 +37,11 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	tm.DirtyTracker.Init(size)
 	tm.events.Listen(EV_ENTITYBEINGDESTROYED)
 	tm.events.SetEventHandler(tm.handleEvent)
+	tm.size = size
 
 	tm.LightSystem.Init(tm)
 	tm.FOVSystem.Init(tm)
 	tm.AnimationSystem.Init(tm)
-
-	tm.size = size
 
 	tm.tiles = make([]Tile, 0, size.Area())
 	for cursor := range vec.EachCoordInArea(tm.Bounds()) {
@@ -263,11 +264,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 		}
 	}
 
-	light := tm.globalLight
-	if light < 255 {
-		light = uint8(min(terrain.LightLevel+uint16(light), 255))
-	}
-
+	light := tm.GetLightLevel(pos)
 	if light > 0 {
 		//TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
 		// inverts the tile colours) should probably do this better somehow....

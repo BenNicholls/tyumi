@@ -26,10 +26,6 @@ type PositionComponent struct {
 type TerrainComponent struct {
 	ecs.Component
 	TileType
-
-	// amount of light hitting this tile. Anything above 255 is considered max, but we have to have room to
-	// overflow here so we use a uint16
-	LightLevel uint16
 }
 
 type EntityComponent struct {

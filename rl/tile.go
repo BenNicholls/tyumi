@@ -81,29 +81,3 @@ func (t Tile) RemoveEntity() {
 		container.Remove()
 	}
 }
-
-// Applies a delta to the light level on a tile.
-func (t Tile) ModLight(delta int) {
-	if delta > 0 {
-		t.AddLight(uint8(delta))
-	} else if delta < 0 {
-		t.RemoveLight(uint8(-delta))
-	}
-}
-
-func (t Tile) AddLight(light uint8) {
-	ecs.Get[TerrainComponent](t).LightLevel += uint16(light)
-}
-
-func (t Tile) RemoveLight(light uint8) {
-	terrain := ecs.Get[TerrainComponent](t)
-	if terrain.LightLevel < uint16(light) {
-		terrain.LightLevel = 0
-	} else {
-		terrain.LightLevel -= uint16(light)
-	}
-}
-
-func (t Tile) GetLight() uint8 {
-	return uint8(min(255, ecs.Get[TerrainComponent](t).LightLevel))
-}

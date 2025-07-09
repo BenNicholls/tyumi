@@ -32,7 +32,7 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 	tmv.TreeNode.Init(tmv)
 
 	tmv.tilemap = tilemap
-	tmv.cameraOffset = vec.ZERO_COORD
+	tmv.SetCameraOffset(vec.ZERO_COORD)
 }
 
 func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {
@@ -61,6 +61,7 @@ func (tmv *TileMapView) MoveCamera(dx, dy int) {
 
 func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
 	tmv.cameraOffset = offset
+	tmv.tilemap.getMap().currentCameraBounds = vec.Rect{offset, tmv.Size()}
 	tmv.ForceRedraw()
 }
 

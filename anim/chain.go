@@ -29,7 +29,7 @@ func (ac *AnimationChain) Update(delta time.Duration) {
 		return
 	}
 
-	if ac.Repeat && ac.elapsed < delta {
+	if ac.justLooped {
 		// if we're a repeating chain, this detects if we've looped around and need to restart
 		// TODO: this creates a little desync when chain loops! for 1 frame, the animation at
 		// the start of the chain will be at zero as it resets, and then afterwards it begins adding

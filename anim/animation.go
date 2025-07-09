@@ -45,6 +45,7 @@ type Animation struct {
 	enabled     bool          //animation is playing
 	reset       bool          //indicates animation should reset and start over.
 	justStopped bool          //indicates animation has stopped recently
+	justLooped  bool          // indicates a looping animation just rolled over and started again
 	elapsed     time.Duration //incremented each update
 }
 
@@ -59,6 +60,7 @@ func (a *Animation) Update(delta time.Duration) {
 		}
 
 		if a.Repeat {
+			a.justLooped = a.elapsed + delta > a.Duration
 			a.elapsed = (a.elapsed + delta) % a.Duration
 		} else {
 			a.elapsed += delta

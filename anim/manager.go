@@ -3,12 +3,13 @@ package anim
 import (
 	"iter"
 	"slices"
+	"time"
 )
 
 type Manager interface {
 	AddAnimation(Animator)
 	RemoveAnimation(Animator)
-	UpdateAnimations()
+	UpdateAnimations(time.Duration)
 	HasBlockingAnimation() bool
 	EachAnimation() iter.Seq[Animator]
 	EachPlayingAnimation() iter.Seq[Animator]
@@ -67,12 +68,12 @@ func (am *AnimationManager) RemoveAnimation(animation Animator) {
 // states, stuff like that), it does NOT apply the effects of the animations. For example, it doesn't make a
 // CanvasAnimation render and draw things on a canvas. Specific types of animations need to be applied in whatever way
 // or time is appropriate for them.
-func (am *AnimationManager) UpdateAnimations() {
+func (am *AnimationManager) UpdateAnimations(delta time.Duration) {
 	am.AnimationJustStopped = false
 	am.AnimationJustUpdated = false
 	for animation := range am.EachAnimation() {
 		if animation.IsPlaying() {
-			animation.Update()
+			animation.Update(delta)
 			if animation.IsUpdated() {
 				am.AnimationJustUpdated = true
 			}

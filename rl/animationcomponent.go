@@ -1,6 +1,8 @@
 package rl
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/rl/ecs"
@@ -53,12 +55,12 @@ func (as *AnimationSystem) Init(tm *TileMap) {
 	as.tileMap = tm
 }
 
-func (as *AnimationSystem) Update() {
+func (as *AnimationSystem) Update(delta time.Duration) {
 	as.HasBlockingAnimation = false
 	emptyAnimCompEntities := make([]ecs.Entity, 0)
 
 	for animComp := range ecs.EachComponent[AnimationComponent]() {
-		animComp.UpdateAnimations()
+		animComp.UpdateAnimations(delta)
 		if animComp.HasBlockingAnimation() {
 			as.HasBlockingAnimation = true
 		}

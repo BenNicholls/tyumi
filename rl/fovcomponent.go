@@ -1,6 +1,8 @@
 package rl
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/util"
@@ -128,8 +130,8 @@ func (fs *FOVSystem) handleEvents(e event.Event) (event_handled bool) {
 	return
 }
 
-func (fs *FOVSystem) Update() {
-	fs.System.Update()
+func (fs *FOVSystem) Update(delta time.Duration) {
+	fs.System.Update(delta)
 
 	// FOV updates
 	for fov := range ecs.EachComponent[FOVComponent]() {

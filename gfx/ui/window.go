@@ -3,6 +3,7 @@ package ui
 import (
 	"os"
 	"slices"
+	"time"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/input"
@@ -42,7 +43,7 @@ func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
 }
 
 // Updates all visible subelements in the window, as well as all visible animations.
-func (wnd *Window) Update() {
+func (wnd *Window) Update(delta time.Duration) {
 	// see how many animations (if any) are blocking updates
 	wnd.blockingAnimations = false
 	util.WalkTree[element](wnd, func(element element) {
@@ -57,12 +58,12 @@ func (wnd *Window) Update() {
 			//THINK : should an element have its events flushed if the window is blocked? we could do that here instead
 			// of wherever we are doing it now (if we're doing it at all....).
 			element.ProcessEvents()
-			element.Update()
+			element.Update(delta)
 		}
-		element.UpdateAnimations()
+		element.UpdateAnimations(delta)
 	}, ifVisible)
 
-	wnd.UpdateAnimations()
+	wnd.UpdateAnimations(delta)
 }
 
 func (wnd *Window) Render() {

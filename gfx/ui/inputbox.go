@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
@@ -43,7 +45,7 @@ func (ib *InputBox) Init(size vec.Dims, pos vec.Coord, depth, input_length int) 
 	} else {
 		ib.inputLengthMax = size.W * 2
 	}
-	ib.cursor = NewInputCursorAnimation(vec.ZERO_COORD, 0, 30)
+	ib.cursor = NewInputCursorAnimation(vec.ZERO_COORD, 0, time.Second/2)
 	ib.AddAnimation(&ib.cursor)
 }
 
@@ -129,7 +131,7 @@ type InputCursorAnimation struct {
 	gfx.BlinkAnimation
 }
 
-func NewInputCursorAnimation(pos vec.Coord, depth, rate int) (cursor InputCursorAnimation) {
+func NewInputCursorAnimation(pos vec.Coord, depth int, rate time.Duration) (cursor InputCursorAnimation) {
 	vis := gfx.NewTextVisuals(gfx.TEXT_BORDER_UD, gfx.TEXT_DEFAULT, col.Pair{gfx.COL_DEFAULT, gfx.COL_DEFAULT})
 	cursor = InputCursorAnimation{
 		BlinkAnimation: gfx.NewBlinkAnimation(vec.Rect{pos, vec.Dims{1, 1}}, depth, vis, rate),

@@ -2,6 +2,7 @@ package tyumi
 
 import (
 	"slices"
+	"time"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/ui"
@@ -28,8 +29,8 @@ type scene interface {
 	Ready() bool
 	Shutdown()
 
-	Update()
-	UpdateUI()
+	Update(delta time.Duration)
+	UpdateUI(delta time.Duration)
 	processTimers()
 	IsBlocked() bool
 
@@ -135,14 +136,14 @@ func (s *Scene) init(size vec.Dims, pos vec.Coord, bordered bool) {
 	s.ready = true
 }
 
-// Update is run each tick, after input has been handled and before UI is updated/rendered. Override this function
-// with your primary game code!
-func (s *Scene) Update() {}
+// Update is run each tick, after input has been handled and before UI is updated/rendered. Delta is the duration since
+// the previous frame. Override this function with your primary game code!
+func (s *Scene) Update(delta time.Duration) {}
 
 // UpdateUI is called before each frame is rendered, allowing you to apply ui changes for rendering all at once if
 // you prefer. Otherwise you can implement Update() functions on the individual UI elements themselves and have them
 // control their own behaviour.
-func (s *Scene) UpdateUI() {}
+func (s *Scene) UpdateUI(delta time.Duration) {}
 
 func (s *Scene) OpenDialog(subScene dialog) {
 	if !subScene.Ready() {

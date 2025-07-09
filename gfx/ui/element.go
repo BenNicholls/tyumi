@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/event"
@@ -24,7 +25,7 @@ type element interface {
 	vec.Bounded
 	util.TreeType[element]
 
-	Update()
+	Update(delta time.Duration)
 	IsUpdated() bool
 
 	prepareRender()
@@ -290,7 +291,7 @@ func (e *Element) RemoveAllChildren() {
 // Update() can be overriden to update the state of the UI Element. Update() is called on each tick. If the element's
 // state is changed and need to be redrawn, you can set its Updated flag to true to trigger a render on the next frame.
 // Note that the element's animations are updated separately and do not need to be managed here.
-func (e *Element) Update() {}
+func (e *Element) Update(delta time.Duration) {}
 
 // Renders any changes in the element to the internal canvas. Override this to implement custom rendering behaviour. If
 // this method has not been overriden, it attempts to call the user-provided OnRender() callback, if any.

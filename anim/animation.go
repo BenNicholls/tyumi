@@ -1,6 +1,8 @@
 package anim
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/log"
 )
 
@@ -12,7 +14,7 @@ type Animator interface {
 	Pause()
 	Stop()
 
-	Update()
+	Update(time.Duration)
 
 	IsPlaying() bool
 	IsDone() bool
@@ -23,32 +25,32 @@ type Animator interface {
 	stoppedSinceLastUpdate() bool
 	clearFlags()
 
-	GetDuration() int
+	GetDuration() time.Duration
 
 	SetOneShot(bool)
 }
 
 // Base struct for animations. Embed this to satisfy Animator interface above.
 type Animation struct {
-	OneShot       bool //indicates animation should play once and then be deleted
-	Repeat        bool //animation repeats when finished
-	Backwards     bool //play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
-	Blocking      bool //whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
-	Updated       bool //indicates to whatever is drawing the animation that it's going to render this frame
-	AlwaysUpdates bool //if true, indicates this animation updates every frame
-	Duration      int  //duration of animation in ticks
+	OneShot       bool          //indicates animation should play once and then be deleted
+	Repeat        bool          //animation repeats when finished
+	Backwards     bool          //play the animation backwards. NOTE: not all animations implement this (sometimes it doesn't make sense)
+	Blocking      bool          //whether this animation should block updates until completed. NOTE: if this is true, Repeat will be set to false to prevent infinite blocking
+	Updated       bool          //indicates to whatever is drawing the animation that it's going to render this frame
+	AlwaysUpdates bool          //if true, indicates this animation updates every frame
+	Duration      time.Duration //duration of animation
 
 	OnDone func() // Callback run when animation finishes.
 
-	enabled     bool //animation is playing
-	reset       bool //indicates animation should reset and start over.
-	justStopped bool //indicates animation has stopped recently
-	ticks       int  //incremented each update
+	enabled     bool          //animation is playing
+	reset       bool          //indicates animation should reset and start over.
+	justStopped bool          //indicates animation has stopped recently
+	elapsed     time.Duration //incremented each update
 }
 
-func (a *Animation) Update() {
+func (a *Animation) Update(delta time.Duration) {
 	if a.reset {
-		a.ticks = 0
+		a.elapsed = 0
 		a.Updated = true
 		a.reset = false
 	} else {
@@ -57,9 +59,9 @@ func (a *Animation) Update() {
 		}
 
 		if a.Repeat {
-			a.ticks = (a.ticks + 1) % a.Duration
+			a.elapsed = (a.elapsed + delta) % a.Duration
 		} else {
-			a.ticks += 1
+			a.elapsed += delta
 		}
 	}
 
@@ -75,7 +77,7 @@ func (a *Animation) Update() {
 }
 
 func (a Animation) IsDone() bool {
-	return !a.Repeat && a.ticks >= a.Duration
+	return !a.Repeat && a.elapsed >= a.Duration
 }
 
 func (a Animation) IsOneShot() bool {
@@ -142,22 +144,23 @@ func (a *Animation) Stop() {
 	a.reset = true
 }
 
-func (a Animation) GetDuration() int {
+func (a Animation) GetDuration() time.Duration {
 	return a.Duration
 }
 
-// gets the tick number. if the animation is being played backwards, this will count down instead of up!
-func (a Animation) GetTicks() int {
+// gets the elapsed time. if the animation is being played backwards, this will count down from the duration instead
+// of up!
+func (a Animation) GetTicks() time.Duration {
 	if a.Backwards {
-		return a.Duration - a.ticks - 1
+		return a.Duration - a.elapsed - 1
 	}
 
-	return a.ticks
+	return a.elapsed
 }
 
 // GetProgress returns a value from [0,1] indicating the progress of the animation
 func (a Animation) GetProgress() float64 {
-	return float64(a.ticks) / float64(a.Duration)
+	return float64(a.elapsed) / float64(a.Duration)
 }
 
 // Returns true if the animation has stopped recently.

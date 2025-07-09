@@ -1,6 +1,8 @@
 package gfx
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/vec"
@@ -97,7 +99,7 @@ type BlinkAnimation struct {
 	blinking bool    //whether the area is rendering a blink or not
 }
 
-func NewBlinkAnimation(area vec.Rect, depth int, vis Visuals, rate int) (ba BlinkAnimation) {
+func NewBlinkAnimation(area vec.Rect, depth int, vis Visuals, rate time.Duration) (ba BlinkAnimation) {
 	ba.Repeat = true
 	ba.Duration = rate
 	ba.Depth = depth
@@ -107,8 +109,8 @@ func NewBlinkAnimation(area vec.Rect, depth int, vis Visuals, rate int) (ba Blin
 	return
 }
 
-func (ba *BlinkAnimation) Update() {
-	ba.Animation.Update()
+func (ba *BlinkAnimation) Update(delta time.Duration) {
+	ba.Animation.Update(delta)
 
 	if ba.GetTicks() == 0 {
 		ba.blinking = !ba.blinking
@@ -156,8 +158,8 @@ type FadeAnimation struct {
 
 // Sets up a Fade Animation. Optionally takes a col.Pair for the fade to start from. Omit this to just fade from
 // whatever the canvas colours are, which is generally what you want.
-func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, to_colour col.Pair, from_colour ...col.Pair) (fa FadeAnimation) {
-	fa.Duration = duration_frames
+func NewFadeAnimation(area vec.Rect, depth int, duration time.Duration, to_colour col.Pair, from_colour ...col.Pair) (fa FadeAnimation) {
+	fa.Duration = duration
 	fa.AlwaysUpdates = true
 	fa.Depth = depth
 	fa.area = area
@@ -171,13 +173,13 @@ func NewFadeAnimation(area vec.Rect, depth int, duration_frames int, to_colour c
 }
 
 // Sets up a Fade Out animation. Both foreground and background are faded to the specified colour.
-func NewFadeOutAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) FadeAnimation {
-	return NewFadeAnimation(area, depth, duration_frames, col.Pair{colour, colour})
+func NewFadeOutAnimation(area vec.Rect, depth int, duration time.Duration, colour col.Colour) FadeAnimation {
+	return NewFadeAnimation(area, depth, duration, col.Pair{colour, colour})
 }
 
 // Sets up a Fade In animation. Both foreground and background are faded from the specified colour.
-func NewFadeInAnimation(area vec.Rect, depth int, duration_frames int, colour col.Colour) (fa FadeAnimation) {
-	fa = NewFadeAnimation(area, depth, duration_frames, col.Pair{colour, colour})
+func NewFadeInAnimation(area vec.Rect, depth int, duration time.Duration, colour col.Colour) (fa FadeAnimation) {
+	fa = NewFadeAnimation(area, depth, duration, col.Pair{colour, colour})
 	fa.Backwards = true
 
 	return
@@ -185,8 +187,8 @@ func NewFadeInAnimation(area vec.Rect, depth int, duration_frames int, colour co
 
 // Sets up a flash animation. The colour immediately is set to the provided flash colours, and then the area fades
 // back to the original colours over the duration.
-func NewFlashAnimation(area vec.Rect, depth int, duration_frames int, flash_colours col.Pair) (fa FadeAnimation) {
-	fa = NewFadeAnimation(area, depth, duration_frames, flash_colours)
+func NewFlashAnimation(area vec.Rect, depth int, duration time.Duration, flash_colours col.Pair) (fa FadeAnimation) {
+	fa = NewFadeAnimation(area, depth, duration, flash_colours)
 	fa.Backwards = true
 
 	return
@@ -204,7 +206,7 @@ func (fa *FadeAnimation) Render(c *Canvas) {
 		fromColours := fa.FromColours.Replace(COL_DEFAULT, c.DefaultColours())
 		fromColours = fromColours.Replace(col.NONE, dst_cell.Colours)
 
-		c.DrawColours(cursor, fa.Depth, fromColours.Lerp(toColours, fa.GetTicks(), fa.Duration-1))
+		c.DrawColours(cursor, fa.Depth, fromColours.Lerp(toColours, int(fa.GetTicks()), int(fa.Duration-1)))
 	}
 
 	fa.Updated = false
@@ -216,7 +218,7 @@ func (fa *FadeAnimation) ApplyToVisuals(vis Visuals) (result Visuals) {
 	toColours := fa.ToColours.Replace(col.NONE, vis.Colours)
 	fromColours := fa.FromColours.Replace(col.NONE, vis.Colours)
 
-	result.Colours = fromColours.Lerp(toColours, fa.GetTicks(), fa.Duration-1)
+	result.Colours = fromColours.Lerp(toColours, int(fa.GetTicks()), int(fa.Duration-1))
 	fa.Updated = false
 
 	return
@@ -228,11 +230,11 @@ type PulseAnimation struct {
 }
 
 // Creates a pulse animation. duration_frames is the duration of the entire cycle: start -> fade to pulse colour -> fade back
-func NewPulseAnimation(area vec.Rect, depth int, duration_frames int, pulse_colours col.Pair) (pa PulseAnimation) {
+func NewPulseAnimation(area vec.Rect, depth int, duration time.Duration, pulse_colours col.Pair) (pa PulseAnimation) {
 	pa.AlwaysUpdates = true
 
 	for i := range 2 {
-		fade := NewFadeAnimation(area, depth, duration_frames/2, pulse_colours)
+		fade := NewFadeAnimation(area, depth, duration/2, pulse_colours)
 		fade.Depth = depth
 		fade.area = area
 		if i == 1 {

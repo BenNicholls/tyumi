@@ -2,6 +2,7 @@ package rl
 
 import (
 	"math/rand"
+	"time"
 
 	"github.com/bennicholls/tyumi"
 	"github.com/bennicholls/tyumi/event"
@@ -202,12 +203,12 @@ func (ls *LightSystem) handleEvents(e event.Event) (event_handled bool) {
 	return true
 }
 
-func (ls *LightSystem) Update() {
+func (ls *LightSystem) Update(delta time.Duration) {
 	if !ls.Enabled || ls.tileMap == nil {
 		return
 	}
 
-	ls.System.Update()
+	ls.System.Update(delta)
 
 	for light := range ecs.EachComponent[LightSourceComponent]() {
 		if light.Disabled {

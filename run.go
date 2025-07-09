@@ -37,7 +37,9 @@ func Run() {
 		events.Listen(input.EV_KEYBOARD)
 	}
 
-	fpsTime = time.Now()
+	if ShowFPS {
+		fpsLabelUpdateTime = time.Now()
+	}
 
 	for running = true; running; {
 		beginFrame()
@@ -54,7 +56,9 @@ func Run() {
 }
 
 func beginFrame() {
-	frameTime = time.Now()
+	prevFrameTime = currentFrameTime
+	currentFrameTime = time.Now()
+
 	activeScene = currentScene
 	if activeSubScene := currentScene.getActiveSubScene(); activeSubScene != nil {
 		activeScene = activeSubScene
@@ -74,7 +78,7 @@ func update() {
 
 	if !activeScene.IsBlocked() {
 		activeScene.processTimers()
-		activeScene.Update()
+		activeScene.Update(GetFrameDelta())
 	}
 
 	activeScene.ProcessEvents() //process any gameplay events from this frame.
@@ -82,8 +86,8 @@ func update() {
 
 // Updates any UI elements that need updating after the most recent tick in the current active scene.
 func updateUI() {
-	activeScene.UpdateUI()
-	activeScene.Window().Update()
+	activeScene.UpdateUI(GetFrameDelta())
+	activeScene.Window().Update(GetFrameDelta())
 }
 
 // builds the frame and renders using the current platform's renderer.
@@ -92,12 +96,12 @@ func render() {
 	activeScene.Window().Draw(&mainConsole.Canvas, false)
 
 	if ShowFPS {
-		if time.Since(fpsTime) > time.Second {
+		if time.Since(fpsLabelUpdateTime) > time.Second {
 			mainConsole.DrawText(vec.ZERO_COORD, 10000000,
 				fmt.Sprintf("FPS: %4d", tick-fpsTicks), col.Pair{col.ORANGE, col.MAROON},
 				gfx.DRAW_TEXT_LEFT)
 			fpsTicks = tick
-			fpsTime = time.Now()
+			fpsLabelUpdateTime = time.Now()
 		}
 	}
 
@@ -107,7 +111,7 @@ func render() {
 func endFrame() {
 	//framerate limiter, so the cpu doesn't implode
 	if !overclock {
-		time.Sleep(frameTargetDuration - time.Since(frameTime))
+		time.Sleep(frameTargetDuration - time.Since(currentFrameTime))
 	}
 
 	tick++

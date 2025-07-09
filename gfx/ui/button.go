@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
@@ -27,7 +29,7 @@ func (b *Button) Init(size vec.Dims, pos vec.Coord, depth int, text string, on_p
 	b.TreeNode.Init(b)
 
 	b.OnPressCallback = on_press
-	pressPulse := gfx.NewPulseAnimation(b.DrawableArea(), 0, 20, col.Pair{col.WHITE, col.WHITE})
+	pressPulse := gfx.NewPulseAnimation(b.DrawableArea(), 0, time.Second/3, col.Pair{col.WHITE, col.WHITE})
 	pressPulse.OneShot = true
 	b.OnPressAnimation = &pressPulse
 }

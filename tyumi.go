@@ -18,10 +18,12 @@ var (
 var (
 	tick                int           //count of number of ticks since engine was initialized
 	frameTargetDuration time.Duration // target duration of each frame, based on user-set framerate
-	frameTime           time.Time
-	overclock           bool // if true, no framerate limiting is enforced
-	fpsTicks            int
-	fpsTime             time.Time
+	prevFrameTime       time.Time     // time we started processing the previous frame. used to calculate frame deltas.
+	currentFrameTime    time.Time     // time we started processing the current frame
+
+	overclock          bool      // if true, no framerate limiting is enforced
+	fpsTicks           int       // number of ticks when fps labal was last updated
+	fpsLabelUpdateTime time.Time // time that the fps label most recently updated
 )
 
 func init() {
@@ -49,6 +51,10 @@ func SetClearColour(colour col.Colour) {
 // Gets the tick number for the current tick (duh)
 func GetTick() int {
 	return tick
+}
+
+func GetFrameDelta() time.Duration {
+	return currentFrameTime.Sub(prevFrameTime)
 }
 
 func isInitialized() bool {

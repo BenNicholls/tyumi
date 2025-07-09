@@ -2,6 +2,7 @@ package rl
 
 import (
 	"runtime"
+	"time"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
@@ -60,15 +61,15 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 }
 
 // update tilemap-controlled systems
-func (tm *TileMap) Update() {
-	tm.LightSystem.Update()
-	tm.AnimationSystem.Update()
+func (tm *TileMap) Update(delta time.Duration) {
+	tm.LightSystem.Update(delta)
+	tm.AnimationSystem.Update(delta)
 
 	if tm.HasBlockingAnimation {
 		return
 	}
 
-	tm.FOVSystem.Update()
+	tm.FOVSystem.Update(delta)
 }
 
 func (tm *TileMap) handleEvent(e event.Event) (event_handled bool) {

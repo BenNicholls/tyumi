@@ -1,6 +1,8 @@
 package rl
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/event"
 )
 
@@ -31,7 +33,7 @@ func (s *System) Disable() {
 	s.setEnabled(false)
 }
 
-func (s *System) Update() {
+func (s *System) Update(delta time.Duration) {
 	s.Stream.ProcessEvents()
 }
 

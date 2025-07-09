@@ -1,6 +1,8 @@
 package rl
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/vec"
@@ -75,7 +77,7 @@ func (tmv *TileMapView) DrawTilemapObject(object gfx.Drawable, tilemap_position 
 	tmv.Updated = true
 }
 
-func (tmv *TileMapView) Update() {
+func (tmv *TileMapView) Update(delta time.Duration) {
 	if tmv.tilemap != nil && tmv.tilemap.Dirty() {
 		tmv.Updated = true
 	}

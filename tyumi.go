@@ -73,11 +73,6 @@ func isInitialized() bool {
 		return false
 	}
 
-	if eventGenerator == nil {
-		log.Error("Cannot run Tyumi: platform did not provide an event generator.")
-		return false
-	}
-
 	if currentScene == nil {
 		log.Error("Cannot run Tyumi, no initial scene set! Run SetInitialScene() first.")
 		return false

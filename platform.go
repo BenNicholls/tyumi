@@ -16,9 +16,9 @@ type Platform interface {
 	Shutdown()
 
 	ChangeTitle(title string)
+	GenerateEvents()
 
 	GetRenderer() Renderer
-	GetEventGenerator() EventGenerator
 	GetAudioSystem() AudioSystem
 }
 
@@ -40,15 +40,9 @@ func SetPlatform(p Platform) (err error) {
 
 	currentPlatform = p
 	renderer = p.GetRenderer()
-	eventGenerator = p.GetEventGenerator()
 
 	return
 }
-
-// definition of whatever system is grabbing events from the system
-// the expectation is that this function consumes system-level events and converts them into tyumi
-// events and fires them
-type EventGenerator func()
 
 // definition of whatever system is rendering to the screen
 type Renderer interface {

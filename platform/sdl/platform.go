@@ -31,10 +31,6 @@ func (p *Platform) GetRenderer() tyumi.Renderer {
 	return &p.renderer
 }
 
-func (p *Platform) GetEventGenerator() tyumi.EventGenerator {
-	return p.processEvents
-}
-
 func (p *Platform) Shutdown() {
 	p.renderer.Cleanup()
 

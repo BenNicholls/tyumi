@@ -14,10 +14,9 @@ import (
 )
 
 var (
-	running        bool
-	renderer       Renderer
-	eventGenerator EventGenerator
-	events         event.Stream //the main event stream for engine-level events
+	running  bool
+	renderer Renderer
+	events   event.Stream //the main event stream for engine-level events
 )
 
 // This is the gameloop
@@ -43,12 +42,12 @@ func Run() {
 
 	for running = true; running; {
 		beginFrame()
-		eventGenerator()       //take inputs from platform, convert to tyumi events as appropriate, and distribute
-		update()               //step forward the gamestate
-		updateUI()             //update changed UI elements
-		render()               //composite frame together, post process, and render to screen
-		events.ProcessEvents() //processes internal events
-		endFrame()             //do any end of tick cleanup, then sleep to maintain framerate if necessary
+		currentPlatform.GenerateEvents() //take inputs from platform, convert to tyumi events as appropriate, and distribute
+		update()                         //step forward the gamestate
+		updateUI()                       //update changed UI elements
+		render()                         //composite frame together, post process, and render to screen
+		events.ProcessEvents()           //processes internal events
+		endFrame()                       //do any end of tick cleanup, then sleep to maintain framerate if necessary
 	}
 
 	currentPlatform.Shutdown()

@@ -9,7 +9,7 @@ import (
 )
 
 // sdl event processor
-func (p *Platform) processEvents() {
+func (p *Platform) GenerateEvents() {
 	//save mouse position so we can detect if we've moved to a new cell and fire a mouse move event
 	new_mouse_pos := p.mouse_position
 

@@ -96,8 +96,14 @@ func render() {
 
 	if ShowFPS {
 		if time.Since(fpsLabelUpdateTime) > time.Second {
+			fpsLabel := fmt.Sprintf("FPS: %4d", tick-fpsTicks)
+			if !overclock {
+				fpsLabel += fmt.Sprintf(" (%4.1f%%)", 100*(1 - sleepTime.Seconds()))
+				sleepTime = 0
+			}
+
 			mainConsole.DrawText(vec.ZERO_COORD, 10000000,
-				fmt.Sprintf("FPS: %4d", tick-fpsTicks), col.Pair{col.ORANGE, col.MAROON},
+				fpsLabel, col.Pair{col.ORANGE, col.MAROON},
 				gfx.DRAW_TEXT_LEFT)
 			fpsTicks = tick
 			fpsLabelUpdateTime = time.Now()
@@ -110,7 +116,9 @@ func render() {
 func endFrame() {
 	//framerate limiter, so the cpu doesn't implode
 	if !overclock {
-		time.Sleep(frameTargetDuration - time.Since(currentFrameTime))
+		sleep := frameTargetDuration - time.Since(currentFrameTime)
+		sleepTime += sleep
+		time.Sleep(sleep)
 	}
 
 	tick++

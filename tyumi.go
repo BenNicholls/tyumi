@@ -14,16 +14,16 @@ var (
 	ShowFPS          bool
 )
 
-// ticks and fps-control vars
 var (
 	tick                int           //count of number of ticks since engine was initialized
 	frameTargetDuration time.Duration // target duration of each frame, based on user-set framerate
 	prevFrameTime       time.Time     // time we started processing the previous frame. used to calculate frame deltas.
 	currentFrameTime    time.Time     // time we started processing the current frame
 
-	overclock          bool      // if true, no framerate limiting is enforced
-	fpsTicks           int       // number of ticks when fps labal was last updated
-	fpsLabelUpdateTime time.Time // time that the fps label most recently updated
+	overclock          bool          // if true, no framerate limiting is enforced
+	fpsTicks           int           // number of ticks when fps label was last updated
+	sleepTime          time.Duration // amount of time the game has slept since the last fps label update
+	fpsLabelUpdateTime time.Time     // time that the fps label most recently updated
 )
 
 func init() {

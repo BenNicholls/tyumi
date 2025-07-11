@@ -40,6 +40,8 @@ func Run() {
 		fpsLabelUpdateTime = time.Now()
 	}
 
+	currentFrameTime = time.Now() // so we get a non-nonsensical frame delta for the first frame.
+
 	for running = true; running; {
 		beginFrame()
 		currentPlatform.GenerateEvents() //take inputs from platform, convert to tyumi events as appropriate, and distribute
@@ -98,7 +100,7 @@ func render() {
 		if time.Since(fpsLabelUpdateTime) > time.Second {
 			fpsLabel := fmt.Sprintf("FPS: %4d", tick-fpsTicks)
 			if !overclock {
-				fpsLabel += fmt.Sprintf(" (%4.1f%%)", 100*(1 - sleepTime.Seconds()))
+				fpsLabel += fmt.Sprintf(" (%4.1f%%)", 100*(1-sleepTime.Seconds()))
 				sleepTime = 0
 			}
 

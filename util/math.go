@@ -90,6 +90,5 @@ func Lerp[T constraints.Integer | constraints.Float](start, end T, val, steps in
 		return start
 	}
 
-	stepVal := (float64(end)-float64(start)) / float64(steps)
-	return T(float64(start) + stepVal*float64(val))
+	return T((float64(end) - float64(start))*float64(val)/float64(steps)) + start
 }

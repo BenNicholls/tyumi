@@ -16,34 +16,38 @@ type DirtyTracker struct {
 	stride   int
 }
 
-func (ft *DirtyTracker) Init(size vec.Dims) {
-	ft.dirty.Init(size.Area())
-	ft.stride = size.W
+func (dt *DirtyTracker) Init(size vec.Dims) {
+	dt.dirty.Init(size.Area())
+	dt.stride = size.W
 }
 
-func (ft DirtyTracker) IsDirtyAt(pos vec.Coord) bool {
-	return ft.allDirty || ft.dirty.Get(pos.ToIndex(ft.stride))
+func (dt DirtyTracker) IsDirtyAt(pos vec.Coord) bool {
+	return dt.allDirty || dt.dirty.Get(pos.ToIndex(dt.stride))
 }
 
-func (ft DirtyTracker) Dirty() bool {
-	return ft.allDirty || !ft.dirty.IsEmpty()
+func (dt DirtyTracker) Dirty() bool {
+	return dt.allDirty || !dt.dirty.IsEmpty()
 }
 
-func (ft *DirtyTracker) SetDirty(pos vec.Coord) {
-	if ft.allDirty {
+func (dt *DirtyTracker) SetDirty(pos vec.Coord) {
+	if dt.allDirty {
 		return
 	}
 
-	ft.dirty.Set(pos.ToIndex(ft.stride))
+	dt.dirty.Set(pos.ToIndex(dt.stride))
 }
 
-func (ft *DirtyTracker) SetAllDirty() {
-	ft.allDirty = true
+func (dt *DirtyTracker) SetAllDirty() {
+	dt.allDirty = true
 }
 
-func (ft *DirtyTracker) Clean() {
-	ft.dirty.Clear()
-	ft.allDirty = false
+func (dt DirtyTracker) CountDirty() int {
+	return dt.dirty.Count()
+}
+
+func (dt *DirtyTracker) Clean() {
+	dt.dirty.Clear()
+	dt.allDirty = false
 }
 
 // SpecialDirtyTracker was an attempt to make a dirty tracker with minimal memory overhead. It accepts a certain number

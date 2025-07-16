@@ -66,8 +66,18 @@ func (as *AnimationSystem) Update(delta time.Duration) {
 		}
 
 		if animComp.AnimationJustUpdated || animComp.AnimationJustStopped {
-			if pos := ecs.Get[PositionComponent](animComp.GetEntity()); pos != nil {
-				as.tileMap.SetDirty(pos.Coord)
+			// If something has updated or stopped, we check all of the animations to see what parts of the tilemap
+			// to set as dirty. For now we're just doing VisualAnimators, but once support for CanvasAnimators goes in
+			// we'll have to think this through my thoroughly. Ideally this loop shouldn't be necessary at all, we
+			// should have a way of directly extracting the updated/stopped animations from the animation manager on
+			// the component. TODO.
+			for animation := range animComp.EachAnimation() {
+				if _, ok := animation.(gfx.VisualAnimator); ok {
+					if pos := ecs.Get[PositionComponent](animComp.GetEntity()); pos != nil {
+						as.tileMap.SetDirty(pos.Coord)
+					}
+					break
+				}
 			}
 		}
 

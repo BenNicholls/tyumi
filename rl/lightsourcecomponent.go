@@ -54,7 +54,10 @@ func (lsc *LightSourceComponent) Init() {
 			}
 		})
 
-		flicker.Start()
+		if !lsc.Disabled {
+			flicker.Start()
+		}
+
 		AddAnimation(lsc.GetEntity(), &flicker, false)
 		lsc.flickerAnimation = &flicker
 	}

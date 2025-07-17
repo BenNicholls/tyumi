@@ -40,6 +40,7 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {
 	tmv.tilemap = tilemap
 	tmv.Updated = true
+	tmv.tilemap.getMap().currentCameraBounds = vec.Rect{tmv.cameraOffset, tmv.Size()}
 	tmv.Clear()
 }
 
@@ -63,7 +64,10 @@ func (tmv *TileMapView) MoveCamera(dx, dy int) {
 
 func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
 	tmv.cameraOffset = offset
-	tmv.tilemap.getMap().currentCameraBounds = vec.Rect{offset, tmv.Size()}
+	if tmv.tilemap != nil {
+		tmv.tilemap.getMap().currentCameraBounds = vec.Rect{offset, tmv.Size()}
+	}
+
 	tmv.ForceRedraw()
 }
 
@@ -72,13 +76,18 @@ func (tmv TileMapView) GetCameraOffset() vec.Coord {
 }
 
 // DrawTilemapObject draws an object to a position defined in tilemap-space.
+// TODO: look at this more closely. i think this is old code that doesn't make sense any more.
 func (tmv *TileMapView) DrawTilemapObject(object gfx.Drawable, tilemap_position vec.Coord, depth int) {
 	object.Draw(&tmv.Canvas, tilemap_position.Add(tmv.cameraOffset), depth)
 	tmv.Updated = true
 }
 
 func (tmv *TileMapView) Update(delta time.Duration) {
-	if tmv.tilemap != nil && tmv.tilemap.Dirty() {
+	if tmv.tilemap == nil {
+		return
+	}
+
+	if tmv.tilemap.Dirty() {
 		tmv.Updated = true
 	}
 }
@@ -88,10 +97,9 @@ func (tmv *TileMapView) Render() {
 		return
 	}
 
-	offset := tmv.cameraOffset.Scale(-1)
 	tilemap := tmv.tilemap.getMap()
-	for cursor := range vec.EachCoordInIntersection(tmv, tmv.tilemap.Bounds().Translated(offset)) {
-		tileCursor := cursor.Subtract(offset)
+	for cursor := range vec.EachCoordInIntersection(tmv, tmv.tilemap.Bounds().Translated(tmv.cameraOffset.Scale(-1))) {
+		tileCursor := cursor.Add(tmv.cameraOffset)
 		if tmv.IsRedrawing() || tilemap.IsDirtyAt(tileCursor) {
 			tileVisuals := tmv.tilemap.CalcTileVisuals(tileCursor)
 			if tileVisuals.Mode == gfx.DRAW_NONE {

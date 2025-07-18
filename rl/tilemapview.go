@@ -3,6 +3,7 @@ package rl
 import (
 	"time"
 
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/vec"
@@ -17,6 +18,8 @@ type drawableTileMap interface {
 
 type TileMapView struct {
 	ui.Element
+
+	FocusedEntity Entity
 
 	tilemap      drawableTileMap
 	cameraOffset vec.Coord // area we're viewing
@@ -33,8 +36,29 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 	tmv.Element.Init(size, pos, depth)
 	tmv.TreeNode.Init(tmv)
 
-	tmv.tilemap = tilemap
+	tmv.SetEventHandler(tmv.HandleEvent)
+	tmv.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED)
+
+	tmv.SetTileMap(tilemap)
 	tmv.SetCameraOffset(vec.ZERO_COORD)
+}
+
+func (tmv *TileMapView) HandleEvent(e event.Event) (event_handled bool) {
+	// tilemapview events
+	switch e.ID() {
+	case EV_ENTITYMOVED:
+		entity := e.(*EntityMovedEvent).Entity
+		if entity == tmv.FocusedEntity {
+			tmv.CenterOnTileMapCoord(entity.Position())
+			event_handled = true
+		}
+	case EV_ENTITYBEINGDESTROYED:
+		entity := e.(*EntityEvent).Entity
+		if entity == tmv.FocusedEntity {
+			tmv.FocusedEntity = INVALID_ENTITY
+			event_handled = true
+		}
+	}
 }
 
 func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {

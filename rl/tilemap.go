@@ -282,3 +282,15 @@ func (tm TileMap) CopyToTileMap(dst_map *TileMap, offset vec.Coord) {
 		dst_map.SetTile(cursor.Add(offset), Tile(ecs.CopyEntity(tm.GetTile(cursor))))
 	}
 }
+
+func (tm TileMap) OutputToXP(filename string) {
+	var canvas gfx.Canvas
+	canvas.Init(tm.size)
+
+	for i, tile := range tm.tiles {
+		vis := tile.GetTileType().Data().Visuals
+		canvas.DrawVisuals(vec.IndexToCoord(i, tm.size.W), 1, vis)
+	}
+
+	canvas.ExportToXP(filename)
+}

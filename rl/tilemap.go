@@ -252,6 +252,11 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	}
 
 	info := terrain.Data()
+	light := tm.GetLightLevel(pos)
+	if light == 0 {
+		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, info.Visuals.Colours.Back})
+	}
+
 	vis = info.Visuals
 	if tileAnimComp := ecs.Get[AnimationComponent](tile); tileAnimComp != nil {
 		vis = tileAnimComp.ApplyVisualAnimations(vis)
@@ -265,14 +270,10 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 		}
 	}
 
-	light := tm.GetLightLevel(pos)
-	if light > 0 {
-		//TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
-		// inverts the tile colours) should probably do this better somehow....
-		vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(light), 255)
-	} else {
-		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, info.Visuals.Colours.Back})
-	}
+	//Apply lighting!
+	//TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
+	// inverts the tile colours) should probably do this better somehow....
+	vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(light), 255)
 
 	return
 }

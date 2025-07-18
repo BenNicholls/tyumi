@@ -44,8 +44,10 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 	ecs.Add(entity, PositionComponent{Coord: NOT_IN_TILEMAP})
 
 	if sight := entity_type.Data().SightRange; sight > 0 {
-		ecs.Add(entity, FOVComponent{SightRange: sight,
-			TrackEntities: entity_type.Data().TracksEntities})
+		ecs.Add(entity, FOVComponent{
+			SightRange: sight,
+			TrackEntities: entity_type.Data().TracksEntities,
+		})
 	}
 
 	if entity_type.Data().HasMemory {
@@ -61,8 +63,7 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 
 // Destroy removes the entity from the ECS. Before doing so, it emits EV_ENTITYBEINGDESTROYED, an event fired in
 // immediate mode. Systems that need to do some cleanup when an entity is destroyed can listen for this event and
-// respond accordingly. Before being removed, all components on the entity will have their Cleanup() function run, if
-// present.
+// respond accordingly. Before being removed, all components on the entity will have their Cleanup() function run.
 func (e Entity) Destroy() {
 	if !ecs.Alive(e) {
 		log.Debug("Trying to destroy an entity that is already dead!!")
@@ -82,8 +83,12 @@ func (e Entity) GetVisuals() (vis gfx.Visuals) {
 	return
 }
 
+func (e Entity) GetEntityData() EntityData {
+	return ecs.Get[EntityComponent](e).EntityType.Data()
+}
+
 func (e Entity) GetName() string {
-	return ecs.Get[EntityComponent](e).EntityType.Data().Name
+	return e.GetEntityData().Name
 }
 
 func (e Entity) Position() vec.Coord {

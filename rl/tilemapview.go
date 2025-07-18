@@ -5,7 +5,9 @@ import (
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
+	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/gfx/ui"
+	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -19,7 +21,8 @@ type drawableTileMap interface {
 type TileMapView struct {
 	ui.Element
 
-	FocusedEntity Entity
+	FocusedEntity Entity // Entity that the tile map view remains centered on.
+	ViewingEntity Entity // Entity that the tile map is drawn from the perspective of.
 
 	tilemap      drawableTileMap
 	cameraOffset vec.Coord // area we're viewing
@@ -121,11 +124,34 @@ func (tmv *TileMapView) Render() {
 		return
 	}
 
+	var fovComp *FOVComponent
+	var memoryComp *MemoryComponent
+
+	if tmv.ViewingEntity != INVALID_ENTITY {
+		fovComp = ecs.Get[FOVComponent](tmv.ViewingEntity)
+		memoryComp = ecs.Get[MemoryComponent](tmv.ViewingEntity)
+	}
+
 	tilemap := tmv.tilemap.getMap()
 	for cursor := range vec.EachCoordInIntersection(tmv, tmv.tilemap.Bounds().Translated(tmv.cameraOffset.Scale(-1))) {
 		tileCursor := cursor.Add(tmv.cameraOffset)
 		if tmv.IsRedrawing() || tilemap.IsDirtyAt(tileCursor) {
-			tileVisuals := tmv.tilemap.CalcTileVisuals(tileCursor)
+			var tileVisuals gfx.Visuals
+			tileVisuals.Mode = gfx.DRAW_NONE
+
+			if fovComp == nil || fovComp.InFOV(tileCursor) {
+				// if there is no viewing entity, or if the viewing entity does not have an FOV component, we just
+				// assume the camera is omniscient. otherwise we check to see if the tile is in the fov we found.
+				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor)
+			} else if memoryComp != nil {
+				// otherwise we try to pull the visuals from the memory of the viewer, if it has one.
+				if memory, ok := memoryComp.GetMemory(tileCursor); ok {
+					tileVisuals = memory.Visuals
+					tileVisuals.Colours = memoryComp.Colours
+					tileVisuals.Colours = tileVisuals.Colours.Replace(col.NONE, tmv.DefaultColours())
+				}
+			}
+
 			if tileVisuals.Mode == gfx.DRAW_NONE {
 				tmv.DrawVisuals(cursor, 0, tmv.DefaultVisuals())
 			} else {

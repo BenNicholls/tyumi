@@ -1,7 +1,6 @@
 package rl
 
 import (
-	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
@@ -56,28 +55,4 @@ func (ecc *EntityContainerComponent) Add(entity Entity) {
 
 func (ecc *EntityContainerComponent) Remove() {
 	ecc.Entity = Entity(ecs.INVALID_ID)
-}
-
-type MemoryComponent struct {
-	ecs.Component
-
-	memory map[vec.Coord]gfx.Visuals
-}
-
-func (mc *MemoryComponent) Init() {
-	mc.memory = make(map[vec.Coord]gfx.Visuals)
-}
-
-func (mc MemoryComponent) GetVisuals(pos vec.Coord) (vis gfx.Visuals, ok bool) {
-	vis, ok = mc.memory[pos]
-	return
-}
-
-func (mc *MemoryComponent) AddVisuals(pos vec.Coord, vis gfx.Visuals) {
-	if vis.Mode == gfx.DRAW_NONE {
-		delete(mc.memory, pos)
-		return
-	}
-
-	mc.memory[pos] = vis
 }

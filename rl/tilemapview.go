@@ -26,6 +26,8 @@ type TileMapView struct {
 
 	tilemap      drawableTileMap
 	cameraOffset vec.Coord // area we're viewing
+
+	labelLayer ui.Element
 }
 
 func NewTileMapView(size vec.Dims, pos vec.Coord, depth int, tilemap drawableTileMap) (tmv *TileMapView) {
@@ -40,10 +42,20 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 	tmv.TreeNode.Init(tmv)
 
 	tmv.SetEventHandler(tmv.HandleEvent)
-	tmv.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED)
+	tmv.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED, EV_LABELUPDATED)
 
 	tmv.SetTileMap(tilemap)
 	tmv.SetCameraOffset(vec.ZERO_COORD)
+
+	tmv.labelLayer.Init(size, vec.ZERO_COORD, 1)
+	tmv.labelLayer.OnRender = tmv.RenderLabels
+	tmv.labelLayer.SetDefaultVisuals(
+		gfx.Visuals{
+			Mode:    gfx.DRAW_NONE,
+			Colours: tmv.DefaultColours(),
+		})
+
+	tmv.AddChild(&tmv.labelLayer)
 }
 
 func (tmv *TileMapView) HandleEvent(e event.Event) (event_handled bool) {
@@ -62,6 +74,29 @@ func (tmv *TileMapView) HandleEvent(e event.Event) (event_handled bool) {
 			event_handled = true
 		}
 	}
+
+	// Label Layer events, to tell us when to redraw labels!
+	if !tmv.labelLayer.IsRedrawing() {
+		switch e.ID() {
+		case EV_LABELUPDATED:
+			tmv.labelLayer.ForceRedraw()
+			event_handled = true
+		case EV_ENTITYMOVED:
+			entity := e.(*EntityMovedEvent).Entity
+			if ecs.Has[MapLabelComponent](entity) {
+				tmv.labelLayer.ForceRedraw()
+				event_handled = true
+			}
+		case EV_ENTITYBEINGDESTROYED:
+			entity := e.(*EntityEvent).Entity
+			if ecs.Has[MapLabelComponent](entity) {
+				tmv.labelLayer.ForceRedraw()
+				event_handled = true
+			}
+		}
+	}
+
+	return
 }
 
 func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {
@@ -96,6 +131,7 @@ func (tmv *TileMapView) SetCameraOffset(offset vec.Coord) {
 	}
 
 	tmv.ForceRedraw()
+	tmv.labelLayer.ForceRedraw()
 }
 
 func (tmv TileMapView) GetCameraOffset() vec.Coord {
@@ -161,4 +197,23 @@ func (tmv *TileMapView) Render() {
 	}
 
 	tmv.tilemap.Clean()
+}
+
+func (tmv *TileMapView) RenderLabels() {
+	var fovComp *FOVComponent
+	if tmv.ViewingEntity != INVALID_ENTITY {
+		fovComp = ecs.Get[FOVComponent](tmv.ViewingEntity)
+	}
+
+	for label := range ecs.EachComponent[MapLabelComponent]() {
+		if fovComp != nil && !label.ShowOutOfFOV {
+			// cull labels that are out of the viewing entity's FOV if necessary
+			// if pos is NOT_IN_TILEMAP then this is an absolute label and we can draw it regardless.
+			if pos := label.EntityPosition(); pos != NOT_IN_TILEMAP && !fovComp.InFOV(pos) {
+				continue
+			}
+		}
+
+		label.Draw(&tmv.labelLayer.Canvas, tmv.cameraOffset, 0)
+	}
 }

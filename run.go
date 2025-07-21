@@ -9,6 +9,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
 	"github.com/pkg/profile"
 )
@@ -122,6 +123,8 @@ func endFrame() {
 		sleepTime += sleep
 		time.Sleep(sleep)
 	}
+
+	ecs.ProcessQueuedEntities()
 
 	tick++
 }

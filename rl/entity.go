@@ -70,7 +70,7 @@ func (e Entity) Destroy() {
 	}
 
 	event.FireImmediate(EV_ENTITYBEINGDESTROYED, &EntityEvent{Entity: e})
-	ecs.RemoveEntity(e)
+	ecs.QueueDestroyEntity(e)
 }
 
 func (e Entity) GetVisuals() (vis gfx.Visuals) {

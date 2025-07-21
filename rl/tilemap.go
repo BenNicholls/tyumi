@@ -51,7 +51,7 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 
 	runtime.AddCleanup(tm, func(tiles []Tile) {
 		for _, tile := range tiles {
-			ecs.RemoveEntity(tile)
+			ecs.DestroyEntity(tile)
 		}
 
 		tm.LightSystem.Shutdown()
@@ -122,7 +122,7 @@ func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
 	}
 
 	if !pos.IsInside(tm) {
-		ecs.RemoveEntity(tile)
+		ecs.DestroyEntity(tile)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
 		}
 	}
 
-	ecs.RemoveEntity(oldTile)
+	ecs.DestroyEntity(oldTile)
 	tm.tiles[pos.ToIndex(tm.size.W)] = tile
 	tm.SetDirty(pos)
 }

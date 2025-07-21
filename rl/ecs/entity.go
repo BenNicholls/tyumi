@@ -2,11 +2,13 @@ package ecs
 
 import (
 	"github.com/bennicholls/tyumi/log"
+	"github.com/bennicholls/tyumi/util"
 )
 
 var entities []Entity
 var freeIndices chan uint32
 var generations []uint8
+var entitiesToDestroy util.Set[Entity]
 
 const maxFreeIDs int = 128
 
@@ -80,8 +82,29 @@ func CopyEntity[ET ~uint32](entity ET) (copy Entity) {
 	return
 }
 
-// RemoveEntity removes an entity from the ECS. All of its components will be removed and it will be set as dead.
-func RemoveEntity[ET ~uint32](entity ET) {
+// Queues an entity to be destroyed at the end of the frame. This is a safe operation, compared to destroying an entity
+// immediately while other systems may be operating upon it during the game.
+func QueueDestroyEntity[ET ~uint32](entity ET) {
+	if Debug && !Alive(entity) {
+		log.Debug("ECS: Destroying dead/invalid entity??")
+		return
+	}
+
+	entitiesToDestroy.Add(Entity(entity))
+}
+
+// Processes the entities that have been queued to be destroyed. This will be run once per frame at a safe time by Tyumi's
+// main game loop, you do not need to call it manually.
+func ProcessQueuedEntities() {
+	for entity := range entitiesToDestroy.EachElement() {
+		DestroyEntity(entity)
+	}
+
+	entitiesToDestroy.RemoveAll()
+}
+
+// DestroyEntity removes an entity from the ECS. All of its components will be removed and it will be set as dead.
+func DestroyEntity[ET ~uint32](entity ET) {
 	if Debug && !Alive(entity) {
 		log.Debug("ECS: Removing dead/invalid entity??")
 		return

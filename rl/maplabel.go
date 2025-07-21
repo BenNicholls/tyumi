@@ -4,6 +4,7 @@ import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/vec"
 )
@@ -47,11 +48,19 @@ func (mlc *MapLabelComponent) Cleanup() {
 }
 
 func (mlc *MapLabelComponent) SetText(txt string) {
+	if mlc.Text == txt {
+		return
+	}
+
 	mlc.Text = txt
 	event.Fire(EV_LABELUPDATED)
 }
 
 func (mlc *MapLabelComponent) SetColours(colours col.Pair) {
+	if mlc.Colours == colours {
+		return
+	}
+
 	mlc.Colours = colours
 	event.Fire(EV_LABELUPDATED)
 }
@@ -118,4 +127,63 @@ func (mlc *MapLabelComponent) Draw(canvas *gfx.Canvas, offset vec.Coord, depth i
 
 	colours := mlc.Colours.Replace(col.NONE, canvas.DefaultColours())
 	canvas.DrawHalfWidthText(pos, depth, mlc.Text, colours, gfx.DRAW_TEXT_LEFT)
+}
+
+type MapLabelSystem struct {
+	System
+
+	labelLayer *ui.Element
+}
+
+func (mls *MapLabelSystem) Init(labelLayer *ui.Element) {
+	mls.labelLayer = labelLayer
+
+	mls.SetEventHandler(mls.HandleEvent)
+	mls.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED, EV_LABELUPDATED)
+}
+
+func (mls *MapLabelSystem) HandleEvent(e event.Event) (event_handled bool) {
+	if !mls.labelLayer.IsRedrawing() {
+		switch e.ID() {
+		case EV_LABELUPDATED:
+			mls.labelLayer.ForceRedraw()
+			event_handled = true
+		case EV_ENTITYMOVED:
+			entity := e.(*EntityMovedEvent).Entity
+			if ecs.Has[MapLabelComponent](entity) {
+				mls.labelLayer.ForceRedraw()
+				event_handled = true
+			} else {
+				for label := range ecs.EachComponent[MapLabelComponent]() {
+					if label.Parent == entity {
+						mls.labelLayer.ForceRedraw()
+						event_handled = true
+						break
+					}
+				}
+			}
+		}
+	}
+
+	switch e.ID() {
+	case EV_ENTITYBEINGDESTROYED:
+		entity := e.(*EntityEvent).Entity
+		if !mls.labelLayer.IsRedrawing() {
+			if ecs.Has[MapLabelComponent](entity) {
+				mls.labelLayer.ForceRedraw()
+				event_handled = true
+			}
+		}
+
+		// if an entity is being destroyed, we need to check all labels to see if they are parented to it. if so, we
+		// destroy the whole entity for the label (we're assuming the entity is entirely just for the label)
+		// THINK: are there situations where this assumption is too much??
+		for label := range ecs.EachComponent[MapLabelComponent]() {
+			if label.Parent == entity {
+				ecs.QueueDestroyEntity(label.GetEntity())
+			}
+		}
+	}
+
+	return
 }

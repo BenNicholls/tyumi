@@ -20,6 +20,7 @@ type drawableTileMap interface {
 
 type TileMapView struct {
 	ui.Element
+	MapLabelSystem
 
 	FocusedEntity Entity // Entity that the tile map view remains centered on.
 	ViewingEntity Entity // Entity that the tile map is drawn from the perspective of.
@@ -42,7 +43,7 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 	tmv.TreeNode.Init(tmv)
 
 	tmv.SetEventHandler(tmv.HandleEvent)
-	tmv.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED, EV_LABELUPDATED)
+	tmv.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED)
 
 	tmv.SetTileMap(tilemap)
 	tmv.SetCameraOffset(vec.ZERO_COORD)
@@ -54,6 +55,8 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 			Mode:    gfx.DRAW_NONE,
 			Colours: tmv.DefaultColours(),
 		})
+
+	tmv.MapLabelSystem.Init(&tmv.labelLayer)
 
 	tmv.AddChild(&tmv.labelLayer)
 }
@@ -72,27 +75,6 @@ func (tmv *TileMapView) HandleEvent(e event.Event) (event_handled bool) {
 		if entity == tmv.FocusedEntity {
 			tmv.FocusedEntity = INVALID_ENTITY
 			event_handled = true
-		}
-	}
-
-	// Label Layer events, to tell us when to redraw labels!
-	if !tmv.labelLayer.IsRedrawing() {
-		switch e.ID() {
-		case EV_LABELUPDATED:
-			tmv.labelLayer.ForceRedraw()
-			event_handled = true
-		case EV_ENTITYMOVED:
-			entity := e.(*EntityMovedEvent).Entity
-			if ecs.Has[MapLabelComponent](entity) {
-				tmv.labelLayer.ForceRedraw()
-				event_handled = true
-			}
-		case EV_ENTITYBEINGDESTROYED:
-			entity := e.(*EntityEvent).Entity
-			if ecs.Has[MapLabelComponent](entity) {
-				tmv.labelLayer.ForceRedraw()
-				event_handled = true
-			}
 		}
 	}
 
@@ -146,6 +128,8 @@ func (tmv *TileMapView) DrawTilemapObject(object gfx.Drawable, tilemap_position 
 }
 
 func (tmv *TileMapView) Update(delta time.Duration) {
+	tmv.MapLabelSystem.Update(delta)
+
 	if tmv.tilemap == nil {
 		return
 	}

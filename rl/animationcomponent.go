@@ -87,6 +87,10 @@ func (as *AnimationSystem) Update(delta time.Duration) {
 	}
 
 	for _, entity := range emptyAnimCompEntities {
+		if !ecs.Alive(entity) {
+			continue
+		}
+
 		ecs.Remove[AnimationComponent](entity)
 	}
 }

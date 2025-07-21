@@ -47,6 +47,9 @@ func NewTitleTextbox(size vec.Dims, pos vec.Coord, depth int, text string) (tb *
 	return
 }
 
+// Creates a textbox. You can set the width or height to FIT_TEXT to have the textbox compute the dimensions for you. If
+// width is set to FIT_TEXT, the box will ensure the entire text fits on 1 line (aka height will be 1). Setting height =
+// FIT_TEXT will wrap the text at the provided width, and the textbox will have height = however many lines are required.
 func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, align Alignment) {
 	tb.text = text
 	tb.alignment = align
@@ -66,6 +69,7 @@ func (tb *Textbox) Init(size vec.Dims, pos vec.Coord, depth int, text string, al
 	tb.wrapText()
 }
 
+// Creates a textbox, defaulting to centered text and enabling the default border.
 func (tb *Textbox) InitTitle(size vec.Dims, pos vec.Coord, depth int, text string) {
 	tb.Init(size, pos, depth, text, ALIGN_CENTER)
 	tb.EnableBorder()

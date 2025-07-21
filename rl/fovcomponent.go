@@ -157,7 +157,8 @@ func (fs *FOVSystem) Update(delta time.Duration) {
 		fs.computeFOV(fov)
 
 		//TODO: this is so the tilemap updates if visibility for the player changes. this seems like a weird place
-		// and way to do this.
+		// and way to do this, and actually this only works if the player is the viewing entity, which is not always
+		// the case anymore!
 		if Entity(fov.GetEntity()).IsPlayer() {
 			fs.tileMap.SetAllDirty()
 		}

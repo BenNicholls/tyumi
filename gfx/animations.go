@@ -206,7 +206,7 @@ func (fa *FadeAnimation) Render(c *Canvas) {
 		fromColours := fa.FromColours.Replace(COL_DEFAULT, c.DefaultColours())
 		fromColours = fromColours.Replace(col.NONE, dst_cell.Colours)
 
-		c.DrawColours(cursor, fa.Depth, fromColours.Lerp(toColours, int(fa.GetTicks()), int(fa.Duration-1)))
+		c.DrawColours(cursor, fa.Depth, fromColours.Lerp(toColours, int(fa.GetTicks()), int(fa.Duration)))
 	}
 
 	fa.Updated = false

@@ -45,7 +45,7 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 
 	if sight := entity_type.Data().SightRange; sight > 0 {
 		ecs.Add(entity, FOVComponent{
-			SightRange: sight,
+			SightRange:    sight,
 			TrackEntities: entity_type.Data().TracksEntities,
 		})
 	}

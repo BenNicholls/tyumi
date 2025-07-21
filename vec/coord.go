@@ -84,6 +84,13 @@ func (c1 Coord) ManhattanDistanceTo(c2 Coord) int {
 	return util.Abs(c2.X-c1.X) + util.Abs(c2.Y-c1.Y)
 }
 
+func (c Coord) Lerp(to Coord, val, steps int) Coord {
+	return Coord{
+		X: util.Lerp(c.X, to.X, val, steps),
+		Y: util.Lerp(c.Y, to.Y, val, steps),
+	}
+}
+
 // IndexToCoord returns a coord representing an index from a 1D array representing a 2D grid with the given stride
 func IndexToCoord(index, stride int) Coord {
 	return Coord{index % stride, index / stride}

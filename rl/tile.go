@@ -3,6 +3,7 @@ package rl
 import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/rl/ecs"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -28,7 +29,7 @@ func RegisterTileType(tileData TileData) TileType {
 	return tileDataCache.RegisterDataType(tileData)
 }
 
-var tileDataCache dataCache[TileData, TileType]
+var tileDataCache util.DataCache[TileData, TileType]
 var TILE_NONE TileType
 
 func init() {

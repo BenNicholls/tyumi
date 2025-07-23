@@ -5,6 +5,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/rl/ecs"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -24,7 +25,7 @@ type EntityData struct {
 	HasMemory      bool
 }
 
-var entityDataCache dataCache[EntityData, EntityType]
+var entityDataCache util.DataCache[EntityData, EntityType]
 
 func RegisterEntityType(entity_data EntityData) EntityType {
 	return entityDataCache.RegisterDataType(entity_data)

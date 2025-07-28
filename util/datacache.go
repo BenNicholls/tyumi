@@ -49,6 +49,15 @@ func (dc DataCache[D, DT]) GetData(data_type DT) (data D) {
 	return dc.cache[data_type]
 }
 
+func (dc *DataCache[D, DT]) ReplaceData(data_type DT, replacement D) {
+	if !dc.validType(data_type) {
+		log.Error("DataType not registered.")
+		return
+	}
+
+	dc.cache[data_type] = replacement
+}
+
 func (dc *DataCache[D, DT]) RegisterDataType(data D) DT {
 	if dc.cache == nil {
 		dc.cache = make([]D, 0)

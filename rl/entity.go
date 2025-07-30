@@ -11,18 +11,16 @@ import (
 
 type EntityType uint32
 
-func (et EntityType) Data() EntityData {
+func (et EntityType) GetData() EntityData {
 	return entityDataCache.GetData(et)
 }
 
 type EntityData struct {
 	Name           string // Generic name of the entity.
 	Desc           string // Generic description for the entity
+	HP             int    // HP this entity starts with. If zero, entity is undamagable.
 	Visuals        gfx.Visuals
-	HP             int // HP this entity starts with. If zero, entity is undamagable.
-	SightRange     uint8
-	TracksEntities bool
-	HasMemory      bool
+	CreateFunction func(e Entity) // function run on the created entity. put custom config steps here!
 }
 
 var entityDataCache util.DataCache[EntityData, EntityType]
@@ -44,19 +42,14 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 	ecs.Add(entity, EntityComponent{EntityType: entity_type})
 	ecs.Add(entity, PositionComponent{Coord: NOT_IN_TILEMAP})
 
-	if sight := entity_type.Data().SightRange; sight > 0 {
-		ecs.Add(entity, FOVComponent{
-			SightRange:    sight,
-			TrackEntities: entity_type.Data().TracksEntities,
-		})
-	}
+	data := entity_type.GetData()
 
-	if entity_type.Data().HasMemory {
-		ecs.Add[MemoryComponent](entity)
-	}
-
-	if hp := entity_type.Data().HP; hp > 0 {
+	if hp := data.HP; hp > 0 {
 		ecs.Add(entity, HealthComponent{HP: NewBasicStat(hp)})
+	}
+
+	if data.CreateFunction != nil {
+		data.CreateFunction(entity)
 	}
 
 	return
@@ -75,7 +68,7 @@ func (e Entity) Destroy() {
 }
 
 func (e Entity) GetVisuals() (vis gfx.Visuals) {
-	vis = ecs.Get[EntityComponent](e).EntityType.Data().Visuals
+	vis = ecs.Get[EntityComponent](e).EntityType.GetData().Visuals
 
 	if animComp := ecs.Get[AnimationComponent](e); animComp != nil {
 		vis = animComp.ApplyVisualAnimations(vis)
@@ -85,7 +78,7 @@ func (e Entity) GetVisuals() (vis gfx.Visuals) {
 }
 
 func (e Entity) GetEntityData() EntityData {
-	return ecs.Get[EntityComponent](e).EntityType.Data()
+	return ecs.Get[EntityComponent](e).EntityType.GetData()
 }
 
 func (e Entity) GetName() string {

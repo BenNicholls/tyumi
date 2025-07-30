@@ -61,6 +61,10 @@ func (t Tile) SetTileType(tile_type TileType) {
 	}
 }
 
+func (t Tile) Position() vec.Coord {
+	return ecs.Get[PositionComponent](t).Coord
+}
+
 func (t Tile) IsPassable() bool {
 	return t.GetTileType().Data().Passable && t.GetEntity() == Entity(ecs.INVALID_ID)
 }

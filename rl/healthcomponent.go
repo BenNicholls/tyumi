@@ -26,7 +26,11 @@ func (hc *HealthComponent) ChangeHealth(delta int) {
 	if hc.HP.Get() != oldHealth {
 		e := Entity(hc.GetEntity())
 		event.Fire(EV_ENTITYHEALTHCHANGED, &EntityHealthChangedEvent{
-			Entity: e, OldHP: oldHealth, NewHP: hc.HP.Get()})
+			Entity: e,
+			OldHP: oldHealth,
+			NewHP: hc.HP.Get(),
+		})
+
 		if hc.HP.Get() == 0 {
 			event.Fire(EV_ENTITYDIED, &EntityEvent{Entity: e})
 		}

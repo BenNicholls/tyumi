@@ -271,9 +271,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	}
 
 	//Apply lighting!
-	//TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
-	// inverts the tile colours) should probably do this better somehow....
-	vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(light), 255)
+	vis = tm.LightTileVisuals(vis, pos)
 
 	return
 }

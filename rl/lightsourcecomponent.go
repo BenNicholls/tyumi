@@ -6,6 +6,7 @@ import (
 
 	"github.com/bennicholls/tyumi/anim"
 	"github.com/bennicholls/tyumi/event"
+	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/rl/ecs"
 	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
@@ -276,6 +277,20 @@ func (ls *LightSystem) Update(delta time.Duration) {
 			ls.applyLight(light)
 		}
 	}
+}
+
+// LightTileVisuals applies the light level at the position to the computed tile visuals.
+func (ls *LightSystem) LightTileVisuals(vis gfx.Visuals, pos vec.Coord) (lit_vis gfx.Visuals) {
+	if !ls.Enabled {
+		return vis
+	}
+
+	// TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
+	// inverts the tile colours) should probably do this better somehow....
+	lit_vis = vis
+	lit_vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(ls.GetLightLevel(pos)), 255)
+
+	return
 }
 
 func (ls *LightSystem) removeAppliedLight(light *LightSourceComponent) {

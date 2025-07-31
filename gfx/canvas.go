@@ -2,6 +2,7 @@ package gfx
 
 import (
 	"fmt"
+	"iter"
 
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
@@ -124,7 +125,7 @@ func (c *Canvas) GetCell(pos vec.Coord) (cell Visuals) {
 	return
 }
 
-// Just a quicker internal version of GetCell that skils the bounds check. Since we know what we're doing... don't we?
+// Just a quicker internal version of GetCell that skips the bounds check. Since we know what we're doing... don't we?
 func (c *Canvas) getCell(pos vec.Coord) Visuals {
 	return c.cells[c.cellIndex(pos)]
 }
@@ -265,11 +266,11 @@ func (c *Canvas) FlattenTo(depth int, areas ...vec.Rect) {
 }
 
 func (c *Canvas) IsDirtyAt(pos vec.Coord) bool {
-	return c.DirtyTracker.IsDirtyAt(pos.Subtract(c.offset))
+	return c.DirtyTracker.isDirtyAtIndex(c.cellIndex(pos))
 }
 
 func (c *Canvas) SetDirty(pos vec.Coord) {
-	c.DirtyTracker.SetDirty(pos.Subtract(c.offset))
+	c.DirtyTracker.setDirtyAtIndex(c.cellIndex(pos))
 }
 
 // IsTransparent returns true if any cells in the canvas are transparent.
@@ -300,4 +301,24 @@ func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 	}
 
 	return
+}
+
+// An iterator that iterates over each cell in the canvas. The 2nd return value is the coordinate of the
+// cell in the local canvas space.
+func (c *Canvas) EachCell() iter.Seq2[Visuals, vec.Coord] {
+	return func(yield func(Visuals, vec.Coord) bool) {
+		if c.offset == vec.ZERO_COORD {
+			for i, cell := range c.cells {
+				if !yield(cell, vec.IndexToCoord(i, c.size.W)) {
+					return
+				}
+			}
+		} else {
+			for i, cell := range c.cells {
+				if !yield(cell, vec.IndexToCoord(i, c.size.W).Add(c.offset)) {
+					return
+				}
+			}
+		}
+	}
 }

@@ -253,9 +253,8 @@ func (r *Renderer) Render() {
 	}
 
 	//collect rects and coords, sorted by colour
-	for cursor := range r.console.Bounds().EachCoord() {
-		cell := r.console.GetCell(cursor)
-		if (!r.console.IsDirtyAt(cursor) && !r.forceRedraw) || cell.Mode == gfx.DRAW_NONE {
+	for cell, cursor := range r.console.EachCell() {
+		if cell.Mode == gfx.DRAW_NONE || (!r.forceRedraw && !r.console.IsDirtyAt(cursor)) {
 			continue
 		}
 

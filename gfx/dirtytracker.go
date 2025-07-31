@@ -22,7 +22,11 @@ func (dt *DirtyTracker) Init(size vec.Dims) {
 }
 
 func (dt DirtyTracker) IsDirtyAt(pos vec.Coord) bool {
-	return dt.allDirty || dt.dirty.Get(pos.ToIndex(dt.stride))
+	return dt.isDirtyAtIndex(pos.ToIndex(dt.stride))
+}
+
+func (dt DirtyTracker) isDirtyAtIndex(idx int) bool {
+	return dt.allDirty || dt.dirty.Get(idx)
 }
 
 func (dt DirtyTracker) Dirty() bool {
@@ -35,6 +39,14 @@ func (dt *DirtyTracker) SetDirty(pos vec.Coord) {
 	}
 
 	dt.dirty.Set(pos.ToIndex(dt.stride))
+}
+
+func (dt *DirtyTracker) setDirtyAtIndex(idx int) {
+	if dt.allDirty {
+		return
+	}
+
+	dt.dirty.Set(idx)
 }
 
 func (dt *DirtyTracker) SetAllDirty() {

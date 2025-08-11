@@ -83,12 +83,10 @@ func (tm *TileMap) handleEvent(e event.Event) (event_handled bool) {
 			return
 		}
 
-		// if it has a light source, remove light
 		if light := ecs.Get[LightSourceComponent](entity); light != nil {
 			tm.removeAppliedLight(light)
 		}
 
-		// remove entity from tilemap
 		tm.RemoveEntityAt(pos)
 
 	default:

@@ -99,10 +99,10 @@ func (e Entity) MoveTo(pos vec.Coord) {
 		return
 	}
 
-	if position.Coord != NOT_IN_TILEMAP {
-		event.Fire(EV_ENTITYMOVED, &EntityMovedEvent{Entity: e, From: position.Coord, To: pos})
-	}
+	oldPos := position.Coord
 	position.Coord = pos
+
+	event.Fire(EV_ENTITYMOVED, &EntityMovedEvent{Entity: e, From: oldPos, To: pos})
 }
 
 func (e Entity) IsInTilemap() bool {

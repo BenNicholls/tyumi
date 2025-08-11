@@ -90,10 +90,10 @@ type FOVSystem struct {
 func (fs *FOVSystem) Init(tm *TileMap) {
 	fs.tileMap = tm
 	fs.Listen(EV_ENTITYMOVED, EV_TILECHANGEDVISIBILITY)
-	fs.SetEventHandler(fs.handleEvents)
+	fs.SetImmediateEventHandler(fs.immediateHandleEvents)
 }
 
-func (fs *FOVSystem) handleEvents(e event.Event) (event_handled bool) {
+func (fs *FOVSystem) immediateHandleEvents(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_ENTITYMOVED:
 		moveEvent := e.(*EntityMovedEvent)

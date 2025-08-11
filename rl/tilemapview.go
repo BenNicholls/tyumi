@@ -42,7 +42,7 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 	tmv.Element.Init(size, pos, depth)
 	tmv.TreeNode.Init(tmv)
 
-	tmv.SetEventHandler(tmv.HandleEvent)
+	tmv.SetImmediateEventHandler(tmv.ImmediateHandleEvent)
 	tmv.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED)
 
 	tmv.SetTileMap(tilemap)
@@ -61,13 +61,13 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 	tmv.AddChild(&tmv.labelLayer)
 }
 
-func (tmv *TileMapView) HandleEvent(e event.Event) (event_handled bool) {
+func (tmv *TileMapView) ImmediateHandleEvent(e event.Event) (event_handled bool) {
 	// tilemapview events
 	switch e.ID() {
 	case EV_ENTITYMOVED:
-		entity := e.(*EntityMovedEvent).Entity
-		if entity == tmv.FocusedEntity {
-			tmv.CenterOnTileMapCoord(entity.Position())
+		moveEvent := e.(*EntityMovedEvent)
+		if moveEvent.Entity == tmv.FocusedEntity {
+			tmv.CenterOnTileMapCoord(moveEvent.To)
 			event_handled = true
 		}
 	case EV_ENTITYBEINGDESTROYED:

@@ -1,11 +1,14 @@
 package rl
 
 import (
+	"time"
+
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/rl/ecs"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -132,36 +135,26 @@ func (mlc *MapLabelComponent) Draw(canvas *gfx.Canvas, offset vec.Coord, depth i
 type MapLabelSystem struct {
 	System
 
-	labelLayer *ui.Element
+	labelLayer    *ui.Element
+	movedEntities util.Set[Entity]
 }
 
 func (mls *MapLabelSystem) Init(labelLayer *ui.Element) {
 	mls.labelLayer = labelLayer
 
-	mls.SetEventHandler(mls.HandleEvent)
+	mls.SetImmediateEventHandler(mls.ImmediateHandleEvent)
 	mls.Listen(EV_ENTITYMOVED, EV_ENTITYBEINGDESTROYED, EV_LABELUPDATED)
 }
 
-func (mls *MapLabelSystem) HandleEvent(e event.Event) (event_handled bool) {
+func (mls *MapLabelSystem) ImmediateHandleEvent(e event.Event) (event_handled bool) {
 	if !mls.labelLayer.IsRedrawing() {
 		switch e.ID() {
 		case EV_LABELUPDATED:
 			mls.labelLayer.ForceRedraw()
 			event_handled = true
 		case EV_ENTITYMOVED:
-			entity := e.(*EntityMovedEvent).Entity
-			if ecs.Has[MapLabelComponent](entity) {
-				mls.labelLayer.ForceRedraw()
-				event_handled = true
-			} else {
-				for label := range ecs.EachComponent[MapLabelComponent]() {
-					if label.Parent == entity {
-						mls.labelLayer.ForceRedraw()
-						event_handled = true
-						break
-					}
-				}
-			}
+			mls.movedEntities.Add(e.(*EntityMovedEvent).Entity)
+			event_handled = true
 		}
 	}
 
@@ -171,7 +164,6 @@ func (mls *MapLabelSystem) HandleEvent(e event.Event) (event_handled bool) {
 		if !mls.labelLayer.IsRedrawing() {
 			if ecs.Has[MapLabelComponent](entity) {
 				mls.labelLayer.ForceRedraw()
-				event_handled = true
 			}
 		}
 
@@ -183,7 +175,29 @@ func (mls *MapLabelSystem) HandleEvent(e event.Event) (event_handled bool) {
 				ecs.QueueDestroyEntity(label.GetEntity())
 			}
 		}
+		event_handled = true
 	}
 
 	return
+}
+
+func (mls *MapLabelSystem) Update(delta time.Duration) {
+	defer mls.movedEntities.RemoveAll()
+	if mls.labelLayer.IsRedrawing() {
+		return
+	}
+	
+	for entity := range mls.movedEntities.EachElement() {
+		if ecs.Has[MapLabelComponent](entity) {
+			mls.labelLayer.ForceRedraw()
+			break
+		} else {
+			for label := range ecs.EachComponent[MapLabelComponent]() {
+				if label.Parent == entity {
+					mls.labelLayer.ForceRedraw()
+					break
+				}
+			}
+		}
+	}
 }

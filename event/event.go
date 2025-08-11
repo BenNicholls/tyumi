@@ -122,6 +122,13 @@ func callHandlersImmediately(e Event) {
 			continue
 		}
 
+		if immediateHandler := stream.Value().immediateHandler; immediateHandler != nil {
+			handled := immediateHandler(e)
+			if handled {
+				continue
+			}
+		}
+
 		// THINK: is this check necessary? how would a stream with a nil handler be an active listener???
 		if handler := stream.Value().handler; handler != nil {
 			handler(e)

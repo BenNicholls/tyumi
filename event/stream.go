@@ -7,6 +7,8 @@ import (
 	"github.com/bennicholls/tyumi/util"
 )
 
+const defaultStreamSize = 100
+
 // A Handler is called when processing events in an eventstream. It takes 1 argument e: the event being processed.
 // It is expected to return true if the Handler successfully handles the event.
 type Handler func(e Event) (handled bool)
@@ -35,12 +37,13 @@ const (
 // Stream is a queue of events. Use Listen() to have the stream collect events of a certain type, and then ProcessEvents()
 // to call the assigned event handler on each accumulated event.
 type Stream struct {
-	stream       []Event
-	handler      Handler           //event handler called by Process()
-	listenIDs    util.Set[EventID] // ids that are currently being listened for
-	disabled     bool              // whether the stream accepts events
-	suppression  SuppressionMode   // type of duplicate event suppression
-	eventIndices map[EventID]int   // indices of events with specific IDs, used while suppressing duplicate events
+	stream           []Event
+	handler          Handler // event handler called by Process()
+	immediateHandler Handler // event handler called when adding. if it doesn't handle the event, it is added to the stream for later processing. OPTIONAL.
+	listenIDs        util.Set[EventID] // ids that are currently being listened for
+	disabled         bool              // whether the stream accepts events
+	suppression      SuppressionMode   // type of duplicate event suppression
+	eventIndices     map[EventID]int   // indices of events with specific IDs, used while suppressing duplicate events
 }
 
 // Initializes a stream. Size is the maximum number of events that can be accumulated before processing. Handler is the
@@ -61,10 +64,16 @@ func NewStream(size int, handler Handler) (s Stream) {
 // events.
 func (s *Stream) SetEventHandler(handler Handler) {
 	if s.stream == nil {
-		s.Init(100, handler)
+		s.Init(defaultStreamSize, handler)
 	} else {
 		s.handler = handler
 	}
+}
+
+// Sets the event handler function for handling events immediately, i.e. when they are emitting. This is in contrast to
+// storing them in the stream and handling them later when stream.ProcessEvents() is called.
+func (s *Stream) SetImmediateEventHandler(immediate_handler Handler) {
+	s.immediateHandler = immediate_handler
 }
 
 // Sets the maximum number of events that the stream can hold before needing to be processed. If this is not called then
@@ -182,15 +191,25 @@ func (s *Stream) ProcessEvents() {
 }
 
 // Adds an event to the stream, unless the stream is full. If stream does not have an event handler, we assume
-// that it can't handle events so we don't add anything.
+// that it can't handle events so we don't add anything. If the stream has an ImmediateEventHandler, it is called
+// for the event. If the immediate handler handles the event we also do not add the event to the stream.
 func (s *Stream) add(e Event) {
+	if s.immediateHandler != nil {
+		handled := s.immediateHandler(e)
+		if handled {
+			e.setHandled()
+			return
+		}
+	}
+
 	if s.handler == nil {
 		return
 	}
 
 	if len(s.stream) == cap(s.stream) {
-		log.Warning(`Event stream full! Event not added. Either this means the stream is too small,
-						or you've forgotten to close a stream that is no longer being processed.`)
+		s.stream = slices.Grow(s.stream, int(float32(len(s.stream))*1.5))
+
+		log.Warning("Event stream full! Either this means the stream is too small, or you've forgotten to close a stream that is no longer being processed. Stream has been resized, new size is: ", cap(s.stream))
 		return
 	}
 

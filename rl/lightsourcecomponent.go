@@ -196,7 +196,7 @@ func (ls *LightSystem) Init(tm *TileMap) {
 	area := ls.tileMap.Bounds().Area()
 	ls.lightmap = make([]uint16, area, area)
 	ls.Listen(EV_ENTITYMOVED, EV_TILECHANGEDVISIBILITY)
-	ls.SetEventHandler(ls.handleEvents)
+	ls.SetImmediateEventHandler(ls.immediateHandleEvent)
 	ls.Enable()
 }
 
@@ -220,14 +220,10 @@ func (ls LightSystem) GetLightLevel(pos vec.Coord) uint8 {
 	return uint8(min(255, uint16(ls.globalLight)+ls.lightmap[pos.ToIndex(ls.tileMap.size.W)]))
 }
 
-func (ls *LightSystem) handleEvents(e event.Event) (event_handled bool) {
+func (ls *LightSystem) immediateHandleEvent(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_ENTITYMOVED:
 		moveEvent := e.(*EntityMovedEvent)
-		if !ecs.Alive(moveEvent.Entity) {
-			return
-		}
-
 		if light := ecs.Get[LightSourceComponent](moveEvent.Entity); light != nil {
 			light.AreaDirty = true
 		}

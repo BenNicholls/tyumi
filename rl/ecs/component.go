@@ -71,6 +71,20 @@ func Get[T componentType, ET ~uint32](entity ET) (component *T) {
 	return getComponentCache[T]().getComponent(Entity(entity))
 }
 
+// GetOrAdd retrieves the component of type T from an entity. If the entity does not have the requested component, a new
+// component T is added and returned. The component is default initialized.
+// WARNING: do not hold these component pointers! Do not store them, do not save them for later. The ECS shuffles things
+// around as necessary to keep arrays packed nicely for iteration so at any time these pointers can become invalid.
+func GetOrAdd[T componentType, ET ~uint32](entity ET) (component *T) {
+	component = Get[T](entity)
+	if component == nil {
+		Add[T](entity)
+		component = Get[T](entity)
+	}
+
+	return
+}
+
 // Has returns true if the entity contains the requested component.
 func Has[T componentType, ET ~uint32](entity ET) bool {
 	if Debug && !Alive(entity) {

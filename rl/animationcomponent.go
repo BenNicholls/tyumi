@@ -13,12 +13,8 @@ func init() {
 }
 
 func AddAnimation[ET ~uint32](entity ET, a anim.Animator, oneshot bool) {
-	animComp := ecs.Get[AnimationComponent](entity)
-	if animComp == nil {
-		ecs.Add[AnimationComponent](entity)
-		animComp = ecs.Get[AnimationComponent](entity)
-	}
-
+	animComp := ecs.GetOrAdd[AnimationComponent](entity)
+	
 	if oneshot {
 		animComp.AddOneShotAnimation(a)
 	} else {

@@ -54,7 +54,7 @@ func GetTick() int {
 }
 
 func GetFrameDelta() time.Duration {
-	return currentFrameTime.Sub(prevFrameTime)
+	return min(currentFrameTime.Sub(prevFrameTime), time.Second)
 }
 
 func isInitialized() bool {

@@ -218,9 +218,7 @@ func (os *OrderedSet[E]) Remove(elems ...E) {
 	os.Set.Remove(elems...)
 
 	for _, elem := range elems {
-		os.order = slices.DeleteFunc(os.order, func(e E) bool {
-			return e == elem
-		})
+		os.order = DeleteElement(os.order, elem)
 	}
 }
 
@@ -250,9 +248,7 @@ func (os *OrderedSet[E]) RemoveSet(s Set[E]) {
 	os.Set.RemoveSet(s)
 
 	for elem := range s.elements {
-		os.order = slices.DeleteFunc(os.order, func(e E) bool {
-			return e == elem
-		})
+		os.order = DeleteElement(os.order, elem)
 	}
 }
 

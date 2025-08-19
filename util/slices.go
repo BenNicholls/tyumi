@@ -3,6 +3,7 @@ package util
 
 import (
 	"math/rand"
+	"slices"
 
 	"golang.org/x/exp/constraints"
 )
@@ -10,6 +11,12 @@ import (
 // PickOne picks a random element from the slice and returns it.
 func PickOne[S ~[]E, E any](slice S) E {
 	return slice[rand.Intn(len(slice))]
+}
+
+func DeleteElement[S ~[]E, E comparable](slice S, element E) S {
+	return slices.DeleteFunc(slice, func(e E) bool {
+		return e == element
+	})
 }
 
 // SetAll sets all elements in the slice S to the provided value.

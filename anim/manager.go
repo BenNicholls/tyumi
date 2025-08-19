@@ -4,6 +4,8 @@ import (
 	"iter"
 	"slices"
 	"time"
+
+	"github.com/bennicholls/tyumi/util"
 )
 
 type Manager interface {
@@ -56,9 +58,7 @@ func (am *AnimationManager) AddOneShotAnimation(animation Animator) {
 // Removes an animation. Note that OneShot animations are disposed of automatically, you do not need to remove them
 // yourself.
 func (am *AnimationManager) RemoveAnimation(animation Animator) {
-	if idx := slices.Index(am.animations, animation); idx != -1 {
-		am.animations = slices.Delete(am.animations, idx, idx+1)
-	}
+	am.animations = util.DeleteElement(am.animations, animation)
 }
 
 // Updates all playing animations. Also updates the AnimationJustStopped and AnimationJustUpdated flags; if an animation

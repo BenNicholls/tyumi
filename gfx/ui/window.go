@@ -252,9 +252,7 @@ func (wnd *Window) onSubNodeRemoved(subNode element) {
 
 		//remove subnode from tabbing order if necessary
 		if len(wnd.tabbingOrder) > 0 {
-			if i := slices.Index(wnd.tabbingOrder, e); i != -1 {
-				wnd.tabbingOrder = slices.Delete(wnd.tabbingOrder, i, i+1)
-			}
+			wnd.tabbingOrder = util.DeleteElement(wnd.tabbingOrder, e)
 		}
 
 		if wnd.focusedElement == e {

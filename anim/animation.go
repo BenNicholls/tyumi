@@ -15,6 +15,8 @@ type Animator interface {
 	Stop()
 
 	Update(time.Duration)
+	GetDuration() time.Duration
+	SetOneShot(bool)
 
 	IsPlaying() bool
 	IsDone() bool
@@ -24,10 +26,6 @@ type Animator interface {
 
 	stoppedSinceLastUpdate() bool
 	clearFlags()
-
-	GetDuration() time.Duration
-
-	SetOneShot(bool)
 }
 
 // Base struct for animations. Embed this to satisfy Animator interface above.

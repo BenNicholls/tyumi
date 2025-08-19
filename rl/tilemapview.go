@@ -62,7 +62,6 @@ func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap dr
 }
 
 func (tmv *TileMapView) ImmediateHandleEvent(e event.Event) (event_handled bool) {
-	// tilemapview events
 	switch e.ID() {
 	case EV_ENTITYMOVED:
 		moveEvent := e.(*EntityMovedEvent)

@@ -170,9 +170,9 @@ func (mls *MapLabelSystem) ImmediateHandleEvent(e event.Event) (event_handled bo
 		// if an entity is being destroyed, we need to check all labels to see if they are parented to it. if so, we
 		// destroy the whole entity for the label (we're assuming the entity is entirely just for the label)
 		// THINK: are there situations where this assumption is too much??
-		for label := range ecs.EachComponent[MapLabelComponent]() {
+		for label, labelEntity := range ecs.EachComponent[MapLabelComponent]() {
 			if label.Parent == entity {
-				ecs.QueueDestroyEntity(label.GetEntity())
+				ecs.QueueDestroyEntity(labelEntity)
 			}
 		}
 		event_handled = true
@@ -186,7 +186,7 @@ func (mls *MapLabelSystem) Update(delta time.Duration) {
 	if mls.labelLayer.IsRedrawing() {
 		return
 	}
-	
+
 	for entity := range mls.movedEntities.EachElement() {
 		if ecs.Has[MapLabelComponent](entity) {
 			mls.labelLayer.ForceRedraw()

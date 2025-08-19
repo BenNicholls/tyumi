@@ -14,7 +14,7 @@ func init() {
 
 func AddAnimation[ET ~uint32](entity ET, a anim.Animator, oneshot bool) {
 	animComp := ecs.GetOrAdd[AnimationComponent](entity)
-	
+
 	if oneshot {
 		animComp.AddOneShotAnimation(a)
 	} else {
@@ -55,7 +55,7 @@ func (as *AnimationSystem) Update(delta time.Duration) {
 	as.HasBlockingAnimation = false
 	emptyAnimCompEntities := make([]ecs.Entity, 0)
 
-	for animComp := range ecs.EachComponent[AnimationComponent]() {
+	for animComp, entity := range ecs.EachComponent[AnimationComponent]() {
 		animComp.UpdateAnimations(delta)
 		if animComp.HasBlockingAnimation() {
 			as.HasBlockingAnimation = true
@@ -69,7 +69,7 @@ func (as *AnimationSystem) Update(delta time.Duration) {
 			// the component. TODO.
 			for animation := range animComp.EachAnimation() {
 				if _, ok := animation.(gfx.VisualAnimator); ok {
-					if pos := ecs.Get[PositionComponent](animComp.GetEntity()); pos != nil {
+					if pos := ecs.Get[PositionComponent](entity); pos != nil {
 						as.tileMap.SetDirty(pos.Coord)
 					}
 					break
@@ -78,7 +78,7 @@ func (as *AnimationSystem) Update(delta time.Duration) {
 		}
 
 		if animComp.CountAnimations() == 0 {
-			emptyAnimCompEntities = append(emptyAnimCompEntities, animComp.GetEntity())
+			emptyAnimCompEntities = append(emptyAnimCompEntities, entity)
 		}
 	}
 

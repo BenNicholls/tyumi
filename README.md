@@ -6,8 +6,6 @@ Tyumi is a general purpose roguelike library and game engine. While the primary 
 
 ### Current State
 
-**IMPORTANT: The master branch of Tyumi currently relies on a feature that was introduced in Go 1.24 but is broken and will not be fixed until Go 1.25 is released in August 2025. If you want to use the latest BLEEDING EDGE Tyumi updates you'll need to either wait until August or go to [This Link](https://go.dev/dl/) for instructions on how to download the Go 1.25 release candidate. Otherwise, Tyumi v0.2 will have to do for now. Sorry!**
-
 Tyumi is currently in early stages of development. As it stands the "roguelike" part of the library doesn't even exist yet, apart from I suppose the cell-based renderer. Still, Tyumi has the features to enable making simple games!
 
 The API is liable to change drastically as I flesh out Tyumi's capabilites, but for simple games you can target the latest 0.x release (currently 0.2). Version 0.2 has the following features (in varying states of maturity):
@@ -84,7 +82,7 @@ Tyumi is the 2nd generation of the engine, with much of it initially pulled from
 - [UI] Added Button! Call Press() to have the button play a pulse animation and call an activation callback.
 - [UI] Added ProgressBar! For showing progress via a bar! Good for HP bars, loading bars, etc.
 - [UI] Images can now load/reload .xp images from disk after initialization.
-- [UI] PageCountainer now accepts custom page types.
+- [UI] PageContainer now accepts custom page types.
 - [UI] Added element focus state! Elements can be set as focused, enabling inputs to be received. Also added support for defining a tabbing order to a window, allowing you to press tab to cycle through focused elements.
 - [UI] Multiple list improvements, including some extra scrolling functionality (still work to do here) and the ability to set a message to be displayed when the list is empty.
 - [UI] Began adding callbacks to common UI occurances. Still could add a lot more.

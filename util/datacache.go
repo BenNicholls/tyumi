@@ -7,8 +7,7 @@ import "github.com/bennicholls/tyumi/log"
 // return a DT, which you can then use to retrieve data later with GetData().
 //
 // Example: for storing tile data! Create a struct for holding data common to types of tiles, and a TileType type for
-//
-//	       the indexes.
+//	        the indexes.
 //
 //	type TileType uint32
 //

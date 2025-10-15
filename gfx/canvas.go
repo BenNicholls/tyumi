@@ -306,14 +306,8 @@ func (c Canvas) CopyArea(area vec.Rect) (copy Canvas) {
 // An iterator that iterates over each cell in the canvas. The 2nd return value is the coordinate of the
 // cell in the local canvas space.
 func (c *Canvas) EachCell() iter.Seq2[Visuals, vec.Coord] {
-	return func(yield func(Visuals, vec.Coord) bool) {
-		if c.offset == vec.ZERO_COORD {
-			for i, cell := range c.cells {
-				if !yield(cell, vec.IndexToCoord(i, c.size.W)) {
-					return
-				}
-			}
-		} else {
+	if c.offset != vec.ZERO_COORD {
+		return func(yield func(Visuals, vec.Coord) bool) {
 			for i, cell := range c.cells {
 				if !yield(cell, vec.IndexToCoord(i, c.size.W).Add(c.offset)) {
 					return
@@ -321,4 +315,13 @@ func (c *Canvas) EachCell() iter.Seq2[Visuals, vec.Coord] {
 			}
 		}
 	}
+
+	return func(yield func(Visuals, vec.Coord) bool) {
+		for i, cell := range c.cells {
+			if !yield(cell, vec.IndexToCoord(i, c.size.W)) {
+				return
+			}
+		}
+	}
+
 }

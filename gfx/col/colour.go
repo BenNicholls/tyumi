@@ -86,7 +86,7 @@ func (c Colour) Lerp(c2 Colour, val, steps int) Colour {
 	)
 }
 
-// ReplaceNone returns the colour c, unless c is to_replace in which case it returns the default colour provided.
+// Replace returns the colour c, unless c is to_replace in which case it returns the default colour provided.
 func (c Colour) Replace(to_replace, defaultColour Colour) Colour {
 	if c == to_replace {
 		return defaultColour
@@ -118,8 +118,7 @@ func (p Pair) Lerp(p2 Pair, val, steps int) Pair {
 	return Pair{p.Fore.Lerp(p2.Fore, val, steps), p.Back.Lerp(p2.Back, val, steps)}
 }
 
-// ReplaceNone returns the colour Pair c, with any to_replace colours found replaced with the appropriate default colour
-// as provided.
+// Replace returns the Pair p with any to_replace colours found replaced with the appropriate default colour as provided.
 func (p Pair) Replace(to_replace Colour, defaultColours Pair) Pair {
 	return Pair{
 		Fore: p.Fore.Replace(to_replace, defaultColours.Fore),
@@ -129,8 +128,8 @@ func (p Pair) Replace(to_replace Colour, defaultColours Pair) Pair {
 
 type Gradient []Colour
 
-// Generate a gredient with num items, passing from colour c1 to c2. The colours are
-// lineraly interpolated evenly from one to the next. Gradient is NOT circular.
+// Generate a gredient with num items, passing from colour c1 to c2. The colours are lineraly interpolated evenly from
+// one to the next. Gradient is NOT circular.
 // TODO: Circular gradient function?
 func GenerateGradient(num int, c1, c2 Colour) (p Gradient) {
 	p = make(Gradient, num)

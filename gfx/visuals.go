@@ -8,7 +8,7 @@ import (
 )
 
 // The basic visual definition of a single-tile object that can be drawn to the screen.
-// Visuals can be one of 3 Modes: Glyph drawing, or Text drawing, or disabled.
+// Visuals can be one of 3 Modes: Glyph drawing, Text drawing, or disabled.
 // Each mode uses a different spritesheet, and Text drawing can draw 2 letters to a cell, hence the 2 Chars.
 type Visuals struct {
 	Mode    DrawMode
@@ -17,6 +17,7 @@ type Visuals struct {
 	Colours col.Pair
 }
 
+// Creates a visuals instance in DRAW_GLYPH mode.
 func NewGlyphVisuals(glyph Glyph, colours col.Pair) Visuals {
 	return Visuals{
 		Mode:    DRAW_GLYPH,
@@ -25,6 +26,7 @@ func NewGlyphVisuals(glyph Glyph, colours col.Pair) Visuals {
 	}
 }
 
+// Creates a visuals instance in DRAW_TEXT mode.
 func NewTextVisuals(char1, char2 uint8, colours col.Pair) Visuals {
 	return Visuals{
 		Mode:    DRAW_TEXT,
@@ -90,6 +92,9 @@ func (v Visuals) ReplaceChars(to_replace uint8, replacements [2]uint8) (result V
 	return
 }
 
+// IsTransparent reports whether the Visuals is considered transparent by canvasses. Transparent visuals either have
+// a transparent background (in which case the background of any lower-depth cell is drawn), or the visuals are in
+// DRAW_NONE mode, in which the visuals are never drawn at all.
 func (v Visuals) IsTransparent() bool {
 	return v.Mode == DRAW_NONE || v.Colours.Back.IsTransparent()
 }
@@ -117,6 +122,7 @@ func (v Visuals) HasForegroundContent() bool {
 	return true
 }
 
+// Draw draws the visuals to a provided canvas at an offset in the canvas's space, respecting depth.
 func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
 	dst_canvas.DrawVisuals(offset, depth, v)
 }

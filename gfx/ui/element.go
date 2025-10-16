@@ -44,6 +44,7 @@ type element interface {
 
 	MoveTo(vec.Coord)
 	Move(dx, dy int)
+	SetDepth(depth int)
 
 	Focus()
 	Defocus()
@@ -235,6 +236,11 @@ func (e *Element) CenterVertical() {
 	}
 
 	e.MoveTo(vec.Coord{e.position.X, (parent.Size().H - e.size.H) / 2})
+}
+
+// SetDepth sets the depth for the element.
+func (e *Element) SetDepth(depth int) {
+	e.depth = depth
 }
 
 // AddChild adds a child element to this one. Child elements are composited together along with their parent to

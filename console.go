@@ -4,6 +4,7 @@ import (
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
+	"github.com/bennicholls/tyumi/gfx/ui"
 	"github.com/bennicholls/tyumi/input"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/vec"
@@ -12,8 +13,7 @@ import (
 var mainConsole console
 
 type console struct {
-	gfx.Canvas
-	event.Stream
+	ui.Window
 
 	ready bool
 	title string // title of the program
@@ -55,7 +55,7 @@ func InitConsole(title string, console_size vec.Dims, glyph_path, font_path stri
 		return
 	}
 
-	mainConsole.Canvas.Init(console_size)
+	mainConsole.Init(console_size, vec.ZERO_COORD, 0)
 	mainConsole.title = title
 
 	// now that the console is set up, we can initialize the renderer (hopefully)

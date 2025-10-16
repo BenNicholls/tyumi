@@ -13,8 +13,6 @@ import (
 )
 
 var EV_CHANGESCENE = event.Register("Scene Change Event")
-var currentScene scene
-var activeScene scene // the scene being updated, checked each frame
 
 const (
 	FIT_CONSOLE int = 0 //window size flag
@@ -30,13 +28,9 @@ type scene interface {
 	Shutdown()
 
 	Update(delta time.Duration)
-	UpdateUI(delta time.Duration)
 	processTimers()
 	IsBlocked() bool
 
-	OpenDialog(dialog)
-
-	getActiveSubScene() scene
 	flushInputs()
 	cleanup()
 }
@@ -51,7 +45,6 @@ type Scene struct {
 
 	window *ui.Window
 
-	subScene dialog
 	timers   []Timer
 
 	inputEvents          event.Stream        //for input events. processed at the start of each tick
@@ -140,49 +133,11 @@ func (s *Scene) init(size vec.Dims, pos vec.Coord, bordered bool) {
 // the previous frame. Override this function with your primary game code!
 func (s *Scene) Update(delta time.Duration) {}
 
-// UpdateUI is called before each frame is rendered, allowing you to apply ui changes for rendering all at once if
-// you prefer. Otherwise you can implement Update() functions on the individual UI elements themselves and have them
-// control their own behaviour.
-func (s *Scene) UpdateUI(delta time.Duration) {}
-
-func (s *Scene) OpenDialog(subScene dialog) {
-	if !subScene.Ready() {
-		log.Error("Could not open dialog, dialog not initialized.")
-		return
-	}
-
-	s.subScene = subScene
-}
-
-func (s *Scene) getActiveSubScene() scene {
-	if s.subScene == nil {
-		return nil
-	}
-
-	if s.subScene.Done() {
-		s.subScene.Shutdown()
-		s.subScene.cleanup()
-		s.Window().SetAllDirty()
-		s.subScene = nil
-		return nil
-	} else {
-		if subScene := s.subScene.getActiveSubScene(); subScene != nil {
-			return subScene
-		} else {
-			return s.subScene
-		}
-	}
-}
-
 func (s *Scene) cleanup() {
 	s.DisableListening()
 	s.inputEvents.DisableListening()
 
-	if s.subScene != nil {
-		s.subScene.Shutdown()
-		s.subScene.cleanup()
-		s.subScene = nil
-	}
+	mainConsole.RemoveChild(s.window)
 
 	// in theory scenes should be freed from memory after being shutdown so this is pointless, but on the off chance a
 	// reference is hanging around maybe this will help catch a bug.
@@ -251,10 +206,6 @@ func (s *Scene) handleInput(event event.Event) (event_handled bool) {
 
 func (s *Scene) flushInputs() {
 	s.inputEvents.FlushEvents()
-
-	if s.subScene != nil {
-		s.subScene.flushInputs()
-	}
 }
 
 func (s *Scene) Ready() bool {
@@ -265,26 +216,6 @@ func (s *Scene) Ready() bool {
 // also indicate that the game is paused perhaps.
 func (s *Scene) IsBlocked() bool {
 	return s.window.IsBlocked()
-}
-
-// SetInitialScene sets a scene to be run by Tyumi at the beginning of execution.
-// This function DOES NOTHING if a scene has already been initialized.
-func SetInitialScene(s scene) {
-	if currentScene != nil {
-		return
-	}
-
-	if !mainConsole.ready {
-		log.Error("Cannot set initial scene: console not initialized. Run InitConsole() first.")
-		return
-	}
-
-	if s == nil || !s.Ready() {
-		log.Error("Cannot set initial scene: scene not initialized or ready.")
-		return
-	}
-
-	currentScene = s
 }
 
 // CreateTimer creates a timer. After duration ticks, the function f is run and the timer is destroyed.
@@ -310,27 +241,3 @@ func (s *Scene) processTimers() {
 	})
 }
 
-type SceneChangeEvent struct {
-	event.EventPrototype
-
-	newScene scene
-}
-
-// ChangeScene changes the current scene being run in Tyumi's gameloop. The change is done at the end of the current
-// engine tick. The old scene's Shutdown() method is called before we swap in the new one. Be sure to initialize the
-// new scene before calling ChangeScene(), otherwise no change will happen and the old scene will remain.
-func ChangeScene(new_scene scene) {
-	if new_scene == nil || !new_scene.Ready() {
-		log.Error("Could not change scene: scene invalid or not initialized.")
-		return
-	}
-
-	//if user tries to use this to setup the initial scene, just forgive them their sin and do it. no need to
-	//harass them with "the correct way".
-	if currentScene == nil {
-		SetInitialScene(new_scene)
-		return
-	}
-
-	event.Fire(EV_CHANGESCENE, &SceneChangeEvent{newScene: new_scene})
-}

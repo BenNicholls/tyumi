@@ -2,6 +2,7 @@ package tyumi
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/bennicholls/tyumi/event"
@@ -60,42 +61,47 @@ func Run() {
 func beginFrame() {
 	prevFrameTime = currentFrameTime
 	currentFrameTime = time.Now()
-
-	activeScene = currentScene
-	if activeSubScene := currentScene.getActiveSubScene(); activeSubScene != nil {
-		activeScene = activeSubScene
-	}
 }
 
 // This is the generic tick function. Steps forward the gamestate, and performs some engine-specific per-tick functions.
 func update() {
 	mainConsole.ProcessEvents()
 
-	if !activeScene.IsBlocked() {
-		activeScene.InputEvents().ProcessEvents()
+	updateScene(currentScene)
+
+	for _, d := range slices.Backward(dialogs) {
+		if !d.IsDone() {
+			updateScene(d)
+		} else {
+			closeDialog(d)
+		}
+	}
+}
+
+func updateScene(s scene) {
+	if !s.IsBlocked() {
+		s.InputEvents().ProcessEvents()
+		s.processTimers()
+		s.Update(GetFrameDelta())
+	} else {
+		s.flushInputs()
 	}
 
-	// make sure we don't accumulate a bunch of inputs in scenes that aren't being updated for whatever reason
-	currentScene.flushInputs()
-
-	if !activeScene.IsBlocked() {
-		activeScene.processTimers()
-		activeScene.Update(GetFrameDelta())
-	}
-
-	activeScene.ProcessEvents() //process any gameplay events from this frame.
+	s.ProcessEvents() //process any gameplay events from this frame.
 }
 
 // Updates any UI elements that need updating after the most recent tick in the current active scene.
 func updateUI() {
-	activeScene.UpdateUI(GetFrameDelta())
-	activeScene.Window().Update(GetFrameDelta())
+	currentScene.Window().Update(GetFrameDelta())
+
+	for _, d := range dialogs {
+		d.Window().Update(GetFrameDelta())
+	}
 }
 
 // builds the frame and renders using the current platform's renderer.
 func render() {
-	activeScene.Window().Render()
-	activeScene.Window().Draw(&mainConsole.Canvas, false)
+	mainConsole.Render()
 
 	if ShowFPS {
 		if time.Since(fpsLabelUpdateTime) > time.Second {
@@ -133,14 +139,18 @@ func endFrame() {
 func handleEvent(e event.Event) (event_handled bool) {
 	switch e.ID() {
 	case EV_QUIT: //quit event, like from clicking the close window button on the window
+		closeAllDialogs()
 		currentScene.Shutdown()
 		currentScene.cleanup()
 		running = false
 		event_handled = true
 	case EV_CHANGESCENE:
+		closeAllDialogs()
 		currentScene.Shutdown()
 		currentScene.cleanup()
+		mainConsole.RemoveChild(currentScene.Window())
 		currentScene = e.(*SceneChangeEvent).newScene
+		mainConsole.AddChild(currentScene.Window())
 		event_handled = true
 	}
 
@@ -156,10 +166,7 @@ func handleEvent(e event.Event) (event_handled bool) {
 				mainConsole.ExportToXP("screenshot.xp")
 			case input.K_F10:
 				log.Info("Dumping UI of current scene! Saving files to directory 'uidump'")
-				currentScene.Window().DumpUI("uidump", true)
-				if activeScene != currentScene {
-					activeScene.Window().DumpUI("uidump", false)
-				}
+				mainConsole.DumpUI("uidump", true)
 			}
 		}
 	}

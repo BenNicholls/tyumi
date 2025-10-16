@@ -127,7 +127,7 @@ func (wnd *Window) HandleAction(action input.ActionID) (action_handled bool) {
 			action_handled = wnd.focusedElement.HandleAction(action)
 		}
 	}
-	return false
+	return
 }
 
 // SetTabbingOrder sets the order for tabbing between elements. Any previously set tabbing order is not retained.

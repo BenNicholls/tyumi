@@ -9,24 +9,42 @@ import (
 type dialog interface {
 	scene
 
-	Done() bool
+	open()
+	close()
+
+	IsDone() bool
 }
 
-// Opens a dialog in the current scene. If there is already an open dialog or some other child scene, does nothing.
-func OpenDialog(d dialog) {
-	if subScene := currentScene.getActiveSubScene(); subScene != nil {
-		return
+type Dialog struct {
+	Scene
+
+	Done bool // set this to true to have Tyumi close the dialog
+
+	OnOpen func()
+	OnDone func()
+}
+
+func (d *Dialog) open() {
+	if d.OnOpen != nil {
+		d.OnOpen()
 	}
 
-	currentScene.OpenDialog(d)
+	d.window.Show()
+}
+
+func (d *Dialog) close() {
+	if d.OnDone != nil {
+		d.OnDone()
+	}
+
+	d.window.Hide()
 }
 
 // MessageDialog is a dialog that displays a simple message and an okay button.
 type MessageDialog struct {
-	Scene
+	Dialog
 
 	okayButton ui.Button
-	done       bool
 }
 
 func NewMessageDialog(title, message string) (md *MessageDialog) {
@@ -47,7 +65,7 @@ func (md *MessageDialog) Init(title, message string) {
 
 	md.okayButton.Init(vec.Dims{6, 1}, vec.Coord{0, 10}, 1, "Okay", func() {
 		md.CreateTimer(20, func() {
-			md.done = true
+			md.Done = true
 		})
 	})
 	md.okayButton.EnableBorder()
@@ -56,6 +74,6 @@ func (md *MessageDialog) Init(title, message string) {
 	md.okayButton.CenterHorizontal()
 }
 
-func (md MessageDialog) Done() bool {
-	return md.done
+func (md MessageDialog) IsDone() bool {
+	return md.Done
 }

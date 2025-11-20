@@ -71,6 +71,10 @@ func InitConsole(title string, console_size vec.Dims, glyph_path, font_path stri
 	mainConsole.mouseCursorVisuals = gfx.NewGlyphVisuals(gfx.GLYPH_BORDER_UUDDLLRR, col.Pair{col.WHITE, col.NONE})
 
 	mainConsole.ready = true
+
+	if Debug {
+		debugger.Init()
+	}
 }
 
 // ChangeTitle changes the title of the running program. i.e. the string shown in the title bar of the program's

@@ -162,6 +162,12 @@ func handleEvent(e event.Event) (event_handled bool) {
 			case input.K_F10:
 				log.Info("Dumping UI of current scene! Saving files to directory 'uidump'")
 				mainConsole.DumpUI("uidump", true)
+			case input.K_F12:
+				if Debug {
+					if !debugger.IsOpen() {
+						OpenDialog(debugger)
+					}
+				}
 			}
 		}
 	}

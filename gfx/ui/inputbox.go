@@ -123,6 +123,16 @@ func (ib *InputBox) Delete() {
 	fireCallbacks(ib.OnTextDeleted)
 }
 
+// Deletes all inputted text.
+func (ib *InputBox) DeleteAll() {
+	if len(ib.text) == 0 {
+		return
+	}
+
+	ib.ChangeText("")
+	fireCallbacks(ib.OnTextDeleted)
+}
+
 func (ib InputBox) InputtedText() string {
 	return ib.text
 }

@@ -13,12 +13,15 @@ type dialog interface {
 	close()
 
 	IsDone() bool
+	IsOpen() bool
+	IsPersistent() bool
 }
 
 type Dialog struct {
 	Scene
 
-	Done bool // set this to true to have Tyumi close the dialog
+	Done       bool // set this to true to have Tyumi close the dialog
+	Persistent bool // if true, dialog is not shutdown when closed (so you can reopen it later without reinitializing)
 
 	OnOpen func()
 	OnDone func()
@@ -29,6 +32,7 @@ func (d *Dialog) open() {
 		d.OnOpen()
 	}
 
+	d.Done = false
 	d.window.Show()
 }
 
@@ -38,6 +42,18 @@ func (d *Dialog) close() {
 	}
 
 	d.window.Hide()
+}
+
+func (d Dialog) IsDone() bool {
+	return d.Done
+}
+
+func (d Dialog) IsOpen() bool {
+	return d.Window().IsVisible()
+}
+
+func (d Dialog) IsPersistent() bool {
+	return d.Persistent
 }
 
 // MessageDialog is a dialog that displays a simple message and an okay button.
@@ -72,8 +88,4 @@ func (md *MessageDialog) Init(title, message string) {
 	md.okayButton.Focus()
 	md.Window().AddChild(&md.okayButton)
 	md.okayButton.CenterHorizontal()
-}
-
-func (md MessageDialog) IsDone() bool {
-	return md.Done
 }

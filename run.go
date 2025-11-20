@@ -145,12 +145,7 @@ func handleEvent(e event.Event) (event_handled bool) {
 		running = false
 		event_handled = true
 	case EV_CHANGESCENE:
-		closeAllDialogs()
-		currentScene.Shutdown()
-		currentScene.cleanup()
-		mainConsole.RemoveChild(currentScene.Window())
-		currentScene = e.(*SceneChangeEvent).newScene
-		mainConsole.AddChild(currentScene.Window())
+		changeScene(e.(*SceneChangeEvent).newScene)
 		event_handled = true
 	}
 

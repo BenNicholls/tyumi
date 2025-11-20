@@ -117,6 +117,7 @@ func (s *Scene) init(size vec.Dims, pos vec.Coord, bordered bool) {
 	}
 
 	s.window = ui.NewWindow(size, pos, 0)
+	s.window.Hide()
 	if bordered {
 		s.window.EnableBorder()
 	}
@@ -125,6 +126,11 @@ func (s *Scene) init(size vec.Dims, pos vec.Coord, bordered bool) {
 
 	//setup automatic listening for input events.
 	s.inputEvents.Listen(input.EV_ACTION, input.EV_KEYBOARD, input.EV_MOUSEBUTTON, input.EV_MOUSEMOVE)
+
+	//disable listening so initialized scenes don't accrue events until they are active.
+	s.DisableListening()
+	s.inputEvents.DisableListening()
+
 	s.timers = make([]Timer, 0)
 	s.ready = true
 }

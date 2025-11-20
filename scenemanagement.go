@@ -29,7 +29,10 @@ func SetInitialScene(s scene) {
 	}
 
 	currentScene = s
+	currentScene.EnableListening()
+	currentScene.InputEvents().EnableListening()
 	mainConsole.AddChild(s.Window())
+	s.Window().Show()
 }
 
 type SceneChangeEvent struct {
@@ -57,6 +60,22 @@ func ChangeScene(new_scene scene) {
 	event.Fire(EV_CHANGESCENE, &SceneChangeEvent{newScene: new_scene})
 }
 
+// internal scene change function that actually does the work. this is called from the engine's event handler at the
+// end of the tick where a user calls ChangeScene
+func changeScene(new_scene scene) {
+	closeAllDialogs()
+
+	currentScene.Shutdown()
+	currentScene.cleanup()
+	mainConsole.RemoveChild(currentScene.Window())
+
+	currentScene = new_scene
+	mainConsole.AddChild(currentScene.Window())
+	currentScene.Window().Show()
+	currentScene.EnableListening()
+	currentScene.InputEvents().EnableListening()
+}
+
 // Opens a dialog in the current scene.
 func OpenDialog(d dialog) {
 	if !d.Ready() {
@@ -81,6 +100,9 @@ func OpenDialog(d dialog) {
 	d.Window().SetDepth(len(dialogs) + 1)
 	mainConsole.AddChild(d.Window())
 
+	d.EnableListening()
+	d.InputEvents().EnableListening()
+
 	dialogs = append(dialogs, d)
 }
 
@@ -101,8 +123,15 @@ func closeDialog(d dialog) {
 	}
 
 	d.close()
-	d.Shutdown()
-	d.cleanup()
+	mainConsole.RemoveChild(d.Window())
+
+	if !d.IsPersistent() {
+		d.Shutdown()
+		d.cleanup()
+	} else {
+		d.DisableListening()
+		d.InputEvents().DisableListening()
+	}
 
 	dialogs = util.DeleteElement(dialogs, d)
 }

@@ -112,7 +112,7 @@ func NewBlinkAnimation(area vec.Rect, depth int, vis Visuals, rate time.Duration
 func (ba *BlinkAnimation) Update(delta time.Duration) {
 	ba.Animation.Update(delta)
 
-	if ba.GetTicks() == 0 {
+	if ba.JustLooped() {
 		ba.blinking = !ba.blinking
 		ba.Updated = true
 	}

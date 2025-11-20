@@ -24,6 +24,8 @@ type Animator interface {
 	IsBlocking() bool
 	IsUpdated() bool
 
+	JustLooped() bool
+
 	stoppedSinceLastUpdate() bool
 	clearFlags()
 }
@@ -43,7 +45,7 @@ type Animation struct {
 	enabled     bool          //animation is playing
 	reset       bool          //indicates animation should reset and start over.
 	justStopped bool          //indicates animation has stopped recently
-	justLooped  bool          // indicates a looping animation just rolled over and started again
+	justLooped  bool          //indicates a looping animation just rolled over and started again
 	elapsed     time.Duration //incremented each update
 }
 
@@ -58,7 +60,7 @@ func (a *Animation) Update(delta time.Duration) {
 		}
 
 		if a.Repeat {
-			a.justLooped = a.elapsed + delta > a.Duration
+			a.justLooped = a.elapsed+delta > a.Duration
 			a.elapsed = (a.elapsed + delta) % a.Duration
 		} else {
 			a.elapsed += delta
@@ -94,6 +96,10 @@ func (a Animation) IsBlocking() bool {
 
 func (a Animation) IsUpdated() bool {
 	return a.AlwaysUpdates || a.Updated
+}
+
+func (a Animation) JustLooped() bool {
+	return a.justLooped
 }
 
 // Sets the animation to OneShot. OneShot animations play once and then can be removed/deleted/garbaged/whatever.

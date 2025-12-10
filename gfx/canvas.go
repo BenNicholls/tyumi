@@ -258,8 +258,9 @@ func (c *Canvas) FlattenTo(depth int, areas ...vec.Rect) {
 
 	for _, area := range areas {
 		for cursor := range vec.EachCoordInIntersection(c, area) {
-			if c.getDepth(cursor) > depth {
-				c.setDepth(cursor, depth)
+			i := c.cellIndex(cursor)
+			if c.depthmap[i] > depth {
+				c.depthmap[i] = depth
 			}
 		}
 	}

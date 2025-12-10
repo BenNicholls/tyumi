@@ -43,7 +43,7 @@ type Renderer struct {
 // valid until Setup() has been run on it.
 func NewRenderer() *Renderer {
 	sdl_renderer := new(Renderer)
-	sdl_renderer.ready = false //i know false is already the default value, this is for emphasis.
+	sdl_renderer.ready = false // i know false is already the default value, this is for emphasis.
 	return sdl_renderer
 }
 
@@ -154,6 +154,9 @@ func (r *Renderer) loadTexture(path string) (*sdl.Texture, error) {
 	image := sdl.ConvertSurface(bmpImage, sdl.PixelFormatARGB8888)
 	defer sdl.DestroySurface(image)
 
+	// process RGB bitmap into alpha-aware surface. pixels with the keycolour are fully transparent,
+	// and pixels that are white are fully opaque. grey pixels have some level of transparency, defined
+	// by their greyness.
 	keyColour := col.FUSCHIA
 	transparent := col.NONE
 
@@ -164,7 +167,9 @@ func (r *Renderer) loadTexture(path string) (*sdl.Texture, error) {
 			if colour == keyColour {
 				setPixel(image, cursor, transparent)
 			} else {
-				colour = col.Make(colour.G(), colour.R(), 0xFF, colour.B())
+				// gray pixel. use green channel as alpha value. (really it doesn't matter which one you
+				// use, they're all the same.)
+				colour = col.Make(colour.G(), 0xFF, 0xFF, 0xFF)
 				setPixel(image, cursor, colour)
 			}
 		}
@@ -182,16 +187,14 @@ func (r *Renderer) loadTexture(path string) (*sdl.Texture, error) {
 }
 
 func getPixel(surface *sdl.Surface, cursor vec.Coord) (colour col.Colour) {
-	pixels := surface.Pixels
-	i := cursor.Y*int(surface.Pitch) + cursor.X*4
-	pixel := (*col.Colour)(unsafe.Pointer(uintptr(pixels) + uintptr(i)))
+	i := cursor.Y*int(surface.Pitch) + cursor.X*4 // tyumi colours are 4 bytes wide.
+	pixel := (*col.Colour)(unsafe.Pointer(uintptr(surface.Pixels) + uintptr(i)))
 	return *pixel
 }
 
 func setPixel(surface *sdl.Surface, cursor vec.Coord, colour col.Colour) {
-	pixels := surface.Pixels
-	i := cursor.Y*int(surface.Pitch) + cursor.X*4
-	pixel := (*col.Colour)(unsafe.Pointer(uintptr(pixels) + uintptr(i)))
+	i := cursor.Y*int(surface.Pitch) + cursor.X*4 // tyumi colours are 4 bytes wide
+	pixel := (*col.Colour)(unsafe.Pointer(uintptr(surface.Pixels) + uintptr(i)))
 	*pixel = colour
 	return
 }

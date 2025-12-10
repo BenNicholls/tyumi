@@ -18,7 +18,7 @@ type Renderer struct {
 	font         *sdl.Texture
 	canvasBuffer *sdl.Texture
 
-	tileSize  int
+	tileSize int
 
 	forceRedraw bool
 	showFPS     bool
@@ -57,7 +57,7 @@ func NewRenderer() *Renderer {
 
 func (r *Renderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string) (err error) {
 	//renderer defaults to 800x600, once fonts are loaded it figures out the resolution to use and resizes accordingly
-	r.window = sdl.CreateWindow(title, 800, 600, sdl.WindowVulkan|sdl.WindowResizable)
+	r.window = sdl.CreateWindow(title, 800, 600, sdl.WindowVulkan|sdl.WindowResizable|sdl.WindowHighPixelDensity)
 	if r.window == nil {
 		log.Error("SDL RENDERER: Failed to create window. sdl: ", sdl.GetError())
 		return errors.New("failed to create window")
@@ -269,9 +269,6 @@ func (r *Renderer) Render() {
 		return
 	}
 
-	t := sdl.GetRenderTarget(r.renderer)            //store window texture, we'll switch back to it once we're done with the buffer.
-	sdl.SetRenderTarget(r.renderer, r.canvasBuffer) //point renderer at buffer texture, we'll draw there
-
 	if r.showChanges {
 		r.debugColour = col.MakeOpaque(
 			uint8((r.frames*10)%255),
@@ -317,10 +314,7 @@ func (r *Renderer) Render() {
 					continue
 				}
 
-				textCursor := cursorPixel
-				if c_i == 1 {
-					textCursor.Move(r.tileSize/2, 0)
-				}
+				textCursor := vec.Coord{cursorPixel.X + c_i*r.tileSize/2, cursorPixel.Y}
 				w, h := float32(r.font.W), float32(r.font.H)
 				src := vec.Coord{(int(char%32) * r.tileSize / 2), (int(char/32) * r.tileSize)}
 
@@ -332,25 +326,34 @@ func (r *Renderer) Render() {
 		}
 	}
 
+	t := sdl.GetRenderTarget(r.renderer)            //store window texture, we'll switch back to it once we're done with the buffer.
+	sdl.SetRenderTarget(r.renderer, r.canvasBuffer) //point renderer at buffer texture, we'll draw there
+
 	// render background rects
-	sdl.RenderGeometryRaw(r.renderer, nil, r.bgPositions, r.bgColours, nil, r.bgIndices)
-	r.bgPositions = r.bgPositions[0:0]
-	r.bgColours = r.bgColours[0:0]
-	r.bgIndices = r.bgIndices[0:0]
+	if len(r.bgPositions) > 0 {
+		sdl.RenderGeometryRaw(r.renderer, nil, r.bgPositions, r.bgColours, nil, r.bgIndices)
+		r.bgPositions = r.bgPositions[0:0]
+		r.bgColours = r.bgColours[0:0]
+		r.bgIndices = r.bgIndices[0:0]
+	}
 
 	// render glyphs
-	sdl.RenderGeometryRaw(r.renderer, r.glyphs, r.glyphPositions, r.glyphColours, r.glyphUVs, r.glyphIndices)
-	r.glyphPositions = r.glyphPositions[0:0]
-	r.glyphColours = r.glyphColours[0:0]
-	r.glyphIndices = r.glyphIndices[0:0]
-	r.glyphUVs = r.glyphUVs[0:0]
+	if len(r.glyphPositions) > 0 {
+		sdl.RenderGeometryRaw(r.renderer, r.glyphs, r.glyphPositions, r.glyphColours, r.glyphUVs, r.glyphIndices)
+		r.glyphPositions = r.glyphPositions[0:0]
+		r.glyphColours = r.glyphColours[0:0]
+		r.glyphIndices = r.glyphIndices[0:0]
+		r.glyphUVs = r.glyphUVs[0:0]
+	}
 
 	// render text
-	sdl.RenderGeometryRaw(r.renderer, r.font, r.textPositions, r.textColours, r.textUVs, r.textIndices)
-	r.textPositions = r.textPositions[0:0]
-	r.textColours = r.textColours[0:0]
-	r.textIndices = r.textIndices[0:0]
-	r.textUVs = r.textUVs[0:0]
+	if len(r.textPositions) > 0 {
+		sdl.RenderGeometryRaw(r.renderer, r.font, r.textPositions, r.textColours, r.textUVs, r.textIndices)
+		r.textPositions = r.textPositions[0:0]
+		r.textColours = r.textColours[0:0]
+		r.textIndices = r.textIndices[0:0]
+		r.textUVs = r.textUVs[0:0]
+	}
 
 	r.console.Clean()
 
@@ -360,13 +363,6 @@ func (r *Renderer) Render() {
 
 	r.forceRedraw = false
 	r.frames++
-}
-
-func (r *Renderer) setTextureColour(tex *sdl.Texture, colour col.Colour, update_alpha bool) {
-	sdl.SetTextureColorMod(tex, colour.R(), colour.G(), colour.B())
-	if update_alpha {
-		sdl.SetTextureAlphaMod(tex, colour.A())
-	}
 }
 
 func (r *Renderer) ForceRedraw() {

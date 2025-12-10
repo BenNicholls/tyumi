@@ -106,10 +106,6 @@ func (c *Canvas) SetOrigin(pos vec.Coord) {
 }
 
 func (c *Canvas) cellIndex(pos vec.Coord) int {
-	if c.offset == vec.ZERO_COORD {
-		return pos.ToIndex(c.size.W)
-	}
-
 	return pos.Subtract(c.offset).ToIndex(c.size.W)
 }
 
@@ -148,7 +144,7 @@ func (c *Canvas) setDepth(pos vec.Coord, depth int) {
 
 // sets the visuals for the cell, respecting depth. if depth = -1, previous depth value is ignored.
 func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
-	if c.getDepth(pos) > depth && depth != -1 {
+	if depth != -1 && c.getDepth(pos) > depth {
 		return
 	}
 
@@ -324,5 +320,4 @@ func (c *Canvas) EachCell() iter.Seq2[Visuals, vec.Coord] {
 			}
 		}
 	}
-
 }

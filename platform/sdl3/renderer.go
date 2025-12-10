@@ -18,7 +18,7 @@ type Renderer struct {
 	font         *sdl.Texture
 	canvasBuffer *sdl.Texture
 
-	tileSize int
+	tileSize  int
 
 	forceRedraw bool
 	showFPS     bool
@@ -30,9 +30,17 @@ type Renderer struct {
 	debugColour col.Colour // for background when show changes is on
 
 	// caches for draw batching
-	bg       map[col.Colour][]sdl.FRect
-	fgGlyphs map[col.Colour]map[gfx.Glyph][]vec.Coord
-	fgText   map[col.Colour]map[uint8][]sdl.FRect
+	bgPositions    []sdl.FPoint
+	bgColours      []sdl.FColor
+	bgIndices      []int32
+	glyphPositions []sdl.FPoint
+	glyphColours   []sdl.FColor
+	glyphUVs       []sdl.FPoint
+	glyphIndices   []int32
+	textPositions  []sdl.FPoint
+	textColours    []sdl.FColor
+	textUVs        []sdl.FPoint
+	textIndices    []int32
 
 	console *gfx.Canvas
 
@@ -62,7 +70,6 @@ func (r *Renderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string)
 	}
 
 	sdl.SetRenderLogicalPresentation(r.renderer, 800, 600, sdl.LogicalPresentationLetterbox)
-
 	sdl.RenderClear(r.renderer)
 
 	r.console = console
@@ -71,9 +78,17 @@ func (r *Renderer) Setup(console *gfx.Canvas, glyphPath, fontPath, title string)
 		return err
 	}
 
-	r.bg = make(map[col.Colour][]sdl.FRect)
-	r.fgGlyphs = make(map[col.Colour]map[gfx.Glyph][]vec.Coord)
-	r.fgText = make(map[col.Colour]map[uint8][]sdl.FRect)
+	r.bgPositions = make([]sdl.FPoint, 0)
+	r.bgColours = make([]sdl.FColor, 0)
+	r.bgIndices = make([]int32, 0)
+	r.glyphPositions = make([]sdl.FPoint, 0)
+	r.glyphUVs = make([]sdl.FPoint, 0)
+	r.glyphColours = make([]sdl.FColor, 0)
+	r.glyphIndices = make([]int32, 0)
+	r.textPositions = make([]sdl.FPoint, 0)
+	r.textUVs = make([]sdl.FPoint, 0)
+	r.textColours = make([]sdl.FColor, 0)
+	r.textIndices = make([]int32, 0)
 
 	r.ready = true
 
@@ -265,23 +280,21 @@ func (r *Renderer) Render() {
 		)
 	}
 
-	//collect rects and coords, sorted by colour
 	for cell, cursor := range r.console.EachCell() {
 		if cell.Mode == gfx.DRAW_NONE || (!r.forceRedraw && !r.console.IsDirtyAt(cursor)) {
 			continue
 		}
+
+		cursorPixel := cursor.Scale(r.tileSize) // location of cursor in pixelspace
 
 		bgColour := cell.Colours.Back
 		if r.showChanges {
 			bgColour = r.debugColour
 		}
 
-		if _, ok := r.bg[bgColour]; !ok {
-			r.bg[bgColour] = make([]sdl.FRect, 0)
-		}
-
-		rect := makeRect(cursor.X*r.tileSize, cursor.Y*r.tileSize, r.tileSize, r.tileSize)
-		r.bg[bgColour] = append(r.bg[bgColour], rect)
+		addQuadPositions(&r.bgPositions, cursorPixel, r.tileSize, r.tileSize)
+		addQuadColours(&r.bgColours, bgColour)
+		addQuadIndices(&r.bgIndices)
 
 		if !cell.HasForegroundContent() {
 			continue
@@ -291,100 +304,53 @@ func (r *Renderer) Render() {
 
 		switch cell.Mode {
 		case gfx.DRAW_GLYPH:
-			if _, ok := r.fgGlyphs[fgColour]; !ok {
-				r.fgGlyphs[fgColour] = make(map[gfx.Glyph][]vec.Coord)
-			}
+			w, h := float32(r.glyphs.W), float32(r.glyphs.H)
+			src := vec.Coord{(int(cell.Glyph%16) * r.tileSize), (int(cell.Glyph/16) * r.tileSize)}
 
-			glyphMap, glyph := r.fgGlyphs[fgColour], cell.Glyph
-			if _, ok := glyphMap[glyph]; !ok {
-				glyphMap[glyph] = make([]vec.Coord, 0)
-			}
-
-			glyphMap[glyph] = append(glyphMap[glyph], cursor)
-			r.fgGlyphs[fgColour] = glyphMap
+			addQuadPositions(&r.glyphPositions, cursorPixel, r.tileSize, r.tileSize)
+			addQuadColours(&r.glyphColours, fgColour)
+			addQuadIndices(&r.glyphIndices)
+			addQuadUVs(&r.glyphUVs, src, w, h, r.tileSize, r.tileSize)
 		case gfx.DRAW_TEXT:
-			if _, ok := r.fgText[fgColour]; !ok {
-				r.fgText[fgColour] = make(map[uint8][]sdl.FRect)
-			}
-
-			textMap := r.fgText[fgColour]
 			for c_i, char := range cell.Chars {
-				if _, ok := textMap[char]; !ok {
-					textMap[char] = make([]sdl.FRect, 0)
+				if char == 0 || char == 32 {
+					continue
 				}
 
-				dst := makeRect(cursor.X*r.tileSize+c_i*r.tileSize/2, cursor.Y*r.tileSize, r.tileSize/2, r.tileSize)
-				textMap[char] = append(textMap[char], dst)
-			}
+				textCursor := cursorPixel
+				if c_i == 1 {
+					textCursor.Move(r.tileSize/2, 0)
+				}
+				w, h := float32(r.font.W), float32(r.font.H)
+				src := vec.Coord{(int(char%32) * r.tileSize / 2), (int(char/32) * r.tileSize)}
 
-			r.fgText[fgColour] = textMap
+				addQuadPositions(&r.textPositions, textCursor, r.tileSize, r.tileSize/2)
+				addQuadColours(&r.textColours, fgColour)
+				addQuadIndices(&r.textIndices)
+				addQuadUVs(&r.textUVs, src, w, h, r.tileSize, r.tileSize/2)
+			}
 		}
 	}
 
-	// apply background cell fills
-	for colour, rects := range r.bg {
-		if len(rects) == 0 {
-			delete(r.bg, colour)
-			continue
-		}
-		R, G, B, A := colour.RGBA()
-		sdl.SetRenderDrawColor(r.renderer, R, G, B, A)
-		sdl.RenderFillRects(r.renderer, rects)
-		r.bg[colour] = rects[0:0]
-	}
+	// render background rects
+	sdl.RenderGeometryRaw(r.renderer, nil, r.bgPositions, r.bgColours, nil, r.bgIndices)
+	r.bgPositions = r.bgPositions[0:0]
+	r.bgColours = r.bgColours[0:0]
+	r.bgIndices = r.bgIndices[0:0]
 
-	currentDrawColour := col.NONE
+	// render glyphs
+	sdl.RenderGeometryRaw(r.renderer, r.glyphs, r.glyphPositions, r.glyphColours, r.glyphUVs, r.glyphIndices)
+	r.glyphPositions = r.glyphPositions[0:0]
+	r.glyphColours = r.glyphColours[0:0]
+	r.glyphIndices = r.glyphIndices[0:0]
+	r.glyphUVs = r.glyphUVs[0:0]
 
-	// copy glyphs
-	src := makeRect(0, 0, r.tileSize, r.tileSize)
-	for colour, glyphMap := range r.fgGlyphs {
-		if len(glyphMap) == 0 {
-			delete(r.fgGlyphs, colour)
-			continue
-		}
-
-		r.setTextureColour(r.glyphs, colour, colour.A() != currentDrawColour.A())
-		currentDrawColour = colour
-		for glyph, coords := range glyphMap {
-			if len(coords) == 0 {
-				delete(glyphMap, glyph)
-				continue
-			}
-			src.X, src.Y = float32(int(glyph%16)*r.tileSize), float32(int(glyph/16)*r.tileSize)
-			for _, pos := range coords {
-				dst := makeRect(pos.X*r.tileSize, pos.Y*r.tileSize, r.tileSize, r.tileSize)
-				sdl.RenderTexture(r.renderer, r.glyphs, &src, &dst)
-			}
-			glyphMap[glyph] = coords[0:0]
-		}
-		r.fgGlyphs[colour] = glyphMap
-	}
-
-	// copy text
-	src.W = src.W / 2
-	for colour, textMap := range r.fgText {
-		if len(textMap) == 0 {
-			delete(r.fgText, colour)
-			continue
-		}
-
-		r.setTextureColour(r.font, colour, colour.A() != currentDrawColour.A())
-		currentDrawColour = colour
-		for char, rects := range textMap {
-			if len(rects) == 0 {
-				delete(textMap, char)
-				continue
-			}
-
-			src.X, src.Y = float32(int(char%32)*r.tileSize/2), float32(int(char/32)*r.tileSize)
-			for _, rect := range rects {
-				sdl.RenderTexture(r.renderer, r.font, &src, &rect)
-
-			}
-			textMap[char] = rects[0:0]
-		}
-		r.fgText[colour] = textMap
-	}
+	// render text
+	sdl.RenderGeometryRaw(r.renderer, r.font, r.textPositions, r.textColours, r.textUVs, r.textIndices)
+	r.textPositions = r.textPositions[0:0]
+	r.textColours = r.textColours[0:0]
+	r.textIndices = r.textIndices[0:0]
+	r.textUVs = r.textUVs[0:0]
 
 	r.console.Clean()
 
@@ -417,6 +383,40 @@ func (r *Renderer) ToggleDebugMode(m string) {
 	}
 }
 
-func makeRect(x, y, w, h int) sdl.FRect {
-	return sdl.FRect{X: float32(x), Y: float32(y), W: float32(w), H: float32(h)}
+// adds the 4 points to the list for draw batching. width is the width of the quad (for half width drawing),
+// dst_pixel is the pixel in the top left corner
+func addQuadPositions(positions *[]sdl.FPoint, dst_pixel vec.Coord, tileSize, width int) {
+	*positions = append(*positions,
+		sdl.FPoint{float32(dst_pixel.X), float32(dst_pixel.Y)},
+		sdl.FPoint{float32(dst_pixel.X + width), float32(dst_pixel.Y)},
+		sdl.FPoint{float32(dst_pixel.X), float32(dst_pixel.Y + tileSize)},
+		sdl.FPoint{float32(dst_pixel.X + width), float32(dst_pixel.Y + tileSize)},
+	)
+}
+
+func addQuadColours(colours *[]sdl.FColor, col col.Colour) {
+	sdlColour := sdl.FColor{
+		A: float32(col.A()) / 255,
+		R: float32(col.R()) / 255,
+		G: float32(col.G()) / 255,
+		B: float32(col.B()) / 255,
+	}
+	*colours = append(*colours, sdlColour, sdlColour, sdlColour, sdlColour)
+}
+
+func addQuadIndices(indices *[]int32) {
+	count := int32(len(*indices) / 6)
+	*indices = append(*indices, []int32{
+		4*count + 1, 4 * count, 4*count + 2, // triangle 1
+		4*count + 1, 4*count + 2, 4*count + 3, // triangle 2
+	}...)
+}
+
+func addQuadUVs(uvs *[]sdl.FPoint, src_pixel vec.Coord, w, h float32, tileSize int, width int) {
+	*uvs = append(*uvs,
+		sdl.FPoint{float32(src_pixel.X) / w, float32(src_pixel.Y) / h},
+		sdl.FPoint{float32(src_pixel.X+(width)) / w, float32(src_pixel.Y) / h},
+		sdl.FPoint{float32(src_pixel.X) / w, float32(src_pixel.Y+tileSize) / h},
+		sdl.FPoint{float32(src_pixel.X+(width)) / w, float32(src_pixel.Y+tileSize) / h},
+	)
 }

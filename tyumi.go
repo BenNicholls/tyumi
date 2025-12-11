@@ -3,6 +3,7 @@ package tyumi
 import (
 	"time"
 
+	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/log"
 	"github.com/bennicholls/tyumi/util"
@@ -28,6 +29,10 @@ var (
 
 func init() {
 	SetFramerate(60)
+
+	log.AddOnMessageCallback(func(entry log.Entry) {
+		event.Fire(EV_LOGMESSAGE, &LogEvent{Entry: entry})
+	})
 }
 
 // Sets maximum framerate as enforced by the framerate limiter. NOTE: cannot go higher than 1000 fps.

@@ -35,7 +35,7 @@ func Run() {
 	events = event.NewStream(250, handleEvent)
 	events.Listen(EV_QUIT, EV_CHANGESCENE)
 	if Debug {
-		events.Listen(input.EV_KEYBOARD)
+		events.Listen(input.EV_KEYBOARD, EV_LOGMESSAGE)
 	}
 
 	if ShowFPS {
@@ -150,7 +150,8 @@ func handleEvent(e event.Event) (event_handled bool) {
 	}
 
 	if Debug {
-		if e.ID() == input.EV_KEYBOARD {
+		switch e.ID() {
+		case input.EV_KEYBOARD:
 			key_event := e.(*input.KeyboardEvent)
 			if key_event.PressType == input.KEY_RELEASED {
 				return
@@ -163,11 +164,14 @@ func handleEvent(e event.Event) (event_handled bool) {
 				log.Info("Dumping UI of current scene! Saving files to directory 'uidump'")
 				mainConsole.DumpUI("uidump", true)
 			case input.K_F12:
-				if Debug {
-					if !debugger.IsOpen() {
-						OpenDialog(debugger)
-					}
+				if !debugger.IsOpen() {
+					OpenDialog(debugger)
 				}
+			}
+		case EV_LOGMESSAGE:
+			if debugger.ready {
+				logEvent := e.(*LogEvent)
+				debugger.addToLogDisplay(logEvent.Entry)
 			}
 		}
 	}

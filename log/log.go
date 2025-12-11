@@ -47,6 +47,10 @@ func (e Entry) String() string {
 	return fmt.Sprintf("[%s] %s: %s", e.Time.Format(time.TimeOnly), e.Level, e.Message)
 }
 
+func (e Entry) SimpleString() string {
+	return fmt.Sprintf("%s: %s\n", e.Level, e.Message)
+}
+
 func init() {
 	logger = make([]Entry, 0, 1000)
 }
@@ -76,8 +80,12 @@ func log(level level, messages ...any) {
 
 	if printLogs {
 		// for console printing we skip the timestamp for easier readability.
-		fmt.Printf("%s: %s\n", e.Level, e.Message)
+		fmt.Print(e.SimpleString())
 	}
+}
+
+func GetLogs() []Entry {
+	return logger
 }
 
 // Writes the log to log.txt.

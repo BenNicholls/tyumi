@@ -11,10 +11,14 @@ import (
 
 var ACTION_LIST_NEXT = input.RegisterAction("Select Next List Element")
 var ACTION_LIST_PREV = input.RegisterAction("Select Previous List Element")
+var ACTION_LIST_SCROLLUP = input.RegisterAction("Scroll List Up 1 Row")
+var ACTION_LIST_SCROLLDOWN = input.RegisterAction("Select List Down 1 Row")
 
 func init() {
 	input.DefaultActionMap.AddSimpleKeyAction(ACTION_LIST_NEXT, input.K_DOWN)
 	input.DefaultActionMap.AddSimpleKeyAction(ACTION_LIST_PREV, input.K_UP)
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_LIST_SCROLLUP, input.K_PAGEUP)
+	input.DefaultActionMap.AddSimpleKeyAction(ACTION_LIST_SCROLLDOWN, input.K_PAGEDOWN)
 }
 
 // A List is a container that renders it's children elements from top to bottom, like you would expect a list to do. If
@@ -439,18 +443,22 @@ func (l *List) Render() {
 }
 
 func (l *List) HandleAction(action input.ActionID) (action_handled bool) {
-	if l.selectionEnabled {
-		switch action {
-		case ACTION_LIST_NEXT:
+	switch action {
+	case ACTION_LIST_NEXT:
+		if l.selectionEnabled {
 			l.SelectNext()
-		case ACTION_LIST_PREV:
-			l.SelectPrev()
-		default:
-			return false
 		}
-
-		return true
+	case ACTION_LIST_PREV:
+		if l.selectionEnabled {
+			l.SelectPrev()
+		}
+	case ACTION_LIST_SCROLLUP:
+		l.ScrollUp()
+	case ACTION_LIST_SCROLLDOWN:
+		l.ScrollDown()
+	default:
+		return false
 	}
 
-	return
+	return true
 }

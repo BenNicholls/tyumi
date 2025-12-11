@@ -9,9 +9,9 @@ import (
 )
 
 var logger []Entry
-var onMessageCallback func(e Entry)  // callback for when a message is logged
-var printLogs bool                   // print log messages to console
-var minimumLogLevel level = LVL_INFO // only log messages of this level or higher
+var onMessageCallbacks []func(e Entry) // callback for when a message is logged
+var printLogs bool                     // print log messages to console
+var minimumLogLevel level = LVL_INFO   // only log messages of this level or higher
 
 type level uint8
 
@@ -68,8 +68,10 @@ func log(level level, messages ...any) {
 
 	logger = append(logger, e)
 
-	if onMessageCallback != nil {
-		onMessageCallback(e)
+	for _, callback := range onMessageCallbacks {
+		if callback != nil {
+			callback(e)
+		}
 	}
 
 	if printLogs {
@@ -105,8 +107,8 @@ func Error(messages ...any) {
 }
 
 // Use this to run code whenever a log entry is recorded.
-func SetOnMessageCallback(f func(e Entry)) {
-	onMessageCallback = f
+func AddOnMessageCallback(f func(e Entry)) {
+	onMessageCallbacks = append(onMessageCallbacks, f)
 }
 
 // EnableConsoleOutput will cause all log messages to be printed to the console.

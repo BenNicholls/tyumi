@@ -28,6 +28,7 @@ type List struct {
 
 	ReverseOrder      bool   // if true, inserted elements are displayed from most recent to least recent
 	OnChangeSelection func() // callback triggered any time selection is changed, i.e. by scrolling
+	OnItemInserted    func()
 
 	selectionEnabled bool // toggle to allow user to have an item selected. selected items are always kept visible.
 	selectionIndex   int  // index of element that is currently selected. selected item will be ensured to be visible
@@ -85,6 +86,10 @@ func (l *List) Insert(items ...element) {
 		l.contentHeight += item.Bounds().H
 		if l.Count() != 1 {
 			l.contentHeight += l.padding
+		}
+
+		if l.OnItemInserted != nil {
+			l.OnItemInserted()
 		}
 
 		itemAdded = true

@@ -46,6 +46,9 @@ type element interface {
 	Move(dx, dy int)
 	SetDepth(depth int)
 
+	Show()
+	Hide()
+
 	Focus()
 	Defocus()
 	IsFocused() bool

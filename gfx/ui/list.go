@@ -23,18 +23,19 @@ type List struct {
 	Element
 
 	ReverseOrder      bool   // if true, inserted elements are displayed from most recent to least recent
-	OnChangeSelection func() //callback triggered any time selection is changed, i.e. by scrolling
+	OnChangeSelection func() // callback triggered any time selection is changed, i.e. by scrolling
 
-	padding   int  //amount of padding added between list items
-	selected  int  //element that is currently selected. selected item will be ensured to be visible
-	highlight bool //toggle to highlight currently selected list item
+	selectionEnabled bool // toggle to allow user to have an item selected. selected items are always kept visible.
+	selectionIndex   int  // index of element that is currently selected. selected item will be ensured to be visible
+	highlight        bool // toggle for showing the currently selected element (TODO: different highlight modes)
 
-	emptyLabel *Textbox
-	items      []element
-	capacity   int // max capacity for items in the List. if 0, no limit is enforced. If > 0, new items replace the oldest items.
+	items      []element // items in the list.
+	capacity   int       // max capacity for items in the List. if 0, no limit is enforced. If > 0, new items replace the oldest items.
+	emptyLabel *Textbox  // text shown when list is empty
 
-	contentHeight int //total height of all list contents. used for viewport and scrollbar purposes
-	scrollOffset  int //number of rows (NOT elements) to scroll the list contents to keep selected item visible
+	padding       int // amount of padding added between list items
+	contentHeight int // total height of all list contents. used for viewport and scrollbar purposes
+	scrollOffset  int // number of rows (NOT elements) to scroll the list contents to keep selected item visible
 
 	recalibrate bool // flag that indicates list elements need to be recalibrated before rendering
 }
@@ -50,7 +51,7 @@ func (l *List) Init(size vec.Dims, pos vec.Coord, depth int) {
 	l.Element.Init(size, pos, depth)
 	l.TreeNode.Init(l)
 	l.Border.EnableScrollbar(0, 0)
-	l.selected = -1
+	l.selectionIndex = -1
 }
 
 // Insert adds elements to the list. Inserted elements will be added to the end of the list and automatically
@@ -85,7 +86,9 @@ func (l *List) Insert(items ...element) {
 	}
 
 	if oldCount == 0 && l.Count() > 0 {
-		l.Select(0)
+		if l.selectionEnabled {
+			l.Select(0)
+		}
 
 		if l.emptyLabel != nil {
 			l.emptyLabel.Hide()
@@ -126,8 +129,8 @@ func (l *List) RemoveAt(index int) {
 
 	l.RemoveChild(l.items[index])
 	l.items = slices.Delete(l.items, index, index+1)
-	if index <= l.selected {
-		l.Select(l.selected - 1)
+	if l.selectionEnabled && index <= l.selectionIndex {
+		l.Select(l.selectionIndex - 1)
 	}
 
 	if l.emptyLabel != nil && l.Count() == 0 {
@@ -155,7 +158,8 @@ func (l *List) RemoveAll() {
 	}
 
 	l.contentHeight = 0
-	l.updateScrollPosition()
+	l.scrollOffset = 0
+	l.Border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
 	l.Updated = true
 }
 
@@ -175,6 +179,16 @@ func (l *List) SetCapacity(cap int) {
 			l.RemoveAt(toTrim - 1 - i)
 		}
 	}
+}
+
+// Sets the amount of padding between list items.
+func (l *List) SetPadding(padding int) {
+	if l.padding == padding {
+		return
+	}
+
+	l.padding = padding
+	l.recalibrate = true
 }
 
 // SetEmptyText creates a label that is shown in the list when the list contains no items.
@@ -212,11 +226,21 @@ func (l *List) calibrate() {
 		if item.IsBordered() {
 			item.Move(0, 1)
 		}
+
+		if item.Bounds().Intersects(l.DrawableArea()) {
+			item.Show()
+		} else {
+			item.Hide()
+		}
 		l.contentHeight += item.Bounds().H + l.padding
 	}
 
 	l.contentHeight -= l.padding // remove the padding below the last item
-	l.updateScrollPosition()
+	if l.selectionEnabled {
+		l.updateScrollPosition()
+	} else {
+		l.Border.UpdateScrollbar(l.contentHeight, l.scrollOffset)
+	}
 }
 
 // if there is more list content than can be displayed at once, ensure selected item is shown via scrolling
@@ -239,6 +263,11 @@ func (l *List) updateScrollPosition() {
 
 			for _, child := range l.GetChildren() {
 				child.Move(0, -scrollDelta)
+				if child.Bounds().Intersects(l.DrawableArea()) {
+					child.Show()
+				} else {
+					child.Hide()
+				}
 			}
 
 			l.scrollOffset += scrollDelta
@@ -266,7 +295,7 @@ func (l *List) ToggleHighlight() {
 }
 
 func (l *List) setHighlight(highlight bool) {
-	if l.highlight == highlight {
+	if !l.selectionEnabled || l.highlight == highlight {
 		return
 	}
 
@@ -274,20 +303,14 @@ func (l *List) setHighlight(highlight bool) {
 	l.Updated = true
 }
 
-// Sets the amount of padding between list items.
-func (l *List) SetPadding(padding int) {
-	if l.padding == padding {
+func (l *List) Select(selection int) {
+	if !l.selectionEnabled {
 		return
 	}
 
-	l.padding = padding
-	l.recalibrate = true
-}
-
-func (l *List) Select(selection int) {
 	if l.Count() == 0 {
-		if l.selected != -1 {
-			l.selected = -1
+		if l.selectionIndex != -1 {
+			l.selectionIndex = -1
 			fireCallbacks(l.OnChangeSelection)
 			l.Updated = true
 		}
@@ -295,59 +318,59 @@ func (l *List) Select(selection int) {
 	}
 
 	new_selection := util.Clamp(selection, 0, l.Count()-1)
-	if l.selected == new_selection {
+	if l.selectionIndex == new_selection {
 		return
 	}
 
-	l.selected = new_selection
+	l.selectionIndex = new_selection
 	l.updateScrollPosition()
 	fireCallbacks(l.OnChangeSelection)
 	l.Updated = true
 }
 
 func (l List) GetSelectionIndex() int {
-	return l.selected
+	return l.selectionIndex
 }
 
 func (l *List) getSelected() element {
-	if l.Count() == 0 {
+	if !l.selectionEnabled || l.Count() == 0 {
 		return nil
 	}
 
-	return l.items[l.selected]
+	return l.items[l.selectionIndex]
 }
 
 // Selects the next item in the list, wrapping back around to the top if necessary.
-func (l *List) Next() {
-	if l.Count() <= 1 {
+func (l *List) SelectNext() {
+	if !l.selectionEnabled || l.Count() <= 1 {
 		return
 	}
 
 	var nextIndex int
 	if !l.ReverseOrder {
-		nextIndex = util.CycleClamp(l.selected+1, 0, l.Count()-1)
+		nextIndex = util.CycleClamp(l.selectionIndex+1, 0, l.Count()-1)
 	} else {
-		nextIndex = util.CycleClamp(l.selected-1, 0, l.Count()-1)
+		nextIndex = util.CycleClamp(l.selectionIndex-1, 0, l.Count()-1)
 	}
 	l.Select(nextIndex)
 }
 
 // Selects the previous item in the list, wrapping back around to the bottom if necessary.
-func (l *List) Prev() {
-	if l.Count() <= 1 {
+func (l *List) SelectPrev() {
+	if !l.selectionEnabled || l.Count() <= 1 {
 		return
 	}
 
 	var prevIndex int
 	if !l.ReverseOrder {
-		prevIndex = util.CycleClamp(l.selected-1, 0, l.Count()-1)
+		prevIndex = util.CycleClamp(l.selectionIndex-1, 0, l.Count()-1)
 	} else {
-		prevIndex = util.CycleClamp(l.selected+1, 0, l.Count()-1)
+		prevIndex = util.CycleClamp(l.selectionIndex+1, 0, l.Count()-1)
 	}
 	l.Select(prevIndex)
 }
 
-func (l *List) ScrollToTop() {
+func (l *List) SelectTop() {
 	if l.ReverseOrder {
 		l.Select(l.Count() - 1)
 	} else {
@@ -355,12 +378,41 @@ func (l *List) ScrollToTop() {
 	}
 }
 
-func (l *List) ScrollToBottom() {
+func (l *List) SelectBottom() {
 	if !l.ReverseOrder {
 		l.Select(l.Count() - 1)
 	} else {
 		l.Select(0)
 	}
+}
+
+func (l *List) scrollTo(offset int) {
+	if offset == l.scrollOffset {
+		return
+	}
+
+	if l.contentHeight < l.size.H {
+		return
+	}
+
+	l.scrollOffset = offset
+	l.recalibrate = true
+}
+
+func (l *List) ScrollToTop() {
+	l.scrollTo(0)
+}
+
+func (l *List) ScrollToBottom() {
+	l.scrollTo(l.contentHeight - l.size.H + 1)
+}
+
+func (l *List) ScrollUp() {
+	l.scrollTo(util.Clamp(l.scrollOffset-1, 0, l.contentHeight-l.size.H))
+}
+
+func (l *List) ScrollDown() {
+	l.scrollTo(util.Clamp(l.scrollOffset+1, 0, l.contentHeight-l.size.H))
 }
 
 func (l *List) prepareRender() {
@@ -379,7 +431,7 @@ func (l *List) prepareRender() {
 func (l *List) Render() {
 	//render highlight for selected item.
 	//TODO: different options for how the selected item is highlighted. currently just inverts the colours
-	if l.highlight && l.Count() > 0 {
+	if l.selectionEnabled && l.highlight && l.Count() > 0 {
 		selected_area := l.getSelected().Bounds()
 		highlight_area := vec.FindIntersectionRect(selected_area, l.DrawableArea())
 		l.Canvas.DrawEffect(gfx.InvertEffect, highlight_area)
@@ -387,14 +439,18 @@ func (l *List) Render() {
 }
 
 func (l *List) HandleAction(action input.ActionID) (action_handled bool) {
-	switch action {
-	case ACTION_LIST_NEXT:
-		l.Next()
-	case ACTION_LIST_PREV:
-		l.Prev()
-	default:
-		return false
+	if l.selectionEnabled {
+		switch action {
+		case ACTION_LIST_NEXT:
+			l.SelectNext()
+		case ACTION_LIST_PREV:
+			l.SelectPrev()
+		default:
+			return false
+		}
+
+		return true
 	}
 
-	return true
+	return
 }

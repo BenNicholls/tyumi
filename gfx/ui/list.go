@@ -82,6 +82,11 @@ func (l *List) Insert(items ...element) {
 
 		l.items = append(l.items, item)
 		l.AddChild(item)
+		l.contentHeight += item.Bounds().H
+		if l.Count() != 1 {
+			l.contentHeight += l.padding
+		}
+
 		itemAdded = true
 	}
 
@@ -132,6 +137,10 @@ func (l *List) RemoveAt(index int) {
 	}
 
 	l.RemoveChild(l.items[index])
+	l.contentHeight -= l.items[index].Bounds().H
+	if l.Count() != 1 {
+		l.contentHeight -= l.padding
+	}
 	l.items = slices.Delete(l.items, index, index+1)
 	if l.selectionEnabled && index <= l.selectionIndex {
 		l.Select(l.selectionIndex - 1)

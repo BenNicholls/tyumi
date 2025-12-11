@@ -61,9 +61,11 @@ func (wnd *Window) Update(delta time.Duration) {
 			element.Update(delta)
 		}
 		element.UpdateAnimations(delta)
+		element.applyElementAnimations()
 	}, ifVisible)
 
 	wnd.UpdateAnimations(delta)
+	wnd.applyElementAnimations()
 }
 
 func (wnd *Window) Render() {
@@ -81,7 +83,7 @@ func (wnd *Window) Render() {
 		if element.IsUpdated() || element.IsRedrawing() {
 			element.Render()
 		}
-		element.renderAnimations()
+		element.renderCanvasAnimations()
 	}, ifVisible)
 
 	// finalize render. cleans up flags etc.
@@ -90,7 +92,7 @@ func (wnd *Window) Render() {
 	}, ifVisible)
 
 	wnd.drawChildren()
-	wnd.renderAnimations()
+	wnd.renderCanvasAnimations()
 	wnd.finalizeRender()
 }
 

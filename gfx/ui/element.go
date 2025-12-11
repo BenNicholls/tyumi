@@ -32,7 +32,8 @@ type element interface {
 	renderIfDirty()
 	Render()
 	Draw(dst_canvas *gfx.Canvas, force bool)
-	renderAnimations()
+	applyElementAnimations()
+	renderCanvasAnimations()
 	finalizeRender()
 	drawChildren()
 	ForceRedraw() //Force the element to clear and redraw itself and all children from scratch
@@ -505,7 +506,15 @@ func (e *Element) AddOneShotAnimation(animation anim.Animator) {
 	e.AddAnimation(animation)
 }
 
-func (e *Element) renderAnimations() {
+func (e *Element) applyElementAnimations() {
+	for animation := range e.EachPlayingAnimation() {
+		if elementAnim, ok := animation.(ElementAnimator); ok {
+			elementAnim.ApplyToElement(e)
+		}
+	}
+}
+
+func (e *Element) renderCanvasAnimations() {
 	for animation := range e.EachPlayingAnimation() {
 		if canvasAnim, ok := animation.(gfx.CanvasAnimator); ok {
 			canvasAnim.Render(&e.Canvas)

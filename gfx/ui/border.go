@@ -213,22 +213,61 @@ func (e *Element) drawBorder() {
 		bottom := vec.Coord{right, rect.Y + e.size.H - 1} //bottom of scrollbar area
 		e.DrawGlyph(top.Step(vec.DIR_UP), BorderDepth+1, gfx.GLYPH_TRIANGLE_UP)
 		e.DrawGlyph(bottom.Step(vec.DIR_DOWN), BorderDepth+1, gfx.GLYPH_TRIANGLE_DOWN)
-		e.DrawLine(vec.Line{top, bottom}, BorderDepth+1, gfx.NewGlyphVisuals(gfx.GLYPH_FILL_SPARSE, style.Colours))
+		e.DrawLine(vec.Line{top, bottom}, BorderDepth+1, gfx.NewGlyphVisuals(gfx.GLYPH_NONE, style.Colours))
 
-		h := e.size.H - 2 //scrollbar area height (not including arrows)
-		barSize := util.Clamp(util.RoundFloatToInt(float64(e.size.H)/float64(e.Border.scrollbarContentHeight)*float64(h)), 1, h-1)
+		listHeight := e.size.H
+		barAreaHeight := listHeight - 2
+		xMaxBarHeight := 2*barAreaHeight - 1
+		contentHeight := e.Border.scrollbarContentHeight
 
-		// default to barposition at top ie. no scrolling
-		barPos := top
-		if e.Border.scrollbarViewportPosition == e.Border.scrollbarContentHeight-e.size.H { // scrolling content is at bottom
-			barPos.Y += h - barSize
-		} else if e.Border.scrollbarViewportPosition != 0 { //scrolling content is somewhere in the middle. must ensure bar isn't at top or bottom.
-			barSize = util.Clamp(barSize, 1, h-2) // ensure bar cannot touch sides, so it shows that we scroll in both directions.
-			barPos.Y += util.Clamp(util.RoundFloatToInt(float64(e.Border.scrollbarViewportPosition)/float64(e.Border.scrollbarContentHeight)*float64(h-barSize)), 1, h-barSize-1)
+		// listheight is incremented by 1 here to represent the fact that a scrollbar will only exist if the
+		// content height is at least 1 higher than the drawable area.
+		xBarHeight := util.Clamp(
+			util.RoundFloatToInt(float64(xMaxBarHeight)*float64(listHeight+1)/float64(contentHeight)),
+			1, xMaxBarHeight*2)
+
+		scrollOffset := e.Border.scrollbarViewportPosition
+		maxScrollOffset := contentHeight - listHeight
+		if scrollOffset > maxScrollOffset {
+			scrollOffset = maxScrollOffset // not sure this is necessary, how would it even happen???
 		}
 
-		for i := range barSize {
-			e.DrawGlyph(barPos.StepN(vec.DIR_DOWN, i), BorderDepth+1, gfx.GLYPH_FILL_DENSE)
+		barPos := top
+		switch scrollOffset {
+		case 0: //scrollbar at top
+			if xBarHeight%2 == 1 {
+				e.DrawGlyph(vec.Coord{right, top.Y + xBarHeight/2}, BorderDepth+1, gfx.GLYPH_HALFBLOCK_UP)
+			}
+		case maxScrollOffset: // scrollbar at bottom
+			barPos = bottom.Subtract(vec.Coord{0, xBarHeight/2 - 1})
+			if xBarHeight%2 == 1 {
+				e.DrawGlyph(vec.Coord{right, bottom.Y - xBarHeight/2}, BorderDepth+1, gfx.GLYPH_HALFBLOCK_DOWN)
+			}
+		default: // scrollbar in middle
+			xMaxBarY := 2*barAreaHeight - xBarHeight
+			xBarY := util.Clamp(
+				util.RoundFloatToInt(float64(xMaxBarY)*float64(scrollOffset)/float64(maxScrollOffset)),
+				1, xMaxBarY)
+
+			if xBarY%2 == 0 {
+				barPos = barPos.Add(vec.Coord{0, xBarY / 2})
+				if xBarHeight%2 == 1 {
+					e.DrawGlyph(vec.Coord{right, top.Y + xBarY/2 + xBarHeight/2}, BorderDepth+1, gfx.GLYPH_HALFBLOCK_UP)
+					xBarHeight -= 1
+				}
+			} else {
+				barPos = barPos.Add(vec.Coord{0, (xBarY + 1) / 2})
+				e.DrawGlyph(vec.Coord{right, top.Y + xBarY/2}, BorderDepth+1, gfx.GLYPH_HALFBLOCK_DOWN)
+				if xBarHeight%2 == 0 {
+					e.DrawGlyph(vec.Coord{right, top.Y + xBarY/2 + xBarHeight/2}, BorderDepth+1, gfx.GLYPH_HALFBLOCK_UP)
+					xBarHeight -= 1
+				}
+				xBarHeight -= 1
+			}
+		}
+
+		for i := range xBarHeight / 2 {
+			e.DrawGlyph(barPos.StepN(vec.DIR_DOWN, i), BorderDepth+1, gfx.GLYPH_BLOCK)
 		}
 	}
 }

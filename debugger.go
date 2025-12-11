@@ -3,6 +3,7 @@ package tyumi
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bennicholls/tyumi/event"
 	"github.com/bennicholls/tyumi/gfx/ui"
@@ -34,6 +35,9 @@ type debugDialog struct {
 	logDisplay ui.List
 
 	commands map[string]debugCommand
+
+	slideIn  ui.ElementMoveAnimation
+	slideOut ui.ElementMoveAnimation
 }
 
 func (d *debugDialog) Init() {
@@ -47,7 +51,7 @@ func (d *debugDialog) Init() {
 	d.Window().AddChild(&d.container)
 
 	d.commandPage = d.container.CreatePage("CMD")
-	d.commandInput.Init(vec.Dims{d.commandPage.Size().W-2, 1}, vec.Coord{2, d.commandPage.Size().H - 1}, 0, 0)
+	d.commandInput.Init(vec.Dims{d.commandPage.Size().W - 2, 1}, vec.Coord{2, d.commandPage.Size().H - 1}, 0, 0)
 	d.commandInput.AcceptInput = true
 	d.commandDisplay.Init(d.commandPage.Size().Shrink(0, 2), vec.ZERO_COORD, ui.BorderDepth)
 	d.commandDisplay.EnableBorder()
@@ -56,10 +60,11 @@ func (d *debugDialog) Init() {
 	d.commandDisplay.OnItemInserted = func() { d.commandDisplay.ScrollToBottom() }
 	d.commandDisplay.AcceptInput = true
 	d.commandPage.AddChildren(&d.commandInput, &d.commandDisplay)
-	d.commandPage.AddChild(ui.NewTextbox(vec.Dims{2,1}, vec.Coord{0, d.commandPage.Size().H - 1}, 0, ">>>", ui.ALIGN_LEFT))
+	d.commandPage.AddChild(ui.NewTextbox(vec.Dims{2, 1}, vec.Coord{0, d.commandPage.Size().H - 1}, 0, ">>>", ui.ALIGN_LEFT))
 
 	d.logPage = d.container.CreatePage("LOG")
 	d.logDisplay.Init(d.logPage.Size().Shrink(0, 2), vec.ZERO_COORD, ui.BorderDepth)
+	d.logDisplay.EnableBorder()
 	d.logDisplay.SetCapacity(200)
 	d.logDisplay.OnItemInserted = func() { d.logDisplay.ScrollToBottom() }
 	d.logDisplay.AcceptInput = true
@@ -72,12 +77,28 @@ func (d *debugDialog) Init() {
 
 	d.keypressInputHandler = d.handleKeyEvent
 	d.Persistent = true
+
+	dSize := d.Window().Size()
+	from := vec.Coord{d.Window().Bounds().Coord.X, -dSize.H - 1}
+	to := vec.Coord{d.Window().Bounds().Coord.X, mainConsole.Size().H/2 - dSize.H/2}
+	d.slideIn = ui.NewElementMoveAnimation(from, to, 150*time.Millisecond)
+	d.slideIn.Blocking = true
+
+	d.slideOut = d.slideIn
+	d.slideOut.Backwards = true
+	d.slideOut.OnDone = func() {
+		d.Done = true
+	}
+
+	d.OnOpen = func() {
+		d.Window().AddOneShotAnimation(&d.slideIn)
+	}
 }
 
 func (d *debugDialog) handleKeyEvent(ke *input.KeyboardEvent) (event_handled bool) {
 	switch ke.Key {
 	case input.K_F12, input.K_ESCAPE:
-		d.Done = true
+		d.Window().AddOneShotAnimation(&d.slideOut)
 		return true
 	}
 

@@ -35,7 +35,8 @@ func fireEntityMovedEvent(entity Entity, from, to vec.Coord) {
 type TileChangedVisibilityEvent struct {
 	event.EventPrototype
 
-	Pos vec.Coord
+	Pos    vec.Coord
+	Opaque bool
 }
 
 type EntitySightEvent struct {

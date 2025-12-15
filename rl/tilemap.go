@@ -8,6 +8,7 @@ import (
 	"github.com/bennicholls/tyumi/gfx"
 	"github.com/bennicholls/tyumi/gfx/col"
 	"github.com/bennicholls/tyumi/rl/ecs"
+	"github.com/bennicholls/tyumi/util"
 	"github.com/bennicholls/tyumi/vec"
 )
 
@@ -22,9 +23,10 @@ type TileMap struct {
 
 	Ready bool // set this to true once level generation is complete! suppresses events while false.
 
-	events event.Stream
-	size   vec.Dims
-	tiles  []Tile
+	events     event.Stream
+	size       vec.Dims
+	tiles      []Tile
+	opacityMap util.Bitset
 
 	currentCameraBounds vec.Rect
 }
@@ -36,9 +38,10 @@ func (tm *TileMap) getMap() *TileMap {
 // Initialize the TileMap. All tiles in the map will be set to defaultTile
 func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	tm.DirtyTracker.Init(size)
-	tm.events.Listen(EV_ENTITYBEINGDESTROYED)
+	tm.events.Listen(EV_ENTITYBEINGDESTROYED, EV_TILECHANGEDVISIBILITY)
 	tm.events.SetEventHandler(tm.handleEvent)
 	tm.size = size
+	tm.opacityMap.Init(size.Area())
 
 	tm.LightSystem.Init(tm)
 	tm.FOVSystem.Init(tm)
@@ -47,6 +50,10 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	tm.tiles = make([]Tile, 0, size.Area())
 	for cursor := range vec.EachCoordInArea(tm.Bounds()) {
 		tm.tiles = append(tm.tiles, CreateTile(defaultTile, cursor))
+	}
+
+	if defaultTile.Data().Opaque {
+		tm.opacityMap.SetAll()
 	}
 
 	runtime.AddCleanup(tm, func(tiles []Tile) {
@@ -88,7 +95,9 @@ func (tm *TileMap) handleEvent(e event.Event) (event_handled bool) {
 		}
 
 		tm.RemoveEntityAt(pos)
-
+	case EV_TILECHANGEDVISIBILITY:
+		o := e.(*TileChangedVisibilityEvent)
+		tm.opacityMap.SetTo(o.Pos.ToIndex(tm.size.W), o.Opaque)
 	default:
 		return false
 	}
@@ -112,6 +121,10 @@ func (tm TileMap) GetTile(pos vec.Coord) (tile Tile) {
 	return tm.tiles[pos.ToIndex(tm.size.W)]
 }
 
+func (tm TileMap) IsTileOpaque(pos vec.Coord) bool {
+	return tm.opacityMap.Get(pos.ToIndex(tm.size.W))
+}
+
 // Sets the tile at the provided position pos. If the set fails for whatever reason (pos out of bounds, etc.), the
 // provided tile entity is destroyed.
 func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
@@ -126,9 +139,11 @@ func (tm *TileMap) SetTile(pos vec.Coord, tile Tile) {
 
 	oldTile := tm.tiles[pos.ToIndex(tm.size.W)]
 
-	if oldTile.IsOpaque() != tile.IsOpaque() {
+	if newTileOpacity := tile.IsOpaque(); tm.IsTileOpaque(pos) != newTileOpacity {
 		if tm.Ready {
-			event.Fire(EV_TILECHANGEDVISIBILITY, &TileChangedVisibilityEvent{Pos: pos})
+			event.Fire(EV_TILECHANGEDVISIBILITY, &TileChangedVisibilityEvent{Pos: pos, Opaque: newTileOpacity})
+		} else {
+			tm.opacityMap.SetTo(pos.ToIndex(tm.size.W), newTileOpacity)
 		}
 	}
 
@@ -149,9 +164,11 @@ func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
 		return
 	}
 
-	if tile.IsOpaque() != tileType.Data().Opaque {
+	if newTileOpacity := tileType.Data().Opaque; tm.IsTileOpaque(pos) != newTileOpacity {
 		if tm.Ready {
-			event.Fire(EV_TILECHANGEDVISIBILITY, &TileChangedVisibilityEvent{Pos: pos})
+			event.Fire(EV_TILECHANGEDVISIBILITY, &TileChangedVisibilityEvent{Pos: pos, Opaque: newTileOpacity})
+		} else {
+			tm.opacityMap.SetTo(pos.ToIndex(tm.size.W), newTileOpacity)
 		}
 	}
 

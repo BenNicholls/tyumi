@@ -22,6 +22,13 @@ func (bs *Bitset) Set(idx int) {
 	bs.bits[idx/64] |= (uint64(0x1) << (idx % 64))
 }
 
+// Sets all bits in the bitset.
+func (bs *Bitset) SetAll() {
+	for i := range bs.bits {
+		bs.bits[i] = 0xFFFFFFFFFFFFFFFF
+	}
+}
+
 // Sets the bit at index idx to 0.
 func (bs *Bitset) Unset(idx int) {
 	if idx >= bs.capacity || idx < 0 {
@@ -29,6 +36,15 @@ func (bs *Bitset) Unset(idx int) {
 	}
 
 	bs.bits[idx/64] &^= (uint64(0x1) << (idx % 64))
+}
+
+// Sets the bit at index idx to the value indicated (0 if false, 1 if true)
+func (bs *Bitset) SetTo(idx int, value bool) {
+	if value {
+		bs.Set(idx)
+	} else {
+		bs.Unset(idx)
+	}
 }
 
 // Gets the bit at index idx.

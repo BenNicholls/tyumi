@@ -38,8 +38,22 @@ type LightSourceComponent struct {
 }
 
 type photon struct {
-	amount uint8
+	amount [4]uint8 // UP, RIGHT, DOWN, LEFT
 	pos    vec.Coord
+}
+
+type tileLight [4]uint16 // UP, RIGHT, DOWN, LEFT
+
+func (tl tileLight) GetLevel(dir vec.Direction) uint16 {
+	return tl[dir/2]
+}
+
+func (tl *tileLight) SetLevel(level uint8, dir vec.Direction) {
+	tl[dir/2] = uint16(level)
+}
+
+func (tl tileLight) IsZero() bool {
+	return tl == tileLight{0, 0, 0, 0}
 }
 
 func (lsc *LightSourceComponent) Init() {
@@ -186,15 +200,14 @@ type LightSystem struct {
 
 	tileMap               *TileMap
 	changedVisbilityTiles util.Set[vec.Coord]
-	globalLight           uint8 // amount of light automatically applied to every tile. If 255, disables system.
-
-	lightmap []uint16 // the light applied to each tile!
+	globalLight           uint8       // amount of light automatically applied to every tile. If 255, disables system.
+	lightmap              []tileLight // the light applied to each tile!
 }
 
 func (ls *LightSystem) Init(tm *TileMap) {
 	ls.tileMap = tm
 	area := ls.tileMap.Bounds().Area()
-	ls.lightmap = make([]uint16, area, area)
+	ls.lightmap = make([]tileLight, area, area)
 	ls.Listen(EV_ENTITYMOVED, EV_TILECHANGEDVISIBILITY)
 	ls.SetImmediateEventHandler(ls.immediateHandleEvent)
 	ls.Enable()
@@ -212,12 +225,79 @@ func (ls *LightSystem) SetGlobalLight(light uint8) {
 	}
 }
 
-func (ls LightSystem) GetLightLevel(pos vec.Coord) uint8 {
+func (ls LightSystem) GetLightLevel(pos, view_pos vec.Coord) uint8 {
 	if !ls.Enabled {
 		return 255
 	}
 
-	return uint8(min(255, uint16(ls.globalLight)+ls.lightmap[pos.ToIndex(ls.tileMap.size.W)]))
+	light := ls.getTileLight(pos)
+	var viewedLight uint16
+	if ls.tileMap.IsTileOpaque(pos) {
+		if view_pos == NOT_IN_TILEMAP {
+			// if viewer is NOT IN TILEMAP we assume they are omniscient, and we light the tile
+			// with the largest light value among all directions
+			for _, level := range light {
+				viewedLight = max(viewedLight, level)
+			}
+		} else {
+			viewDelta := view_pos.Subtract(pos)
+
+			if viewDelta.X > 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_RIGHT)) {
+				viewedLight = light.GetLevel(vec.DIR_RIGHT)
+			} else if viewDelta.X < 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_LEFT)) {
+				viewedLight = light.GetLevel(vec.DIR_LEFT)
+			}
+
+			if viewDelta.Y < 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_UP)) {
+				viewedLight = max(viewedLight, light.GetLevel(vec.DIR_UP))
+			} else if viewDelta.Y > 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_DOWN)) {
+				viewedLight = max(viewedLight, light.GetLevel(vec.DIR_DOWN))
+			}
+
+			// sampling method for "technically invisible" corners that we still want to be
+			// able to see because it is nicer. :)
+			if viewedLight == 0 {
+				if viewDelta.X < 0 && viewDelta.Y < 0 {
+					if ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_UP)) && ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_LEFT)) {
+						if !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_UPLEFT)) {
+							viewedLight = ls.getTileLight(pos.Step(vec.DIR_UPLEFT))[0]
+						}
+					}
+				} else if viewDelta.X < 0 && viewDelta.Y > 0 {
+					if ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_DOWN)) && ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_LEFT)) {
+						if !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_DOWNLEFT)) {
+							viewedLight = ls.getTileLight(pos.Step(vec.DIR_DOWNLEFT))[0]
+						}
+					}
+				} else if viewDelta.X > 0 && viewDelta.Y < 0 {
+					if ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_UP)) && ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_RIGHT)) {
+						if !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_UPRIGHT)) {
+							viewedLight = ls.getTileLight(pos.Step(vec.DIR_UPRIGHT))[0]
+						}
+					}
+				} else if viewDelta.X > 0 && viewDelta.Y > 0 {
+					if ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_DOWN)) && ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_RIGHT)) {
+						if !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_DOWNRIGHT)) {
+							viewedLight = ls.getTileLight(pos.Step(vec.DIR_DOWNRIGHT))[0]
+						}
+					}
+				}
+			}
+
+		}
+	} else {
+		viewedLight = light.GetLevel(vec.DIR_UP)
+	}
+
+	return uint8(min(255, uint16(ls.globalLight)+viewedLight))
+}
+
+func (ls LightSystem) getTileLight(pos vec.Coord) *tileLight {
+	if !ls.Enabled {
+		return &tileLight{255, 255, 255, 255}
+	}
+
+	return &ls.lightmap[pos.ToIndex(ls.tileMap.size.W)]
 }
 
 func (ls *LightSystem) immediateHandleEvent(e event.Event) (event_handled bool) {
@@ -276,7 +356,7 @@ func (ls *LightSystem) Update(delta time.Duration) {
 }
 
 // LightTileVisuals applies the light level at the position to the computed tile visuals.
-func (ls *LightSystem) LightTileVisuals(vis gfx.Visuals, pos vec.Coord) (lit_vis gfx.Visuals) {
+func (ls *LightSystem) LightTileVisuals(vis gfx.Visuals, pos, view_pos vec.Coord) (lit_vis gfx.Visuals) {
 	if !ls.Enabled {
 		return vis
 	}
@@ -284,20 +364,26 @@ func (ls *LightSystem) LightTileVisuals(vis gfx.Visuals, pos vec.Coord) (lit_vis
 	// TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
 	// inverts the tile colours) should probably do this better somehow....
 	lit_vis = vis
-	lit_vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(ls.GetLightLevel(pos)), 255)
+	lit_vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(ls.GetLightLevel(pos, view_pos)), 255)
 
 	return
 }
 
+var zeroLight = [4]uint8{0, 0, 0, 0}
+
 func (ls *LightSystem) removeAppliedLight(light *LightSourceComponent) {
 	for idx, photon := range light.photons {
 		pos, amount := photon.pos, photon.amount
-		if amount == 0 {
+		if amount == zeroLight {
 			continue
 		}
 
-		ls.removeLight(pos, amount)
-		light.photons[idx].amount = 0
+		tileLight := ls.getTileLight(pos)
+
+		for i, value := range photon.amount {
+			tileLight[i] -= uint16(value)
+		}
+		light.photons[idx].amount = zeroLight
 		ls.tileMap.SetDirty(pos)
 	}
 }
@@ -327,7 +413,7 @@ func (ls *LightSystem) computeLightArea(light *LightSourceComponent) {
 
 	lightRange := light.GetMaxRange()
 	ls.tileMap.ShadowCast(source, int(lightRange), func(tm *TileMap, pos vec.Coord, d, r int) {
-		light.photons = append(light.photons, photon{0, pos})
+		light.photons = append(light.photons, photon{zeroLight, pos})
 		light.litbounds = light.litbounds.CalcExtendedRect(pos)
 	})
 
@@ -341,41 +427,61 @@ func (ls *LightSystem) applyLight(light *LightSourceComponent) {
 		return
 	}
 
-	source := ecs.Get[PositionComponent](light.GetEntity()).Coord
+	source := Entity(light.GetEntity()).Position()
 	if source == NOT_IN_TILEMAP {
 		return
 	}
 
 	for idx, photon := range light.photons {
 		pos := photon.pos
-		newLight := max(0, int(light.Power)-int(source.DistanceTo(pos)*float64(light.FalloffRate)))
-		if delta := newLight - int(photon.amount); delta != 0 {
-			ls.modLight(pos, delta)
-			ls.tileMap.SetDirty(pos)
+		amplitude := uint8(max(0, int(light.Power)-int(source.DistanceTo(pos)*float64(light.FalloffRate))))
+
+		var newLight tileLight
+		if ls.tileMap.IsTileOpaque(pos) {
+			posDelta := source.Subtract(pos)
+
+			if posDelta == vec.ZERO_COORD {
+				newLight = tileLight{uint16(amplitude), uint16(amplitude), uint16(amplitude), uint16(amplitude)}
+			} else {
+				if posDelta.X > 0 {
+					newLight.SetLevel(amplitude, vec.DIR_RIGHT)
+				} else if posDelta.X < 0 {
+					newLight.SetLevel(amplitude, vec.DIR_LEFT)
+				} else {
+					newLight.SetLevel(amplitude/2, vec.DIR_LEFT)
+					newLight.SetLevel(amplitude/2, vec.DIR_RIGHT)
+				}
+
+				if posDelta.Y < 0 {
+					newLight.SetLevel(amplitude, vec.DIR_UP)
+				} else if posDelta.Y > 0 {
+					newLight.SetLevel(amplitude, vec.DIR_DOWN)
+				} else {
+					newLight.SetLevel(amplitude/2, vec.DIR_DOWN)
+					newLight.SetLevel(amplitude/2, vec.DIR_UP)
+				}
+			}
+		} else {
+			newLight = tileLight{uint16(amplitude), uint16(amplitude), uint16(amplitude), uint16(amplitude)}
 		}
 
-		light.photons[idx].amount = uint8(newLight)
-	}
-}
+		tileLight := ls.getTileLight(pos)
 
-// Applies a delta to the light level on a tile.
-func (ls *LightSystem) modLight(pos vec.Coord, delta int) {
-	if delta > 0 {
-		ls.addLight(pos, uint8(delta))
-	} else if delta < 0 {
-		ls.removeLight(pos, uint8(-delta))
-	}
-}
+		for i := range newLight {
+			if photon.amount[i] == uint8(newLight[i]) {
+				continue
+			}
 
-func (ls *LightSystem) addLight(pos vec.Coord, light uint8) {
-	ls.lightmap[pos.ToIndex(ls.tileMap.size.W)] += uint16(light)
-}
+			delta := int(newLight[i]) - int(photon.amount[i])
+			if delta > 0 {
+				tileLight[i] += uint16(delta)
+			} else if delta < 0 {
+				tileLight[i] -= uint16(-delta)
+			}
 
-func (ls *LightSystem) removeLight(pos vec.Coord, light uint8) {
-	level := ls.GetLightLevel(pos)
-	if level < light {
-		ls.lightmap[pos.ToIndex(ls.tileMap.size.W)] = 0
-	} else {
-		ls.lightmap[pos.ToIndex(ls.tileMap.size.W)] -= uint16(light)
+			light.photons[idx].amount[i] = uint8(newLight[i])
+
+			ls.tileMap.SetDirty(pos)
+		}
 	}
 }

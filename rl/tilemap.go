@@ -253,13 +253,15 @@ func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
 
 func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	for cursor := range vec.EachCoordInIntersection(dst_canvas, tm.Bounds().Translated(offset)) {
-		dst_canvas.DrawVisuals(cursor, depth, tm.CalcTileVisuals(cursor.Subtract(offset)))
+		dst_canvas.DrawVisuals(cursor, depth, tm.CalcTileVisuals(cursor.Subtract(offset), NOT_IN_TILEMAP))
 	}
 
 	tm.Clean()
 }
 
-func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
+// pos is the position of the tile being lit. view_pos is the position of the viewing entity. if view_pos
+// is NOT_IN_TILEMAP, the viewer is considered to be able to see the tile from all angles, i guess. hmm. (THINK)
+func (tm *TileMap) CalcTileVisuals(pos, view_pos vec.Coord) (vis gfx.Visuals) {
 	tile := tm.GetTile(pos)
 	terrain := ecs.Get[TerrainComponent](tile)
 	if terrain.TileType == TILE_NONE {
@@ -267,7 +269,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	}
 
 	info := terrain.Data()
-	light := tm.GetLightLevel(pos)
+	light := tm.GetLightLevel(pos, view_pos)
 	if light == 0 {
 		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, info.Visuals.Colours.Back})
 	}
@@ -286,7 +288,7 @@ func (tm *TileMap) CalcTileVisuals(pos vec.Coord) (vis gfx.Visuals) {
 	}
 
 	//Apply lighting!
-	vis = tm.LightTileVisuals(vis, pos)
+	vis = tm.LightTileVisuals(vis, pos, view_pos)
 
 	return
 }

@@ -52,9 +52,10 @@ func (tm *TileMap) scan(pos vec.Coord, row int, slope1, slope2 float32, radius i
 					fn(tm, mapPos, d, radius)
 				}
 			}
+			
 			//scanning a block
 			if blocked {
-				if !tm.tiles[mapPos.ToIndex(tm.size.W)].IsOpaque() {
+				if !tm.IsTileOpaque(mapPos) {
 					blocked = false
 					slope1 = newStart
 				} else {
@@ -62,7 +63,7 @@ func (tm *TileMap) scan(pos vec.Coord, row int, slope1, slope2 float32, radius i
 				}
 			} else {
 				//blocked square, commence child scan
-				if j < radius && tm.tiles[mapPos.ToIndex(tm.size.W)].IsOpaque() {
+				if j < radius && tm.IsTileOpaque(mapPos) {
 					blocked = true
 					tm.scan(pos, j+1, newStart, lSlope, radius, r, cull, fn)
 					newStart = rSlope

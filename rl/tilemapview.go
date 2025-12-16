@@ -14,7 +14,7 @@ import (
 type drawableTileMap interface {
 	vec.Bounded
 	gfx.DrawableReporter
-	CalcTileVisuals(tile_pos vec.Coord) gfx.Visuals
+	CalcTileVisuals(tile_pos, viewer_pos vec.Coord) gfx.Visuals
 	getMap() *TileMap
 }
 
@@ -161,7 +161,12 @@ func (tmv *TileMapView) Render() {
 			if fovComp == nil || fovComp.InFOV(tileCursor) {
 				// if there is no viewing entity, or if the viewing entity does not have an FOV component, we just
 				// assume the camera is omniscient. otherwise we check to see if the tile is in the fov we found.
-				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor)
+				view_pos := NOT_IN_TILEMAP
+				if fovComp != nil && !fovComp.Omniscient {
+					view_pos = tmv.ViewingEntity.Position()
+				}
+
+				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor, view_pos)
 			} else if memoryComp != nil {
 				// otherwise we try to pull the visuals from the memory of the viewer, if it has one.
 				if memory, ok := memoryComp.GetMemory(tileCursor); ok {
@@ -172,10 +177,10 @@ func (tmv *TileMapView) Render() {
 			}
 
 			if tileVisuals.Mode == gfx.DRAW_NONE {
-				tmv.DrawVisuals(cursor, 0, tmv.DefaultVisuals())
-			} else {
-				tmv.DrawVisuals(cursor, 0, tileVisuals)
+				tileVisuals = tmv.DefaultVisuals()
 			}
+
+			tmv.DrawVisuals(cursor, 0, tileVisuals)
 		}
 	}
 

@@ -81,6 +81,14 @@ func (t Tile) GetEntity() Entity {
 	}
 }
 
+func (t Tile) HasEntity() bool {
+	if container := ecs.Get[EntityContainerComponent](t); container != nil {
+		return container.Entity.IsValid()
+	} else {
+		return false
+	}
+}
+
 func (t Tile) RemoveEntity() {
 	if container := ecs.Get[EntityContainerComponent](t); container != nil {
 		container.Remove()

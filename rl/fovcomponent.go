@@ -283,7 +283,7 @@ func (mc *MemoryComponent) AddMemory(tilemap *TileMap, pos vec.Coord) {
 
 	info := tiletype.Data()
 	if info.Passable {
-		if entity := tile.GetEntity(); entity != INVALID_ENTITY {
+		if entity := tile.GetEntity(); entity.IsValid() {
 			memory.Visuals = entity.GetEntityData().Visuals
 		}
 	}

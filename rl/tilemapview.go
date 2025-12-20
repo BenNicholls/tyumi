@@ -146,7 +146,7 @@ func (tmv *TileMapView) Render() {
 	var fovComp *FOVComponent
 	var memoryComp *MemoryComponent
 
-	if tmv.ViewingEntity != INVALID_ENTITY {
+	if tmv.ViewingEntity.IsValid() {
 		fovComp = ecs.Get[FOVComponent](tmv.ViewingEntity)
 		memoryComp = ecs.Get[MemoryComponent](tmv.ViewingEntity)
 	}
@@ -189,7 +189,7 @@ func (tmv *TileMapView) Render() {
 
 func (tmv *TileMapView) RenderLabels() {
 	var fovComp *FOVComponent
-	if tmv.ViewingEntity != INVALID_ENTITY {
+	if tmv.ViewingEntity.IsValid() {
 		fovComp = ecs.Get[FOVComponent](tmv.ViewingEntity)
 	}
 

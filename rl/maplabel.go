@@ -86,7 +86,7 @@ func (mlc *MapLabelComponent) MoveTo(pos vec.Coord) {
 func (mlc *MapLabelComponent) EntityPosition() (pos vec.Coord) {
 	pos = NOT_IN_TILEMAP
 
-	if mlc.Parent != INVALID_ENTITY {
+	if mlc.Parent.IsValid() {
 		if posComp := ecs.Get[PositionComponent](mlc.Parent); posComp != nil {
 			pos = posComp.Coord
 		}

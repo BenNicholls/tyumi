@@ -78,7 +78,7 @@ func (e Entity) GetVisuals() (vis gfx.Visuals) {
 }
 
 func (e Entity) GetEntityData() EntityData {
-	return ecs.Get[EntityComponent](e).EntityType.GetData()
+	return ecs.Get[EntityComponent](e).GetData()
 }
 
 func (e Entity) GetName() string {
@@ -91,6 +91,10 @@ func (e Entity) Position() vec.Coord {
 
 func (e Entity) IsPlayer() bool {
 	return ecs.Has[PlayerComponent](e)
+}
+
+func (e Entity) IsValid() bool {
+	return e != INVALID_ENTITY
 }
 
 func (e Entity) MoveTo(pos vec.Coord) {

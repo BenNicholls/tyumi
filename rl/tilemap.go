@@ -159,7 +159,7 @@ func (tm *TileMap) SetTileType(pos vec.Coord, tileType TileType) {
 
 	tile := tm.tiles[pos.ToIndex(tm.size.W)]
 
-	if tile.GetEntity() != INVALID_ENTITY && !tileType.Data().Passable {
+	if tile.GetEntity().IsValid() && !tileType.Data().Passable {
 		// do not do the switch if there's an entity and new tiletype can't hold an entity
 		return
 	}
@@ -229,7 +229,7 @@ func (tm *TileMap) GetEntityAt(pos vec.Coord) Entity {
 }
 
 func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
-	if entity == INVALID_ENTITY {
+	if !entity.IsValid() {
 		return
 	}
 
@@ -280,14 +280,13 @@ func (tm *TileMap) CalcTileVisuals(pos, view_pos vec.Coord) (vis gfx.Visuals) {
 	}
 
 	if info.Passable {
-		if entity := tile.GetEntity(); entity != INVALID_ENTITY {
+		if entity := tile.GetEntity(); entity.IsValid() {
 			tileVis := vis
 			vis = entity.GetVisuals()
 			vis.Colours.Back = vis.Colours.Back.Replace(col.NONE, tileVis.Colours.Back)
 		}
 	}
 
-	//Apply lighting!
 	vis = tm.LightTileVisuals(vis, pos, view_pos)
 
 	return

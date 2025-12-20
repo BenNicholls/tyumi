@@ -1,6 +1,10 @@
 package ecs
 
-import "iter"
+import (
+	"iter"
+
+	"github.com/bennicholls/tyumi/log"
+)
 
 // EachComponent is an iterator that iterates over all active components of a certain type. The 2nd returned iterator
 // value is the component's entity.
@@ -26,4 +30,13 @@ func EachEntityWith[T componentType]() iter.Seq[Entity] {
 			}
 		}
 	}
+}
+
+func EachEntityWithTag(tag Tag) iter.Seq[Entity] {
+	if !tag.isValid() {
+		log.Debug("Invalid tag!")
+		return func(yield func(Entity) bool) { return }
+	}
+
+	return tagCaches[tag].EachElement()
 }

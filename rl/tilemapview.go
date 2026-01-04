@@ -14,7 +14,7 @@ import (
 type drawableTileMap interface {
 	vec.Bounded
 	gfx.DrawableReporter
-	CalcTileVisuals(tile_pos, viewer_pos vec.Coord) gfx.Visuals
+	CalcTileVisuals(tile_pos vec.Coord, viewer Entity) gfx.Visuals
 	getMap() *TileMap
 }
 
@@ -158,21 +158,19 @@ func (tmv *TileMapView) Render() {
 			var tileVisuals gfx.Visuals
 			tileVisuals.Mode = gfx.DRAW_NONE
 
-			if fovComp == nil || fovComp.InFOV(tileCursor) {
-				// if there is no viewing entity, or if the viewing entity does not have an FOV component, we just
-				// assume the camera is omniscient. otherwise we check to see if the tile is in the fov we found.
-				view_pos := NOT_IN_TILEMAP
-				if fovComp != nil && !fovComp.Omniscient {
-					view_pos = tmv.ViewingEntity.Position()
-				}
+			if fovComp == nil || fovComp.Omniscient {
+				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor, INVALID_ENTITY)
+			} else if fovComp.InFOV(tileCursor) {
+				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor, tmv.ViewingEntity)
+			}
 
-				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor, view_pos)
-			} else if memoryComp != nil {
-				// otherwise we try to pull the visuals from the memory of the viewer, if it has one.
-				if memory, ok := memoryComp.GetMemory(tileCursor); ok {
-					tileVisuals = memory.Visuals
-					tileVisuals.Colours = memoryComp.Colours
-					tileVisuals.Colours = tileVisuals.Colours.Replace(col.NONE, tmv.DefaultColours())
+			if tileVisuals.Mode == gfx.DRAW_NONE {
+				if memoryComp != nil {
+					if memory, ok := memoryComp.GetMemory(tileCursor); ok {
+						tileVisuals = memory.Visuals
+						tileVisuals.Colours = memoryComp.Colours
+						tileVisuals.Colours = tileVisuals.Colours.Replace(col.NONE, tmv.DefaultColours())
+					}
 				}
 			}
 

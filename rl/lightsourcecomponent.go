@@ -356,7 +356,7 @@ func (ls *LightSystem) Update(delta time.Duration) {
 }
 
 // LightTileVisuals applies the light level at the position to the computed tile visuals.
-func (ls *LightSystem) LightTileVisuals(vis gfx.Visuals, pos, view_pos vec.Coord) (lit_vis gfx.Visuals) {
+func (ls *LightSystem) LightTileVisuals(vis gfx.Visuals, light_level uint8) (lit_vis gfx.Visuals) {
 	if !ls.Enabled {
 		return vis
 	}
@@ -364,7 +364,7 @@ func (ls *LightSystem) LightTileVisuals(vis gfx.Visuals, pos, view_pos vec.Coord
 	// TODO: this lighting function will act pretty weird if the backcolour is a light colour (like if something
 	// inverts the tile colours) should probably do this better somehow....
 	lit_vis = vis
-	lit_vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(ls.GetLightLevel(pos, view_pos)), 255)
+	lit_vis.Colours.Fore = vis.Colours.Back.Lerp(vis.Colours.Fore, int(light_level), 255)
 
 	return
 }

@@ -80,6 +80,11 @@ func (fov *FOVComponent) InFOV(pos vec.Coord) bool {
 	return fov.field.Contains(pos)
 }
 
+// Reports whether the viewer is allowed to see the entity (ie the entity is not invisible or something)
+func (fov *FOVComponent) CanSee(entity Entity) bool {
+	return fov.Omniscient || !entity.IsInvisible()
+}
+
 type FOVSystem struct {
 	System
 
@@ -103,7 +108,7 @@ func (fs *FOVSystem) immediateHandleEvents(e event.Event) (event_handled bool) {
 				continue
 			}
 
-			if !fov.TrackEntities {
+			if !fov.TrackEntities || !fov.CanSee(moveEvent.Entity) {
 				continue
 			}
 
@@ -127,6 +132,9 @@ func (fs *FOVSystem) immediateHandleEvents(e event.Event) (event_handled bool) {
 		visEvent := e.(*TileChangedVisibilityEvent)
 		fs.changedVisbilityTiles.Add(visEvent.Pos)
 		return true
+	// case EV_ENTITYCHANGEDVISIBILITY:
+		// TODO: IMPLEMENT THIS ONCE WE NEED IT.
+		// return
 	}
 
 	return
@@ -171,7 +179,9 @@ func (fs *FOVSystem) Update(delta time.Duration) {
 				}
 
 				if pos := ecs.Get[PositionComponent](newEntity).Coord; fov.InFOV(pos) {
-					newEntities.Add(Entity(newEntity))
+					if fov.CanSee(Entity(newEntity)) {
+						newEntities.Add(Entity(newEntity))
+					}
 				}
 			}
 

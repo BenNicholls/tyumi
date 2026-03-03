@@ -30,6 +30,8 @@ type TerrainComponent struct {
 type EntityComponent struct {
 	ecs.Component
 	EntityType
+
+	Invisible bool
 }
 
 type PlayerComponent struct {

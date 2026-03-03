@@ -20,6 +20,7 @@ type EntityData struct {
 	Desc           string // Generic description for the entity
 	HP             int    // HP this entity starts with. If zero, entity is undamagable.
 	Visuals        gfx.Visuals
+	Invisible      bool // if this entity can be seen by non-omniscient beings.
 	CreateFunction func(e Entity) // function run on the created entity. put custom config steps here!
 }
 
@@ -46,6 +47,10 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 
 	if hp := data.HP; hp > 0 {
 		ecs.Add(entity, HealthComponent{HP: NewBasicStat(hp)})
+	}
+
+	if data.Invisible {
+		ecs.Get[EntityComponent](entity).Invisible = true
 	}
 
 	if data.CreateFunction != nil {
@@ -75,6 +80,18 @@ func (e Entity) GetVisuals() (vis gfx.Visuals) {
 	}
 
 	return
+}
+
+func (e Entity) IsInvisible() bool {
+	return ecs.Get[EntityComponent](e).Invisible
+}
+
+func (e Entity) IsOmniscient() bool {
+	if fov := ecs.Get[FOVComponent](e); fov != nil {
+		return fov.Omniscient
+	}
+
+	return false
 }
 
 func (e Entity) GetEntityData() EntityData {

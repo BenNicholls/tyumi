@@ -289,20 +289,20 @@ func (mc *MemoryComponent) AddMemory(tilemap *TileMap, pos vec.Coord) {
 	}
 
 	var memory Memory
-	memory.Visuals.Mode = gfx.DRAW_NONE // used as a sentinel value to make sure we get a memory
+	memory.Mode = gfx.DRAW_NONE // used as a sentinel value to make sure we get a memory
 
 	info := tiletype.Data()
 	if info.Passable {
 		if entity := tile.GetEntity(); entity.IsValid() {
-			memory.Visuals = entity.GetEntityData().Visuals
+			memory = makeMemory(entity.GetEntityData().Visuals)
 		}
 	}
 
-	if memory.Visuals.Mode == gfx.DRAW_NONE {
-		memory.Visuals = info.Visuals
+	if memory.Mode == gfx.DRAW_NONE {
+		memory = makeMemory(info.Visuals)
 	}
 
-	if memory.Visuals.Mode != gfx.DRAW_NONE {
+	if memory.Mode != gfx.DRAW_NONE {
 		mc.memory[pos] = memory
 	} else {
 		// no visuals found for some reason... lets just do a big baleet to make sure we don't have garbage in here.
@@ -311,5 +311,15 @@ func (mc *MemoryComponent) AddMemory(tilemap *TileMap, pos vec.Coord) {
 }
 
 type Memory struct {
-	Visuals gfx.Visuals
+	Mode gfx.DrawMode
+	Glyph gfx.Glyph
+	Chars [2]uint8
+}
+
+func makeMemory(vis gfx.Visuals) Memory {
+	return Memory{
+		Mode: vis.Mode,
+		Glyph: vis.Glyph,
+		Chars: vis.Chars,
+	}
 }

@@ -167,7 +167,9 @@ func (tmv *TileMapView) Render() {
 			if tileVisuals.Mode == gfx.DRAW_NONE {
 				if memoryComp != nil {
 					if memory, ok := memoryComp.GetMemory(tileCursor); ok {
-						tileVisuals = memory.Visuals
+						tileVisuals.Mode = memory.Mode
+						tileVisuals.Glyph = memory.Glyph
+						tileVisuals.Chars = memory.Chars
 						tileVisuals.Colours = memoryComp.Colours
 						tileVisuals.Colours = tileVisuals.Colours.Replace(col.NONE, tmv.DefaultColours())
 					}

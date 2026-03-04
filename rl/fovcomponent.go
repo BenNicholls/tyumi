@@ -281,9 +281,13 @@ func (mc *MemoryComponent) AddMemory(tilemap *TileMap, pos vec.Coord) {
 		return
 	}
 
+	viewer := Entity(mc.GetEntity())
+	if tilemap.GetLightLevel(pos, viewer.Position()) == 0 {
+		return
+	}
+
 	tile := tilemap.GetTile(pos)
-	tiletype := tile.GetTileType()
-	if tiletype == TILE_NONE {
+	if tile.GetTileType() == TILE_NONE {
 		delete(mc.memory, pos)
 		return
 	}
@@ -291,15 +295,11 @@ func (mc *MemoryComponent) AddMemory(tilemap *TileMap, pos vec.Coord) {
 	var memory Memory
 	memory.Mode = gfx.DRAW_NONE // used as a sentinel value to make sure we get a memory
 
-	info := tiletype.Data()
-	if info.Passable {
-		if entity := tile.GetEntity(); entity.IsValid() {
-			memory = makeMemory(entity.GetEntityData().Visuals)
-		}
-	}
+	entityVis, _ := DefaultTileEntityDrawFunction(tile, viewer)
+	memory = makeMemory(entityVis)
 
-	if memory.Mode == gfx.DRAW_NONE {
-		memory = makeMemory(info.Visuals)
+	if memory.Mode == gfx.DRAW_NONE || !entityVis.HasForegroundContent() {
+		memory = makeMemory(DefaultTileDrawFunction(tile, viewer))
 	}
 
 	if memory.Mode != gfx.DRAW_NONE {

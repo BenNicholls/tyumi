@@ -11,13 +11,6 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-type drawableTileMap interface {
-	vec.Bounded
-	gfx.DrawableReporter
-	CalcTileVisuals(tile_pos vec.Coord, viewer Entity) gfx.Visuals
-	getMap() *TileMap
-}
-
 type TileMapView struct {
 	ui.Element
 	MapLabelSystem
@@ -25,20 +18,20 @@ type TileMapView struct {
 	FocusedEntity Entity // Entity that the tile map view remains centered on.
 	ViewingEntity Entity // Entity that the tile map is drawn from the perspective of.
 
-	tilemap      drawableTileMap
+	tilemap      *TileMap
 	cameraOffset vec.Coord // area we're viewing
 
 	labelLayer ui.Element
 }
 
-func NewTileMapView(size vec.Dims, pos vec.Coord, depth int, tilemap drawableTileMap) (tmv *TileMapView) {
+func NewTileMapView(size vec.Dims, pos vec.Coord, depth int, tilemap *TileMap) (tmv *TileMapView) {
 	tmv = new(TileMapView)
 	tmv.Init(size, pos, depth, tilemap)
 
 	return
 }
 
-func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap drawableTileMap) {
+func (tmv *TileMapView) Init(size vec.Dims, pos vec.Coord, depth int, tilemap *TileMap) {
 	tmv.Element.Init(size, pos, depth)
 	tmv.TreeNode.Init(tmv)
 
@@ -80,7 +73,7 @@ func (tmv *TileMapView) ImmediateHandleEvent(e event.Event) (event_handled bool)
 	return
 }
 
-func (tmv *TileMapView) SetTileMap(tilemap drawableTileMap) {
+func (tmv *TileMapView) SetTileMap(tilemap *TileMap) {
 	tmv.tilemap = tilemap
 	tmv.Updated = true
 	tmv.tilemap.getMap().currentCameraBounds = vec.Rect{tmv.cameraOffset, tmv.Size()}
@@ -148,20 +141,21 @@ func (tmv *TileMapView) Render() {
 
 	if tmv.ViewingEntity.IsValid() {
 		fovComp = ecs.Get[FOVComponent](tmv.ViewingEntity)
-		memoryComp = ecs.Get[MemoryComponent](tmv.ViewingEntity)
+		if !fovComp.Omniscient {
+			memoryComp = ecs.Get[MemoryComponent](tmv.ViewingEntity)
+		}
 	}
 
-	tilemap := tmv.tilemap.getMap()
 	for cursor := range vec.EachCoordInIntersection(tmv, tmv.tilemap.Bounds().Translated(tmv.cameraOffset.Scale(-1))) {
 		tileCursor := cursor.Add(tmv.cameraOffset)
-		if tmv.IsRedrawing() || tilemap.IsDirtyAt(tileCursor) {
+		if tmv.IsRedrawing() || tmv.tilemap.IsDirtyAt(tileCursor) {
 			var tileVisuals gfx.Visuals
 			tileVisuals.Mode = gfx.DRAW_NONE
 
 			if fovComp == nil || fovComp.Omniscient {
-				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor, INVALID_ENTITY)
+				tileVisuals = tmv.tilemap.calcTileVisuals(tileCursor, INVALID_ENTITY)
 			} else if fovComp.InFOV(tileCursor) {
-				tileVisuals = tmv.tilemap.CalcTileVisuals(tileCursor, tmv.ViewingEntity)
+				tileVisuals = tmv.tilemap.calcTileVisuals(tileCursor, tmv.ViewingEntity)
 			}
 
 			if tileVisuals.Mode == gfx.DRAW_NONE {
@@ -170,8 +164,7 @@ func (tmv *TileMapView) Render() {
 						tileVisuals.Mode = memory.Mode
 						tileVisuals.Glyph = memory.Glyph
 						tileVisuals.Chars = memory.Chars
-						tileVisuals.Colours = memoryComp.Colours
-						tileVisuals.Colours = tileVisuals.Colours.Replace(col.NONE, tmv.DefaultColours())
+						tileVisuals.Colours = memoryComp.Colours.Replace(col.NONE, tmv.DefaultColours())
 					}
 				}
 			}

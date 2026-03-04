@@ -22,6 +22,14 @@ func AddAnimation[ET ~uint32](entity ET, a anim.Animator, oneshot bool) {
 	}
 }
 
+func ApplyVisualAnimations[ET ~uint32](entity ET, start_vis gfx.Visuals) (vis gfx.Visuals) {
+	if animComp := ecs.Get[AnimationComponent](entity); animComp != nil {
+		return animComp.ApplyVisualAnimations(start_vis)
+	}
+
+	return start_vis
+}
+
 // AnimationComponent is a container for animations affecting an entity in the ECS.
 type AnimationComponent struct {
 	ecs.Component

@@ -253,7 +253,7 @@ func (tm *TileMap) MoveEntity(entity Entity, to vec.Coord) {
 
 func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 	for cursor := range vec.EachCoordInIntersection(dst_canvas, tm.Bounds().Translated(offset)) {
-		dst_canvas.DrawVisuals(cursor, depth, tm.CalcTileVisuals(cursor.Subtract(offset), INVALID_ENTITY))
+		dst_canvas.DrawVisuals(cursor, depth, tm.calcTileVisuals(cursor.Subtract(offset), INVALID_ENTITY))
 	}
 
 	tm.Clean()
@@ -261,34 +261,39 @@ func (tm TileMap) Draw(dst_canvas *gfx.Canvas, offset vec.Coord, depth int) {
 
 // pos is the position of the tile being computed. view_pos is the position of the viewing entity. if view_pos
 // is NOT_IN_TILEMAP, the viewer is considered to be able to see the tile from all angles, i guess. hmm. (THINK)
-func (tm *TileMap) CalcTileVisuals(pos vec.Coord, viewer Entity) (vis gfx.Visuals) {
+func (tm *TileMap) calcTileVisuals(pos vec.Coord, viewer Entity) (vis gfx.Visuals) {
 	view_pos := NOT_IN_TILEMAP
 	if viewer.IsValid() {
 		view_pos = viewer.Position()
 	}
 
 	tile := tm.GetTile(pos)
-	terrain := ecs.Get[TerrainComponent](tile)
-	if terrain.TileType == TILE_NONE {
+	tileType := tile.GetTileType()
+	if tileType == TILE_NONE {
 		return gfx.Visuals{Mode: gfx.DRAW_NONE}
 	}
 
-	info := terrain.Data()
 	light := tm.GetLightLevel(pos, view_pos)
 	if light == 0 {
+		info := tileType.Data()
 		return gfx.NewGlyphVisuals(gfx.GLYPH_NONE, col.Pair{col.NONE, info.Visuals.Colours.Back})
 	}
 
-	vis = info.Visuals
-	if tileAnimComp := ecs.Get[AnimationComponent](tile); tileAnimComp != nil {
-		vis = tileAnimComp.ApplyVisualAnimations(vis)
-	}
+	var entity Entity
+	vis, entity = DefaultTileEntityDrawFunction(tile, viewer)
+	if entity == INVALID_ENTITY || vis.Mode == gfx.DRAW_NONE {
+		vis = DefaultTileDrawFunction(tile, viewer)
+	} else if f, b := vis.HasForegroundContent(), vis.HasBackgroundContent(); !f || !b {
+		tileVis := DefaultTileDrawFunction(tile, viewer)
+		if !f {
+			vis.Mode = tileVis.Mode
+			vis.Glyph = tileVis.Glyph
+			vis.Chars = tileVis.Chars
+			vis.Colours.Fore = tileVis.Colours.Fore
+		}
 
-	if info.Passable {
-		if entity := tile.GetEntity(); entity.IsValid() {
-			tileVis := vis
-			vis = entity.GetVisuals()
-			vis.Colours.Back = vis.Colours.Back.Replace(col.NONE, tileVis.Colours.Back)
+		if !b {
+			vis.Colours.Back = tileVis.Colours.Back
 		}
 	}
 

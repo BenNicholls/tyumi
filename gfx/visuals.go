@@ -122,6 +122,10 @@ func (v Visuals) HasForegroundContent() bool {
 	return true
 }
 
+func (v Visuals) HasBackgroundContent() bool {
+	return v.Mode != DRAW_NONE && v.Colours.Back.A() != 0
+}
+
 // Draw draws the visuals to a provided canvas at an offset in the canvas's space, respecting depth.
 func (v Visuals) Draw(dst_canvas Canvas, offset vec.Coord, depth int) {
 	dst_canvas.DrawVisuals(offset, depth, v)

@@ -1,7 +1,6 @@
 package rl
 
 import (
-	"runtime"
 	"time"
 
 	"github.com/bennicholls/tyumi/event"
@@ -35,7 +34,8 @@ func (tm *TileMap) getMap() *TileMap {
 	return tm
 }
 
-// Initialize the TileMap. All tiles in the map will be set to defaultTile
+// Initialize the TileMap. All tiles in the map will be set to defaultTile. Be sure to call TileMap.Cleanup() before
+// getting rid of a tilemap!
 func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	tm.DirtyTracker.Init(size)
 	tm.events.Listen(EV_ENTITYBEINGDESTROYED, EV_TILECHANGEDVISIBILITY)
@@ -55,16 +55,16 @@ func (tm *TileMap) Init(size vec.Dims, defaultTile TileType) {
 	if defaultTile.Data().Opaque {
 		tm.opacityMap.SetAll()
 	}
+}
 
-	runtime.AddCleanup(tm, func(tiles []Tile) {
-		for _, tile := range tiles {
-			ecs.DestroyEntity(tile)
-		}
+func (tm *TileMap) Cleanup() {
+	for _, tile := range tm.tiles {
+		ecs.DestroyEntity(tile)
+	}
 
-		tm.LightSystem.Shutdown()
-		tm.FOVSystem.Shutdown()
-		tm.events.DisableListening()
-	}, tm.tiles)
+	tm.LightSystem.Shutdown()
+	tm.FOVSystem.Shutdown()
+	tm.events.DisableListening()
 }
 
 // update tilemap-controlled systems

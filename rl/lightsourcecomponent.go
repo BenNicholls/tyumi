@@ -12,6 +12,9 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
+var EV_LIGHTENABLED = event.Register("Light Enabled")
+var EV_LIGHTDISABLED = event.Register("Light Disabled")
+
 func init() {
 	ecs.Register[LightSourceComponent]()
 }
@@ -58,7 +61,7 @@ func (tl tileLight) IsZero() bool {
 
 func (lsc *LightSourceComponent) Init() {
 	if !lsc.Disabled {
-		lsc.AreaDirty = true
+		event.Fire(EV_LIGHTENABLED, &EntityEvent{Entity: Entity(lsc.GetEntity())})
 	}
 
 	if lsc.FlickerSpeed > 0 {
@@ -89,6 +92,10 @@ func (lsc *LightSourceComponent) Cleanup() {
 			animComp.RemoveAnimation(lsc.flickerAnimation)
 		}
 	}
+
+	if !lsc.Disabled {
+		event.Fire(EV_LIGHTDISABLED, &EntityEvent{Entity: Entity(lsc.GetEntity())})
+	}
 }
 
 func (lsc *LightSourceComponent) Enable() {
@@ -113,11 +120,12 @@ func (lsc *LightSourceComponent) setDisabled(disabled bool) {
 		if lsc.flickerAnimation != nil {
 			lsc.flickerAnimation.Stop()
 		}
+		event.Fire(EV_LIGHTDISABLED, &EntityEvent{Entity: Entity(lsc.GetEntity())})
 	} else {
 		if lsc.flickerAnimation != nil {
 			lsc.flickerAnimation.Start()
 		}
-		lsc.AreaDirty = true // if enabling, trigger a recompute and apply
+		event.FireImmediate(EV_LIGHTENABLED, &EntityEvent{Entity: Entity(lsc.GetEntity())})
 	}
 }
 
@@ -200,8 +208,9 @@ type LightSystem struct {
 
 	tileMap               *TileMap
 	changedVisbilityTiles util.Set[vec.Coord]
-	globalLight           uint8       // amount of light automatically applied to every tile. If 255, disables system.
-	lightmap              []tileLight // the light applied to each tile!
+	globalLight           uint8               // amount of light automatically applied to every tile. If 255, disables system.
+	lightmap              []tileLight         // the light applied to each tile!
+	sources               util.Set[vec.Coord] // positions of all enabled light sources.
 }
 
 func (ls *LightSystem) Init(tm *TileMap) {
@@ -233,7 +242,7 @@ func (ls LightSystem) GetLightLevel(pos, view_pos vec.Coord) uint8 {
 	light := ls.getTileLight(pos)
 	var viewedLight uint16
 	if ls.tileMap.IsTileOpaque(pos) {
-		if view_pos == NOT_IN_TILEMAP {
+		if view_pos == NOT_IN_TILEMAP || view_pos == pos {
 			// if viewer is NOT IN TILEMAP we assume they are omniscient, and we light the tile
 			// with the largest light value among all directions
 			for _, level := range light {
@@ -242,15 +251,15 @@ func (ls LightSystem) GetLightLevel(pos, view_pos vec.Coord) uint8 {
 		} else {
 			viewDelta := view_pos.Subtract(pos)
 
-			if viewDelta.X > 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_RIGHT)) {
+			if viewDelta.X > 0 && (!ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_RIGHT)) || ls.sources.Contains(pos.Step(vec.DIR_RIGHT))) {
 				viewedLight = light.GetLevel(vec.DIR_RIGHT)
-			} else if viewDelta.X < 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_LEFT)) {
+			} else if viewDelta.X < 0 && (!ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_LEFT)) || ls.sources.Contains(pos.Step(vec.DIR_LEFT))) {
 				viewedLight = light.GetLevel(vec.DIR_LEFT)
 			}
 
-			if viewDelta.Y < 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_UP)) {
+			if viewDelta.Y < 0 && (!ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_UP)) || ls.sources.Contains(pos.Step(vec.DIR_UP))) {
 				viewedLight = max(viewedLight, light.GetLevel(vec.DIR_UP))
-			} else if viewDelta.Y > 0 && !ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_DOWN)) {
+			} else if viewDelta.Y > 0 && (!ls.tileMap.IsTileOpaque(pos.Step(vec.DIR_DOWN)) || ls.sources.Contains(pos.Step(vec.DIR_DOWN))) {
 				viewedLight = max(viewedLight, light.GetLevel(vec.DIR_DOWN))
 			}
 
@@ -306,10 +315,21 @@ func (ls *LightSystem) immediateHandleEvent(e event.Event) (event_handled bool) 
 		moveEvent := e.(*EntityMovedEvent)
 		if light := ecs.Get[LightSourceComponent](moveEvent.Entity); light != nil {
 			light.AreaDirty = true
+			if !light.Disabled {
+				ls.sources.Remove(moveEvent.From)
+				ls.sources.Add(moveEvent.To)
+			}
 		}
 	case EV_TILECHANGEDVISIBILITY:
 		visEvent := e.(*TileChangedVisibilityEvent)
 		ls.changedVisbilityTiles.Add(visEvent.Pos)
+	case EV_LIGHTENABLED:
+		lightEvent := e.(*EntityEvent)
+		ecs.Get[LightSourceComponent](lightEvent.Entity).AreaDirty = true
+		ls.sources.Add(lightEvent.Entity.Position())
+	case EV_LIGHTDISABLED:
+		lightEvent := e.(*EntityEvent)
+		ls.sources.Remove(lightEvent.Entity.Position())
 	default:
 		return
 	}
@@ -437,29 +457,25 @@ func (ls *LightSystem) applyLight(light *LightSourceComponent) {
 		amplitude := uint8(max(0, int(light.Power)-int(source.DistanceTo(pos)*float64(light.FalloffRate))))
 
 		var newLight tileLight
-		if ls.tileMap.IsTileOpaque(pos) {
+		if ls.tileMap.IsTileOpaque(pos) && pos != source {
 			posDelta := source.Subtract(pos)
 
-			if posDelta == vec.ZERO_COORD {
-				newLight = tileLight{uint16(amplitude), uint16(amplitude), uint16(amplitude), uint16(amplitude)}
+			if posDelta.X > 0 {
+				newLight.SetLevel(amplitude, vec.DIR_RIGHT)
+			} else if posDelta.X < 0 {
+				newLight.SetLevel(amplitude, vec.DIR_LEFT)
 			} else {
-				if posDelta.X > 0 {
-					newLight.SetLevel(amplitude, vec.DIR_RIGHT)
-				} else if posDelta.X < 0 {
-					newLight.SetLevel(amplitude, vec.DIR_LEFT)
-				} else {
-					newLight.SetLevel(amplitude/2, vec.DIR_LEFT)
-					newLight.SetLevel(amplitude/2, vec.DIR_RIGHT)
-				}
+				newLight.SetLevel(amplitude/2, vec.DIR_LEFT)
+				newLight.SetLevel(amplitude/2, vec.DIR_RIGHT)
+			}
 
-				if posDelta.Y < 0 {
-					newLight.SetLevel(amplitude, vec.DIR_UP)
-				} else if posDelta.Y > 0 {
-					newLight.SetLevel(amplitude, vec.DIR_DOWN)
-				} else {
-					newLight.SetLevel(amplitude/2, vec.DIR_DOWN)
-					newLight.SetLevel(amplitude/2, vec.DIR_UP)
-				}
+			if posDelta.Y < 0 {
+				newLight.SetLevel(amplitude, vec.DIR_UP)
+			} else if posDelta.Y > 0 {
+				newLight.SetLevel(amplitude, vec.DIR_DOWN)
+			} else {
+				newLight.SetLevel(amplitude/2, vec.DIR_DOWN)
+				newLight.SetLevel(amplitude/2, vec.DIR_UP)
 			}
 		} else {
 			newLight = tileLight{uint16(amplitude), uint16(amplitude), uint16(amplitude), uint16(amplitude)}

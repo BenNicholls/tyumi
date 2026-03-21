@@ -48,11 +48,11 @@ func (tm *TileMap) scan(pos vec.Coord, row int, slope1, slope2 float32, radius i
 			}
 
 			if d := vec.ZERO_COORD.DistanceSqTo(vec.Coord{dx, dy}); d < r2 {
-				if !cull || !(dx == 0 || dy == 0 || dx == dy) {
+				if cull || (dx != 0 && dy != 0 && dx != dy) {
 					fn(tm, mapPos, d, radius)
 				}
 			}
-			
+
 			//scanning a block
 			if blocked {
 				if !tm.IsTileOpaque(mapPos) {

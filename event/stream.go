@@ -38,12 +38,14 @@ const (
 // to call the assigned event handler on each accumulated event.
 type Stream struct {
 	stream           []Event
-	handler          Handler // event handler called by Process()
-	immediateHandler Handler // event handler called when adding. if it doesn't handle the event, it is added to the stream for later processing. OPTIONAL.
+	handler          Handler           // event handler called by Process()
+	immediateHandler Handler           // event handler called when adding. if it doesn't handle the event, it is added to the stream for later processing. OPTIONAL.
 	listenIDs        util.Set[EventID] // ids that are currently being listened for
 	disabled         bool              // whether the stream accepts events
 	suppression      SuppressionMode   // type of duplicate event suppression
 	eventIndices     map[EventID]int   // indices of events with specific IDs, used while suppressing duplicate events
+	processing       bool              // true while processing
+	queuedHandler    Handler           // if a new event handler is set while processing, we queue it instead and swap at an appropriate time
 }
 
 // Initializes a stream. Size is the maximum number of events that can be accumulated before processing. Handler is the
@@ -61,12 +63,17 @@ func NewStream(size int, handler Handler) (s Stream) {
 }
 
 // Sets the event handler function to the stream for event processing. If this is not set, the stream will not receive
-// events.
+// events. If the event handler is set while events are being processed, the remaining events in the stream are flushed
+// before the swap is made.
 func (s *Stream) SetEventHandler(handler Handler) {
 	if s.stream == nil {
 		s.Init(defaultStreamSize, handler)
 	} else {
-		s.handler = handler
+		if s.processing {
+			s.queuedHandler = handler
+		} else {
+			s.handler = handler
+		}
 	}
 }
 
@@ -110,6 +117,7 @@ func (s *Stream) SuppressDuplicateEvents(mode SuppressionMode) {
 // Clears the event stream of all collected events.
 func (s *Stream) FlushEvents() {
 	s.stream = slices.Delete(s.stream, 0, len(s.stream))
+	s.stream = s.stream[0:0]
 	if s.suppression != DoNotSuppress {
 		clear(s.eventIndices)
 	}
@@ -174,20 +182,41 @@ func (s *Stream) setDisabled(disabled bool) {
 	}
 }
 
+func (s Stream) IsProcessingEvents() bool {
+	return s.processing
+}
+
 // Processes all events in the stream with the provided event handler function (if there is one).
 func (s *Stream) ProcessEvents() {
 	if s.disabled || s.handler == nil {
 		return
 	}
 
-	for _, event := range s.stream {
+	s.processing = true
+
+	for i, event := range s.stream {
+		if i > len(s.stream) {
+			// DEAR FUTURE BEN: this probably looks kind of weird. This is to ensure that if the streams events are
+			// flushed during processing, we don't keep trying to process nil events.
+			break
+		}
 		handled := s.handler(event)
 		if handled {
 			event.setHandled()
 		}
+
+		if s.queuedHandler != nil {
+			break
+		}
 	}
 
 	s.FlushEvents()
+	if s.queuedHandler != nil {
+		s.handler = s.queuedHandler
+		s.queuedHandler = nil
+	}
+
+	s.processing = false
 }
 
 // Adds an event to the stream, unless the stream is full. If stream does not have an event handler, we assume

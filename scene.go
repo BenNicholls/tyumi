@@ -45,7 +45,7 @@ type Scene struct {
 
 	window *ui.Window
 
-	timers   []Timer
+	timers []Timer
 
 	inputEvents          event.Stream        //for input events. processed at the start of each tick
 	inputHandler         event.Handler       //user-provided input handling function. runs AFTER the UI has had a chance to process input.
@@ -167,24 +167,30 @@ func (s *Scene) InputEvents() *event.Stream {
 // processed at the beginning of each tick(). This handler is called after the UI and any more specific input handlers
 // have had a chance to handle the input. If another handler handles the event then event.Handled() will be true. You
 // can still choose to ignore that and handle the event again if you like though.
+// Setting this handler clears the input event stream of any remaining events.
 func (s *Scene) SetInputHandler(handler event.Handler) {
 	s.inputHandler = handler
+	s.inputEvents.FlushEvents()
 }
 
 // Sets the function for handling keypresses. Inputs are collected, distributed and then processed at the beginning of
 // each tick(). This handler is called only for key press events (not key releases) after the UI has had a chance to
 // handle the input. If the UI handles the event then event.Handled() will be true. You can still choose to ignore that
 // and handle the event again if you like though.
+// Setting this handler clears the input event stream of any remaining events.
 func (s *Scene) SetKeypressHandler(keypress_handler func(keyboard_event *input.KeyboardEvent) bool) {
 	s.keypressInputHandler = keypress_handler
+	s.inputEvents.FlushEvents()
 }
 
 // Sets the function for handling action events. Inputs are collected, distributed and then processed at the beginning of
 // each tick(). This handler is called only for events that trigger actions. It runs after the UI has had a chance to
 // handle the action. If the UI handles the action then event.Handled() will be true. You can still choose to ignore that
 // and handle the action again if you like though.
+// Setting this handler clears the input event stream of any remaining events.
 func (s *Scene) SetActionHandler(action_handler input.ActionHandler) {
 	s.actionHandler = action_handler
+	s.inputEvents.FlushEvents()
 }
 
 func (s *Scene) handleInput(event event.Event) (event_handled bool) {
@@ -246,4 +252,3 @@ func (s *Scene) processTimers() {
 		return timer.Done()
 	})
 }
-

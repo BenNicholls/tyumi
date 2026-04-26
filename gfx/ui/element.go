@@ -167,16 +167,26 @@ func (e *Element) Resize(size vec.Dims) {
 
 // Sets the default colours for draw operations on this element.
 func (e *Element) SetDefaultColours(colours col.Pair) {
+	if colours == e.DefaultColours() {
+		return
+	}
+
 	e.Canvas.SetDefaultColours(colours)
 	e.Updated = true
+	e.forceRedraw = true
 	if e.Border.enabled {
 		e.Border.dirty = true
 	}
 }
 
 func (e *Element) SetDefaultVisuals(vis gfx.Visuals) {
+	if vis == e.DefaultVisuals() {
+		return
+	}
+
 	e.Canvas.SetDefaultVisuals(vis)
 	e.Updated = true
+	e.forceRedraw = true
 }
 
 // Returns the bounding box of the element wrt its parent.

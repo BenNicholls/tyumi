@@ -144,13 +144,14 @@ func (c *Canvas) setDepth(pos vec.Coord, depth int) {
 
 // sets the visuals for the cell, respecting depth. if depth = -1, previous depth value is ignored.
 func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
-	if depth != -1 && c.getDepth(pos) > depth {
+	cellIndex := c.cellIndex(pos)
+	if depth != -1 && c.depthmap[cellIndex] > depth {
 		return
 	}
 
-	c.setDepth(pos, depth)
+	c.depthmap[cellIndex] = depth
 
-	cell := c.getCell(pos)
+	cell := c.cells[cellIndex]
 	vis.Colours = vis.Colours.Replace(COL_DEFAULT, c.defaultVisuals.Colours)
 	vis.Colours = vis.Colours.Replace(col.NONE, cell.Colours)
 	vis = vis.ReplaceChars(TEXT_DEFAULT, cell.Chars) // remember, this only runs if Mode == DRAW_TEXT
@@ -167,8 +168,8 @@ func (c *Canvas) setCell(pos vec.Coord, depth int, vis Visuals) {
 		}
 	}
 
-	c.cells[c.cellIndex(pos)] = vis
-	c.SetDirty(pos)
+	c.cells[cellIndex] = vis
+	c.DirtyTracker.setDirtyAtIndex(cellIndex)
 }
 
 func (c *Canvas) setForeColour(pos vec.Coord, depth int, colour col.Colour) {

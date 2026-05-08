@@ -4,6 +4,7 @@
 package util
 
 import (
+	"cmp"
 	"math"
 
 	"golang.org/x/exp/constraints"
@@ -27,7 +28,7 @@ func Abs[T constraints.Signed](value T) T {
 }
 
 // Clamp checks if min <= val <= max. If val < min, returns min. If val > max, returns max. Otherwise returns val.
-func Clamp[T constraints.Ordered](value, min, max T) T {
+func Clamp[T cmp.Ordered](value, min, max T) T {
 	if min == max {
 		return min
 	}
@@ -84,11 +85,11 @@ func RoundFloatToInt(f float64) int {
 
 // Lerp linearly interpolates a range (start-end) over (steps) intervals, and returns the (val)th step.
 func Lerp[T constraints.Integer | constraints.Float](start, end T, val, steps int) T {
-	if val >= steps || start == end {
-		return end
-	} else if val <= 0 {
-		return start
-	}
+	// if val >= steps || start == end {
+	// 	return end
+	// } else if val <= 0 {
+	// 	return start
+	// }
 
 	return T((float64(end) - float64(start))*float64(val)/float64(steps)) + start
 }

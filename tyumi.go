@@ -21,10 +21,10 @@ var (
 	prevFrameTime       time.Time     // time we started processing the previous frame. used to calculate frame deltas.
 	currentFrameTime    time.Time     // time we started processing the current frame
 
-	overclock          bool          // if true, no framerate limiting is enforced
-	fpsTicks           int           // number of ticks when fps label was last updated
-	sleepTime          time.Duration // amount of time the game has slept since the last fps label update
-	fpsLabelUpdateTime time.Time     // time that the fps label most recently updated
+	overclock           bool          // if true, no framerate limiting is enforced
+	fpsTicks            int           // number of ticks when fps label was last updated
+	fpsLabelUpdateTime  time.Time     // time that the fps label most recently updated
+	frameTimeBuffer     util.SummedRingBuffer[time.Duration]
 )
 
 func init() {
@@ -39,10 +39,12 @@ func init() {
 func SetFramerate(f int) {
 	if f == 0 {
 		overclock = true
+		frameTimeBuffer.Init(1000)
 		return
 	}
 	f = util.Clamp(f, 1, 1000)
 	frameTargetDuration = time.Duration(1000/float64(f)) * time.Millisecond
+	frameTimeBuffer.Init(f)
 }
 
 func SetFullScreen(enable bool) {

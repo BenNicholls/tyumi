@@ -11,7 +11,7 @@ import (
 
 type EntityType uint32
 
-func (et EntityType) GetData() EntityData {
+func (et EntityType) Data() EntityData {
 	return entityDataCache.GetData(et)
 }
 
@@ -43,7 +43,7 @@ func CreateEntity(entity_type EntityType) (entity Entity) {
 	ecs.Add(entity, EntityComponent{EntityType: entity_type})
 	ecs.Add(entity, PositionComponent{Coord: NOT_IN_TILEMAP})
 
-	data := entity_type.GetData()
+	data := entity_type.Data()
 
 	if hp := data.HP; hp > 0 {
 		ecs.Add(entity, HealthComponent{HP: NewBasicStat(hp)})
@@ -73,7 +73,7 @@ func (e Entity) Destroy() {
 }
 
 func (e Entity) GetVisuals() (vis gfx.Visuals) {
-	vis = ecs.Get[EntityComponent](e).EntityType.GetData().Visuals
+	vis = ecs.Get[EntityComponent](e).EntityType.Data().Visuals
 
 	if animComp := ecs.Get[AnimationComponent](e); animComp != nil {
 		vis = animComp.ApplyVisualAnimations(vis)
@@ -95,7 +95,7 @@ func (e Entity) IsOmniscient() bool {
 }
 
 func (e Entity) GetEntityData() EntityData {
-	return ecs.Get[EntityComponent](e).GetData()
+	return ecs.Get[EntityComponent](e).Data()
 }
 
 func (e Entity) GetName() string {

@@ -17,13 +17,13 @@ import (
 	"github.com/bennicholls/tyumi/vec"
 )
 
-// element is the base api of anything handled by the UI system.
-type element interface {
+// ElementInterface is the base api of anything handled by the UI system.
+type ElementInterface interface {
 	Labelled
 	anim.Manager
 	event.Listener
 	vec.Bounded
-	util.TreeType[element]
+	util.TreeType[ElementInterface]
 
 	Update(delta time.Duration)
 	IsUpdated() bool
@@ -83,7 +83,7 @@ type element interface {
 // the element's bounds will not be drawn.
 type Element struct {
 	gfx.Canvas
-	util.TreeNode[element]
+	util.TreeNode[ElementInterface]
 	event.Stream
 	anim.AnimationManager
 
@@ -138,7 +138,7 @@ func (e *Element) Init(size vec.Dims, pos vec.Coord, depth int) {
 	// if element is not in a window, ensure it and all children that may already be attached have their event streams
 	// disabled
 	if e.getWindow() == nil {
-		util.WalkTree[element](e, func(element element) { element.DisableListening() })
+		util.WalkTree[ElementInterface](e, func(element ElementInterface) { element.DisableListening() })
 	}
 }
 
@@ -259,7 +259,7 @@ func (e *Element) SetDepth(depth int) {
 
 // AddChild adds a child element to this one. Child elements are composited together along with their parent to
 // produce the final visuals for the element.
-func (e *Element) AddChild(child element) {
+func (e *Element) AddChild(child ElementInterface) {
 	if child.ID() == e.id {
 		log.Error("Tried to add an element as a child of itself! Why???")
 		return
@@ -273,18 +273,18 @@ func (e *Element) AddChild(child element) {
 	e.TreeNode.AddChild(child)
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeAdded(child)
-		util.WalkTree(child, func(element element) { element.EnableListening() }, ifVisible)
+		util.WalkTree(child, func(element ElementInterface) { element.EnableListening() }, ifVisible)
 	}
 	e.ForceRedraw()
 }
 
-func (e *Element) AddChildren(children ...element) {
+func (e *Element) AddChildren(children ...ElementInterface) {
 	for _, child := range children {
 		e.AddChild(child)
 	}
 }
 
-func (e *Element) RemoveChild(child element) {
+func (e *Element) RemoveChild(child ElementInterface) {
 	oldChildCount := e.ChildCount()
 	e.TreeNode.RemoveChild(child)
 	if e.ChildCount() == oldChildCount {
@@ -294,7 +294,7 @@ func (e *Element) RemoveChild(child element) {
 
 	if window := e.getWindow(); window != nil {
 		window.onSubNodeRemoved(child)
-		util.WalkTree(child, func(element element) { element.DisableListening() })
+		util.WalkTree(child, func(element ElementInterface) { element.DisableListening() })
 	}
 	e.ForceRedraw()
 }
@@ -431,7 +431,7 @@ func (e *Element) drawChildren() {
 	// collect opaque and transparent children, sort accordingly, and recombine into a drawlist.
 	// opaque children can be drawn high to low to prevent overdraw, but transparent ones must be drawn low to high
 	// like Bob Ross would.
-	var opaque, transparent []element
+	var opaque, transparent []ElementInterface
 
 	for _, child := range e.GetChildren() {
 		if !child.IsVisible() {
@@ -452,10 +452,10 @@ func (e *Element) drawChildren() {
 		return
 	}
 
-	slices.SortStableFunc(opaque, func(e1, e2 element) int {
+	slices.SortStableFunc(opaque, func(e1, e2 ElementInterface) int {
 		return cmp.Compare(e2.getDepth(), e1.getDepth()) // sort by descending reverse depth
 	})
-	slices.SortStableFunc(transparent, func(e1, e2 element) int {
+	slices.SortStableFunc(transparent, func(e1, e2 ElementInterface) int {
 		return cmp.Compare(e1.getDepth(), e2.getDepth()) // sort by ascending depth
 	})
 
@@ -575,10 +575,10 @@ func (e *Element) setVisible(v bool) {
 	e.visible = v
 	if e.visible {
 		e.Updated = true
-		util.WalkTree[element](e, func(element element) { element.EnableListening() }, ifVisible)
+		util.WalkTree[ElementInterface](e, func(element ElementInterface) { element.EnableListening() }, ifVisible)
 	} else {
 		e.setFocus(false)
-		util.WalkTree[element](e, func(element element) { element.DisableListening() })
+		util.WalkTree[ElementInterface](e, func(element ElementInterface) { element.DisableListening() })
 	}
 
 	e.forceParentRedraw()

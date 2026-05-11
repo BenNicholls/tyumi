@@ -32,7 +32,7 @@ func init() {
 
 // Retrieves a reference to the element in window with the supplied label. If the element is not found, or is not
 // right type, returns nil.
-func GetLabelled[T element](window *Window, label string) (element T) {
+func GetLabelled[T ElementInterface](window *Window, label string) (element T) {
 	if e, ok := window.labels[label]; ok {
 		if t, ok := e.(T); ok {
 			return t
@@ -52,6 +52,6 @@ func fireCallbacks(callbacks ...func()) {
 
 // predicate for ui-tree-walking functions. we use this to break early on walks that only apply to visible sections
 // of the ui tree
-func ifVisible(e element) bool {
+func ifVisible(e ElementInterface) bool {
 	return e != nil && e.IsVisible()
 }

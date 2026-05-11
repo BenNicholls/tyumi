@@ -10,7 +10,7 @@ import (
 type ElementAnimator interface {
 	anim.Animator
 
-	ApplyToElement(e element)
+	ApplyToElement(e ElementInterface)
 }
 
 type ElementMoveAnimation struct {
@@ -19,7 +19,7 @@ type ElementMoveAnimation struct {
 	from, to vec.Coord
 }
 
-func (ema *ElementMoveAnimation) ApplyToElement(e element) {
+func (ema *ElementMoveAnimation) ApplyToElement(e ElementInterface) {
 	pos := ema.from.Lerp(ema.to, int(ema.GetTicks()), int(ema.GetDuration()))
 	e.MoveTo(pos)
 }

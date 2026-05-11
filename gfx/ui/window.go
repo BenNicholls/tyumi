@@ -26,19 +26,19 @@ func init() {
 type Window struct {
 	Element
 
-	labels             map[string]element
+	labels             map[string]ElementInterface
 	blockingAnimations bool //true if running animations are blocking updates
 
 	SendEventsToUnfocused bool //if true, unhandled input events will be sent to all elements, not just the focused one.
-	focusedElement        element
-	tabbingOrder          []element
+	focusedElement        ElementInterface
+	tabbingOrder          []ElementInterface
 }
 
 func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
 	wnd = new(Window)
 	wnd.Init(size, pos, depth)
 	wnd.TreeNode.Init(wnd)
-	wnd.labels = make(map[string]element)
+	wnd.labels = make(map[string]ElementInterface)
 	return
 }
 
@@ -46,14 +46,14 @@ func NewWindow(size vec.Dims, pos vec.Coord, depth int) (wnd *Window) {
 func (wnd *Window) Update(delta time.Duration) {
 	// see how many animations (if any) are blocking updates
 	wnd.blockingAnimations = false
-	util.WalkTree[element](wnd, func(element element) {
+	util.WalkTree[ElementInterface](wnd, func(element ElementInterface) {
 		if element.HasBlockingAnimation() {
 			wnd.blockingAnimations = true
 		}
-	}, ifVisible, func(e element) bool { return !wnd.IsBlocked() })
+	}, ifVisible, func(e ElementInterface) bool { return !wnd.IsBlocked() })
 
 	// update all visible subelements (unless window is blocked) and their animations
-	util.WalkSubTrees[element](wnd, func(element element) {
+	util.WalkSubTrees[ElementInterface](wnd, func(element ElementInterface) {
 		if !wnd.IsBlocked() {
 			//THINK : should an element have its events flushed if the window is blocked? we could do that here instead
 			// of wherever we are doing it now (if we're doing it at all....).
@@ -70,12 +70,12 @@ func (wnd *Window) Update(delta time.Duration) {
 
 func (wnd *Window) Render() {
 	//prepare_render
-	util.WalkTree[element](wnd, func(element element) {
+	util.WalkTree[ElementInterface](wnd, func(element ElementInterface) {
 		element.prepareRender()
 	}, ifVisible)
 
 	//render all visible subnodes
-	util.WalkSubTrees[element](wnd, func(element element) {
+	util.WalkSubTrees[ElementInterface](wnd, func(element ElementInterface) {
 		element.drawChildren()
 		if element.getCanvas().Dirty() {
 			element.renderIfDirty()
@@ -87,7 +87,7 @@ func (wnd *Window) Render() {
 	}, ifVisible)
 
 	// finalize render. cleans up flags etc.
-	util.WalkSubTrees[element](wnd, func(element element) {
+	util.WalkSubTrees[ElementInterface](wnd, func(element ElementInterface) {
 		element.finalizeRender()
 	}, ifVisible)
 
@@ -98,7 +98,7 @@ func (wnd *Window) Render() {
 
 func (wnd *Window) HandleKeypress(key_event *input.KeyboardEvent) (event_handled bool) {
 	if wnd.SendEventsToUnfocused {
-		util.WalkSubTrees[element](wnd, func(element element) {
+		util.WalkSubTrees[ElementInterface](wnd, func(element ElementInterface) {
 			if !event_handled && element.acceptsInput() {
 				event_handled = element.HandleKeypress(key_event)
 			}
@@ -119,7 +119,7 @@ func (wnd *Window) HandleAction(action input.ActionID) (action_handled bool) {
 	}
 
 	if wnd.SendEventsToUnfocused {
-		util.WalkSubTrees[element](wnd, func(element element) {
+		util.WalkSubTrees[ElementInterface](wnd, func(element ElementInterface) {
 			if !action_handled && element.acceptsInput() {
 				action_handled = element.HandleAction(action)
 			}
@@ -133,7 +133,7 @@ func (wnd *Window) HandleAction(action input.ActionID) (action_handled bool) {
 }
 
 // SetTabbingOrder sets the order for tabbing between elements. Any previously set tabbing order is not retained.
-func (wnd *Window) SetTabbingOrder(tabbed_elements ...element) {
+func (wnd *Window) SetTabbingOrder(tabbed_elements ...ElementInterface) {
 	wnd.tabbingOrder = nil
 
 	for _, e := range tabbed_elements {
@@ -214,7 +214,7 @@ func (wnd *Window) getWindow() *Window {
 	return wnd
 }
 
-func (wnd *Window) addLabel(label string, e element) {
+func (wnd *Window) addLabel(label string, e ElementInterface) {
 	if _, ok := wnd.labels[label]; ok {
 		log.Warning("Duplicate label: ", label)
 		return
@@ -227,8 +227,8 @@ func (wnd *Window) removeLabel(label string) {
 	delete(wnd.labels, label)
 }
 
-func (wnd *Window) onSubNodeAdded(subNode element) {
-	util.WalkTree(subNode, func(e element) {
+func (wnd *Window) onSubNodeAdded(subNode ElementInterface) {
+	util.WalkTree(subNode, func(e ElementInterface) {
 		//find labelled subnodes of the new element and add them to the label map
 		if e.IsLabelled() {
 			wnd.addLabel(e.GetLabel(), e)
@@ -245,8 +245,8 @@ func (wnd *Window) onSubNodeAdded(subNode element) {
 	})
 }
 
-func (wnd *Window) onSubNodeRemoved(subNode element) {
-	util.WalkTree(subNode, func(e element) {
+func (wnd *Window) onSubNodeRemoved(subNode ElementInterface) {
+	util.WalkTree(subNode, func(e ElementInterface) {
 		//find labelled subnodes of the removed element and remove them from the label map
 		if e.IsLabelled() {
 			wnd.removeLabel(e.GetLabel())
@@ -263,7 +263,7 @@ func (wnd *Window) onSubNodeRemoved(subNode element) {
 	})
 }
 
-func (wnd *Window) onSubNodeFocused(subnode element) {
+func (wnd *Window) onSubNodeFocused(subnode ElementInterface) {
 	if wnd.focusedElement != nil {
 		wnd.focusedElement.Defocus()
 	}
@@ -272,7 +272,7 @@ func (wnd *Window) onSubNodeFocused(subnode element) {
 	event.Fire(EV_FOCUS_CHANGED)
 }
 
-func (wnd *Window) onSubNodeDefocused(subnode element) {
+func (wnd *Window) onSubNodeDefocused(subnode ElementInterface) {
 	if wnd.focusedElement == subnode {
 		wnd.focusedElement = nil
 	}

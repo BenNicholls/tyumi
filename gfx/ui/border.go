@@ -276,7 +276,7 @@ func (e *Element) drawBorder() {
 // current frame). Also recomputes the list of internal links if necessary, which are the cells in this element's border
 // (if it has one) that were linked by its children. The internal link set is needed so we can pass this data to parents
 // without them having to crawl the entire subtree.
-func (e *Element) computeBorderLinks(elements_to_link []element) (borderLinks util.Set[vec.Coord]) {
+func (e *Element) computeBorderLinks(elements_to_link []ElementInterface) (borderLinks util.Set[vec.Coord]) {
 	if e.forceRedraw {
 		e.Border.internalLinksRecalculated = true
 	}

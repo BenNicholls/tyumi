@@ -34,7 +34,7 @@ type List struct {
 	selectionIndex   int  // index of element that is currently selected. selected item will be ensured to be visible
 	highlight        bool // toggle for showing the currently selected element (TODO: different highlight modes)
 
-	items      []element // items in the list.
+	items      []ElementInterface // items in the list.
 	capacity   int       // max capacity for items in the List. if 0, no limit is enforced. If > 0, new items replace the oldest items.
 	emptyLabel *Textbox  // text shown when list is empty
 
@@ -61,13 +61,13 @@ func (l *List) Init(size vec.Dims, pos vec.Coord, depth int) {
 
 // Insert adds elements to the list. Inserted elements will be added to the end of the list and automatically
 // positioned.
-func (l *List) Insert(items ...element) {
+func (l *List) Insert(items ...ElementInterface) {
 	if len(items) == 0 {
 		return
 	}
 
 	if l.items == nil {
-		l.items = make([]element, 0)
+		l.items = make([]ElementInterface, 0)
 	}
 
 	oldCount := l.Count()
@@ -115,7 +115,7 @@ func (l *List) Insert(items ...element) {
 
 // InsertText adds simple textboxes to the list, one for each string passed.
 func (l *List) InsertText(align Alignment, items ...string) {
-	textBoxes := make([]element, 0)
+	textBoxes := make([]ElementInterface, 0)
 	for _, item := range items {
 		textBoxes = append(textBoxes, NewTextbox(vec.Dims{l.size.W, FIT_TEXT}, vec.ZERO_COORD, 0, item, align))
 	}
@@ -124,7 +124,7 @@ func (l *List) InsertText(align Alignment, items ...string) {
 }
 
 // Remove removes ui elements from the list, if present.
-func (l *List) Remove(items ...element) {
+func (l *List) Remove(items ...ElementInterface) {
 	for _, item := range items {
 		itemIndex := slices.Index(l.items, item)
 		if itemIndex == -1 {
@@ -234,7 +234,7 @@ func (l *List) SetEmptyText(text string) {
 func (l *List) calibrate() {
 	l.contentHeight = 0
 	for i := range l.Count() {
-		var item element
+		var item ElementInterface
 		if l.ReverseOrder {
 			item = l.items[l.Count()-1-i]
 		} else {
@@ -350,7 +350,7 @@ func (l List) GetSelectionIndex() int {
 	return l.selectionIndex
 }
 
-func (l *List) getSelected() element {
+func (l *List) getSelected() ElementInterface {
 	if !l.selectionEnabled || l.Count() == 0 {
 		return nil
 	}

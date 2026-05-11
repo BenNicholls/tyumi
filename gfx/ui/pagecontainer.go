@@ -17,7 +17,7 @@ func init() {
 // PageElement is the interface defining the elements that can act as pages in the PageContainer. It's satisfied by
 // the Page element, which you can embed into a custom element.
 type PageElement interface {
-	element
+	ElementInterface
 	initPage(size vec.Dims, title string)
 	activate()
 	deactivate()

@@ -91,6 +91,37 @@ func (c Coord) Lerp(to Coord, val, steps int) Coord {
 	}
 }
 
+func (c Coord) DirectionTo(c2 Coord) Direction {
+	if c == c2 {
+		return DIR_NONE
+	}
+
+	dx, dy := c2.X-c.X, c2.Y-c.Y
+	if dx < 0 {
+		if dy < 0 && dy < dx {
+			return DIR_UPLEFT
+		} else if dy > 0 && -dy < dx {
+			return DIR_DOWNLEFT
+		} else {
+			return DIR_LEFT
+		}
+	} else if dx > 0 {
+		if dy < 0 && -dy < dx {
+			return DIR_UPRIGHT
+		} else if dy > 0 && dy < dx {
+			return DIR_DOWNRIGHT
+		} else {
+			return DIR_RIGHT
+		}
+	} else {
+		if dy < 0 {
+			return DIR_UP
+		} else {
+			return DIR_DOWN
+		}
+	}
+}
+
 // IndexToCoord returns a coord representing an index from a 1D array representing a 2D grid with the given stride
 func IndexToCoord(index, stride int) Coord {
 	return Coord{index % stride, index / stride}

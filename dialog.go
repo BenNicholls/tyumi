@@ -25,6 +25,8 @@ type Dialog struct {
 
 	OnOpen func()
 	OnDone func()
+
+	closing bool // to prevent infinite loops in scene management while closing dialogs
 }
 
 func (d *Dialog) open() {
@@ -37,11 +39,17 @@ func (d *Dialog) open() {
 }
 
 func (d *Dialog) close() {
+	if d.closing {
+		return
+	}
+
+	d.closing = true
 	if d.OnDone != nil {
 		d.OnDone()
 	}
 
 	d.window.Hide()
+	d.closing = false
 }
 
 func (d Dialog) IsDone() bool {
@@ -72,7 +80,7 @@ func NewMessageDialog(title, message string) (md *MessageDialog) {
 
 func (md *MessageDialog) Init(title, message string) {
 	md.Scene.InitCentered(vec.Dims{mainConsole.Size().W / 2, 12})
-	md.Window().EnableBorder()
+	md.Window().SetupBorder(title, "")
 
 	messageText := ui.NewTextbox(vec.Dims{md.Window().Size().W, ui.FIT_TEXT}, vec.Coord{0, 1}, 0, message, ui.ALIGN_CENTER)
 	md.Window().AddChild(messageText)

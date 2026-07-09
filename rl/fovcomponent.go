@@ -1,6 +1,7 @@
 package rl
 
 import (
+	"iter"
 	"time"
 
 	"github.com/bennicholls/tyumi/event"
@@ -83,6 +84,19 @@ func (fov *FOVComponent) InFOV(pos vec.Coord) bool {
 // Reports whether the viewer is allowed to see the entity (ie the entity is not invisible or something)
 func (fov *FOVComponent) CanSee(entity Entity) bool {
 	return fov.Omniscient || !entity.IsInvisible()
+}
+
+// Reports whether entity is in the FOV of another
+func (fov *FOVComponent) EntityInFOV(entity Entity) bool {
+	if fov.TrackEntities {
+		return fov.entities.Contains(entity)
+	} else {
+		return fov.CanSee(entity) && fov.InFOV(ecs.Get[PositionComponent](entity).Coord)
+	}
+}
+
+func (fov *FOVComponent) EachTrackedEntity() iter.Seq[Entity] {
+	return fov.entities.EachElement()
 }
 
 type FOVSystem struct {
@@ -311,14 +325,14 @@ func (mc *MemoryComponent) AddMemory(tilemap *TileMap, pos vec.Coord) {
 }
 
 type Memory struct {
-	Mode gfx.DrawMode
+	Mode  gfx.DrawMode
 	Glyph gfx.Glyph
 	Chars [2]uint8
 }
 
 func makeMemory(vis gfx.Visuals) Memory {
 	return Memory{
-		Mode: vis.Mode,
+		Mode:  vis.Mode,
 		Glyph: vis.Glyph,
 		Chars: vis.Chars,
 	}

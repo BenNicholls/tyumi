@@ -25,6 +25,8 @@ type ElementInterface interface {
 	vec.Bounded
 	util.TreeType[ElementInterface]
 
+	String() string
+
 	Update(delta time.Duration)
 	IsUpdated() bool
 
@@ -284,11 +286,14 @@ func (e *Element) AddChildren(children ...ElementInterface) {
 	}
 }
 
+func (e *Element) HasChild(child ElementInterface) bool {
+	return slices.Contains(e.GetChildren(), child)
+}
+
 func (e *Element) RemoveChild(child ElementInterface) {
 	oldChildCount := e.ChildCount()
 	e.TreeNode.RemoveChild(child)
 	if e.ChildCount() == oldChildCount {
-		log.Debug("Child not actually a child, no remove done.")
 		return
 	}
 

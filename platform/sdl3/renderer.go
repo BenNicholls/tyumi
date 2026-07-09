@@ -211,7 +211,6 @@ func setPixel(surface *sdl.Surface, cursor vec.Coord, colour col.Colour) {
 	i := cursor.Y*int(surface.Pitch) + cursor.X*4 // tyumi colours are 4 bytes wide
 	pixel := (*col.Colour)(unsafe.Pointer(uintptr(surface.Pixels) + uintptr(i)))
 	*pixel = colour
-	return
 }
 
 func (r *Renderer) createCanvasBuffer() (err error) {
@@ -358,6 +357,7 @@ func (r *Renderer) Render() {
 	r.console.Clean()
 
 	sdl.SetRenderTarget(r.renderer, t) //point renderer at window again
+	sdl.RenderClear(r.renderer)
 	sdl.RenderTexture(r.renderer, r.canvasBuffer, nil, nil)
 	sdl.RenderPresent(r.renderer)
 

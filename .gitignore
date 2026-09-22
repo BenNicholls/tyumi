@@ -1,2 +1,5 @@
 *.code-workspace
 *.txt
+*.wasm
+wasm_exec.js
+.DS_Store

@@ -13,6 +13,7 @@ The API is liable to change drastically as I flesh out Tyumi's capabilites, but 
 - **Game engine** with simple game loop. Compose your game around a Tyumi.Scene object and Tyumi will run it!
 - **Roguelike data structures and algorithms**. Tilemaps, entities, things used for classic roguelikes. The package is currently quite barebones, and lot more is coming here. [package rl]
 - **SDL2 based platform** implementation for rendering, audio, and input events [package platform/sdl]
+- **Web platform** that runs a game in the browser via WebAssembly [package platform/web]
 - **2D cell-based canvas with drawing functions**. Canvas cells are square and support both full-width glyph drawing as well as half-width glyph drawing for writing denser text. [package gfx]
 - **Animation system**, for making things flash and move and just generally fun to look at.
 - **UI system** with a number of predefined elements, which can be composed around to define custom elements. UI elements are then added into a tree structure to build complex UIs. [package gfx/ui]
@@ -30,9 +31,21 @@ Get Tyumi in the usual way:
 go get github.com/bennicholls/tyumi@v0.2.0
 ```
 
-At the moment the only supported platform for Tyumi is based on [go-sdl2](https://github.com/veandco/go-sdl2), so you'll need to follow the instructions there to set up your dev environment for sdl2 correctly. Eventually other platforms will be added but for now this is what we have.
+Desktop builds use the [go-sdl2](https://github.com/veandco/go-sdl2) platform, so you'll need to follow the instructions there to set up your dev environment for sdl2 correctly. There is also an SDL3 platform, and a web platform for `GOOS=js GOARCH=wasm` (see below).
 
 If you're feeling particularly brave you can track the main branch here instead, but I'm not sure I'd recommend it. Tyumi is something of an organic creature at the moment and I change things at a whim sometimes.
+
+### Web platform
+
+`platform/web` is the browser build target. Point `main` at `web.NewPlatform()` instead of SDL, then compile with `GOOS=js GOARCH=wasm`. `example/web` is a small scene that does this.
+
+```
+cd example/web
+GOOS=js GOARCH=wasm go build -o web.wasm .
+cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" .
+```
+
+Serve that directory over HTTP and open `index.html`. The page needs a canvas with id `tyumi-canvas`, and it must load `platform/web/memfs.js` before `wasm_exec.js`. That script is the filesystem Go uses for `os.Open` and `os.WriteFile` in the browser. Before `InitConsole`, call `web.Mount` on any file the game reads from disk (fonts, images, sounds) so it lands in that filesystem. Font and audio paths are fetched automatically when they are missing. Directory listings such as `LoadSoundLibrary` still need each file mounted, since a web server will not list a folder for you.
 
 ### Examples
 
@@ -47,7 +60,7 @@ Once the API is more nailed down I'll write up some little example apps, maybe a
 There's still lots of work to do. On the horizon are things like:
 
 - **More Helpers for making roguelikes**: This is what Tyumi is supposed to be for, so *coming soon* will be better tile and map structures, procedural generation functions, pathfinding, FOV, actors, AI routines for NPCs and enemies, and much much more! Roguelikes present a huge domain of problems to solve so there's lots of work to do here!
-- **More platforms**: At the moment the only platform that has been put together is SDL2 based. SDL2 is nice but Tyumi's platform system is designed so other platforms can be slotted in instead, so we'll have to make some other platform implementations to take advantage of that. In the short term, making an SDL3-based platform seems like a good idea. I also want to make a terminal platform, for making games that run in a terminal just like an old-school roguelike should. Long term I also want to have a WASM platform so people can compile a version of their game for the web.
+- **More platforms**: SDL2, SDL3, and a browser/WebAssembly platform are in place. A terminal platform, for games that run in a terminal the way an old-school roguelike should, is still to come.
 - **Better Input Handling**: right now input handling is... lacking, to say the least. Mouse clicks don't do anything, keyboard modifier keys are not tracked, gamepad support is non-existent. So there's room for improvement here!
 - **More UI Things**: more pre-built UI elements to use as building blocks, with more configuration options, and more ways to interact with them! UI can be a pain so having as much of this stuff done by the engine lets us make games faster. The biggest thing I need to nail down is some kind of consistent Theming Support. The UI package has ways to set styles for borders, default colours for objects, things like that, but it's kind of all over the place at the moment. Need to organize that and make it easier to use for sure.
 - **And More!** Tyumi is built and expanded in whatever ways I need at the time while I make games with it, so who knows what features will be added next? If you have any suggestions I'd love to hear them though! Perhaps there will be a time where Tyumi can grow to meet the needs of people other than myself :)

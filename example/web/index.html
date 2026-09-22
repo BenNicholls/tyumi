@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tyumi</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      image-rendering: pixelated;
+      background: #000;
+      outline: none;
+    }
+    #tyumi-boot {
+      position: fixed;
+      left: 8px;
+      top: 8px;
+      color: #f88;
+      z-index: 2;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="tyumi-canvas" tabindex="0"></canvas>
+  <pre id="tyumi-boot">Loading…</pre>
+  <script src="memfs.js"></script>
+  <script src="wasm_exec.js"></script>
+  <script>
+    const boot = document.getElementById("tyumi-boot");
+    const go = new Go();
+    fetch("web.wasm")
+      .then((resp) => {
+        if (!resp.ok) {
+          throw new Error("failed to fetch web.wasm: " + resp.status);
+        }
+        return resp.arrayBuffer();
+      })
+      .then((bytes) => WebAssembly.instantiate(bytes, go.importObject))
+      .then((result) => {
+        boot.textContent = "";
+        go.run(result.instance);
+      })
+      .catch((err) => {
+        boot.textContent = String(err);
+      });
+  </script>
+</body>
+</html>

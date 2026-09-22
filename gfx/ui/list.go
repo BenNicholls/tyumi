@@ -312,6 +312,14 @@ func (l *List) ToggleHighlight() {
 	l.setHighlight(!l.highlight)
 }
 
+// EnableSelection lets the list track a selected item. The first item is selected when the list is not empty.
+func (l *List) EnableSelection() {
+	l.selectionEnabled = true
+	if l.selectionIndex < 0 && l.Count() > 0 {
+		l.Select(0)
+	}
+}
+
 func (l *List) setHighlight(highlight bool) {
 	if !l.selectionEnabled || l.highlight == highlight {
 		return
